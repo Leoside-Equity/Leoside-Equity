@@ -480,11 +480,15 @@ Boot.start('dashboard', function () {
         const peak = daily.reduce(function (m, d) { return Math.max(m, d.n || 0); }, 1);
 
         el.innerHTML =
+          /* No digest figure. The daily email was removed from signup and from
+             account settings, so digest_opt_in is now a column nobody can set
+             and everybody defaults to true on. Reporting it would be a number
+             that looks like a result and means nothing. */
           '<div class="stat-row">' +
             statBlock('Total accounts', s.readers_total, 'all time') +
             statBlock('New this week', s.readers_week, 'last seven days') +
             statBlock('Confirmed email', s.readers_confirmed, 'of ' + num(s.readers_total) + ' accounts') +
-            statBlock('Daily email opt in', s.digest_optin, 'want the report by email') +
+            statBlock('Saved reports', s.saves_total, 'held across all readers') +
           '</div>' +
 
           '<div class="panel"><div class="panel__head"><h3>Signups, last 14 days</h3></div>' +

@@ -221,10 +221,14 @@ p  { margin: 0 0 1.1em; }
    5. Brand mark
    -------------------------------------------------------------------------- */
 .brand { display: inline-flex; align-items: center; gap: .7rem; }
-.brand__mark { width: 34px; height: 34px; flex: none; color: var(--brass); }
-.brand__mark .mane { fill: currentColor; }
-.brand__mark .face { fill: var(--bg); }
-.brand__mark .ink  { stroke: currentColor; }
+/* The mark is an image now, so it carries its own colour. object-fit keeps a
+   non square export from stretching, and the explicit box stops the header
+   jumping while it loads. */
+.brand__mark {
+  width: 34px; height: 34px; flex: none;
+  object-fit: contain;
+  display: block;
+}
 .brand__name {
   font-family: var(--f-display);
   font-size: 1.22rem;
@@ -251,8 +255,6 @@ p  { margin: 0 0 1.1em; }
 
 /* Brand on dark surfaces */
 .on-ink .brand__name { color: var(--text-on-ink); }
-.on-ink .brand__mark { color: var(--brass-2); }
-.on-ink .brand__mark .face { fill: var(--bg-ink); }
 .on-ink .brand__sub { color: var(--text-on-ink-2); }
 
 /* --------------------------------------------------------------------------
@@ -1211,45 +1213,39 @@ p  { margin: 0 0 1.1em; }
    COOKIE BANNER
    Fixed to the bottom, slides up once, never blocks the page.
    ========================================================================== */
-/* No entry animation, deliberately. Anything that starts the bar off screen
-   and relies on a transition or animation to bring it back can strand it there
-   if animation is throttled, disabled or interrupted, and a consent notice
-   that fails to appear is worse than one that appears without a flourish.
-   The bar simply is where it belongs. Only the dismissal animates, and if that
-   fails to run the bar is removed a moment later regardless. */
-.cookie-bar {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  z-index: 200;
+/* The consent gate. No entry animation on purpose: anything that starts off
+   screen and relies on animation to arrive can be stranded there if animation
+   is throttled or disabled, and a gate that fails to appear silently lets
+   people past it. It simply is where it belongs. */
+.cookie-gate {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(5px);
+}
+.cookie-gate__card {
+  max-width: 32rem; width: 100%;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
   background: var(--bg-elev);
-  border-top: 1px solid var(--line);
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, .18);
-  padding: max(.9rem, env(safe-area-inset-bottom, 0)) 0 .9rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 2.2rem;
+  box-shadow: var(--shadow-lg);
 }
-.cookie-bar[data-dismissed="true"] {
-  transform: translateY(110%);
-  transition: transform .2s ease;
-}
-
-.cookie-bar__inner {
-  max-width: var(--wrap);
-  margin: 0 auto;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-}
-.cookie-bar__text {
-  margin: 0;
-  flex: 1 1 320px;
-  min-width: 0;
-  font-size: .86rem;
-  line-height: 1.55;
+.cookie-gate__card h2 { font-size: 1.45rem; margin: 0 0 1rem; }
+.cookie-gate__card p {
   color: var(--text-dim);
+  font-size: .93rem; line-height: 1.65;
+  margin: 0 0 .9rem;
 }
-.cookie-bar__actions { display: flex; gap: .6rem; flex: 0 0 auto; flex-wrap: wrap; }
-.cookie-bar .btn { flex: 0 0 auto; white-space: nowrap; }
+.cookie-gate__strong { color: var(--text) !important; font-weight: 500; }
+.cookie-gate__card .small { font-size: .84rem; }
+.cookie-gate__actions {
+  display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.6rem;
+}
+.cookie-gate__actions .btn { flex: 1 1 auto; }
 
 /* Shown when storage is declined. There is no working site without it. */
 .cookie-stop {
@@ -1274,8 +1270,10 @@ p  { margin: 0 0 1.1em; }
 /* Armed state for a two step button, so the second press is a real decision. */
 .btn--armed { --btn-bg: var(--brass); --btn-fg: #fff; --btn-bd: var(--brass); }
 
-@media (prefers-reduced-motion: reduce) {
-  .cookie-bar[data-dismissed="true"] { transition: none; }
+@media (max-width: 560px) {
+  .cookie-gate, .cookie-stop { padding: 16px; align-items: flex-end; }
+  .cookie-gate__card, .cookie-stop__card { padding: 1.5rem; }
+  .cookie-gate__actions .btn, .cookie-stop__actions .btn { flex: 1 1 100%; }
 }
 
 /* ==========================================================================

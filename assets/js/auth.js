@@ -334,26 +334,33 @@ const Auth = (function () {
         return !!(err && /removed_at/i.test(err.message || ''));
       };
 
+      /* Every write asks for the affected rows back. Row level security
+         filters rows rather than rejecting statements, so a write the policy
+         does not allow returns success having touched nothing. Without asking
+         what changed, an unsave that the database quietly refused looks like
+         it worked, the cache drops the id, and the next save collides with a
+         row the reader was never allowed to alter. Counting the returned rows
+         is the only way to tell "done" from "silently ignored". */
       const attempt = added
         ? Promise.resolve(SB.from('saved_reports').upsert(
             { user_id: cachedUser.id, report_id: id, removed_at: null },
             { onConflict: 'user_id,report_id' }
-          )).then(function (res) {
+          ).select('report_id')).then(function (res) {
             if (res && res.error && noColumn(res.error)) {
               return SB.from('saved_reports').upsert(
                 { user_id: cachedUser.id, report_id: id },
                 { onConflict: 'user_id,report_id' }
-              );
+              ).select('report_id');
             }
             return res;
           })
         : Promise.resolve(SB.from('saved_reports')
             .update({ removed_at: new Date().toISOString() })
-            .eq('user_id', cachedUser.id).eq('report_id', id)
+            .eq('user_id', cachedUser.id).eq('report_id', id).select('report_id')
           ).then(function (res) {
             if (res && res.error && noColumn(res.error)) {
               return SB.from('saved_reports').delete()
-                .eq('user_id', cachedUser.id).eq('report_id', id);
+                .eq('user_id', cachedUser.id).eq('report_id', id).select('report_id');
             }
             return res;
           });
@@ -363,6 +370,13 @@ const Auth = (function () {
           /* The row already being there is the outcome we wanted anyway. */
           if (added && res.error.code === '23505') return { ok: true };
           return { ok: false, error: res.error.message };
+        }
+        if (res && Array.isArray(res.data) && res.data.length === 0) {
+          return {
+            ok: false,
+            error: 'The database accepted that but changed nothing, which means row level ' +
+                   'security blocked it. Run supabase/migrations/0010_saved_reports_policies.sql.'
+          };
         }
         return { ok: true };
       }).catch(function (e) {

@@ -35,25 +35,22 @@ const LS = (function () {
   function icon(name) { return ICONS[name] || ''; }
 
   /* ------------------------------------------------------------ brand mark
-     Front facing lion. The mane is a twenty point star, the muzzle is an
-     upward chevron so the mark reads as a rising trend at small sizes.     */
-  const MANE = '32,2 38.64,11.55 49.63,7.73 49.39,19.36 60.53,22.73 53.5,32 60.53,41.27 49.39,44.64 49.63,56.27 38.64,52.45 32,62 25.36,52.45 14.37,56.27 14.61,44.64 3.47,41.27 10.5,32 3.47,22.73 14.61,19.36 14.37,7.73 25.36,11.55';
+     The mark is a single image file, so replacing the artwork never means
+     editing code again. Drop a new file at the path below and every header,
+     footer and page that draws the brand picks it up.
 
+     Wanted: a square export with a TRANSPARENT background. The mark sits on
+     a cream header in light mode and an ink one in dark, so a baked in dark
+     panel would show as a box around it on the light theme. */
+  const LOGO_SRC = 'assets/img/logo.png';
+  const LOGO_FALLBACK = 'assets/img/favicon.svg';
+
+  /* Falls back to the old mark if the new file is not in place yet, so the
+     header never shows a broken image icon while the artwork is being added. */
   function mark(cls) {
-    return (
-      '<svg class="brand__mark ' + (cls || '') + '" viewBox="0 0 64 64" role="img" aria-label="Leoside Equity">' +
-        '<g transform="translate(32 32) scale(.9) translate(-32 -32)">' +
-          '<polygon class="mane" points="' + MANE + '" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>' +
-          '<path class="face" d="M16.9 28.6C16.9 24.7 18 21.3 20 18.7L16.2 12.9c-.4-.7.3-1.5 1-1.2l8.6 3.3c1.9-.8 4-1.2 6.2-1.2s4.3.4 6.2 1.2l8.6-3.3c.7-.3 1.4.5 1 1.2L44 18.7c2 2.6 3.1 6 3.1 9.9 0 5.6-1.7 10.2-4.7 13.6-2.7 3-6.3 4.9-10.4 5.7-4.1-.8-7.7-2.7-10.4-5.7-3-3.4-4.7-8-4.7-13.6Z"/>' +
-          '<path class="mane" d="M22.1 28.2c1.6-2.7 5.4-2.7 7 0-1.6 2.3-5.4 2.3-7 0ZM34.9 28.2c1.6-2.7 5.4-2.7 7 0-1.6 2.3-5.4 2.3-7 0Z" stroke="none"/>' +
-          '<g class="ink" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
-            '<path d="M21.4 22.3 29.3 23.8M42.6 22.3 34.7 23.8" stroke-width="2.2"/>' +
-            '<path d="M27 36.4 32 31l5 5.4" stroke-width="2.7"/>' +
-            '<path d="M27.2 40.8c1.8 3 4 3 4.8.9.8 2.1 3 2.1 4.8-.9" stroke-width="1.9"/>' +
-          '</g>' +
-        '</g>' +
-      '</svg>'
-    );
+    return '<img class="brand__mark ' + (cls || '') + '" src="' + LOGO_SRC + '" ' +
+      'alt="Leoside Equity" width="64" height="64" decoding="async" ' +
+      'onerror="this.onerror=null;this.src=\'' + LOGO_FALLBACK + '\'">';
   }
 
   function brand(href, sub) {
@@ -401,11 +398,12 @@ const LS = (function () {
       '</div>';
 
     document.body.appendChild(stop);
-    document.documentElement.style.overflow = 'hidden';
+    lockScroll(true);
+    setTimeout(function () { stop.querySelector('#cookieReconsider').focus(); }, 0);
 
     stop.querySelector('#cookieReconsider').addEventListener('click', function () {
       rememberChoice('accepted', !!(typeof Auth !== 'undefined' && Auth.current && Auth.current()));
-      document.documentElement.style.overflow = '';
+      lockScroll(false);
       stop.remove();
     });
   }
@@ -417,43 +415,60 @@ const LS = (function () {
 
     const signedIn = !!(typeof Auth !== 'undefined' && Auth.current && Auth.current());
 
-    const bar = document.createElement('div');
-    bar.className = 'cookie-bar';
-    bar.setAttribute('role', 'dialog');
-    bar.setAttribute('aria-live', 'polite');
-    bar.setAttribute('aria-label', 'Cookie notice');
-    bar.innerHTML =
-      '<div class="cookie-bar__inner">' +
-        '<p class="cookie-bar__text">' +
-          'We use a small amount of browser storage to keep you signed in, remember your ' +
-          'theme and hold your saved reports. No advertising, no analytics, no tracking, ' +
-          'and nothing sold on. See the <a class="link" href="privacy.html">privacy policy</a>.' +
-        '</p>' +
-        '<div class="cookie-bar__actions">' +
-          '<button class="btn btn--sm" type="button" id="cookieAccept">Accept and continue</button>' +
-          '<button class="btn btn--quiet btn--sm" type="button" id="cookieDecline">Decline</button>' +
+    /* A gate rather than a bar. The page behind stays readable so nobody has
+       to agree to something they cannot see, but nothing on it can be used
+       until a choice is made, and the choice is only ever asked once. */
+    const gate = document.createElement('div');
+    gate.className = 'cookie-gate';
+    gate.setAttribute('role', 'dialog');
+    gate.setAttribute('aria-modal', 'true');
+    gate.setAttribute('aria-labelledby', 'cookieGateTitle');
+    gate.innerHTML =
+      '<div class="cookie-gate__card">' +
+        '<h2 id="cookieGateTitle">Before you start reading</h2>' +
+        '<p>Leoside Equity keeps a small amount of information in your browser: your sign in ' +
+        'session, whether you prefer light or dark, and the reports you save. That is the ' +
+        'whole list.</p>' +
+        '<p class="cookie-gate__strong">There is no advertising, no analytics, no third party ' +
+        'tracking, and nothing is ever sold or shared.</p>' +
+        '<p class="small">Full detail is in the <a class="link" href="privacy.html">privacy policy</a> ' +
+        'and the <a class="link" href="terms.html">terms of service</a>.</p>' +
+        '<div class="cookie-gate__actions">' +
+          '<button class="btn btn--lg" type="button" id="cookieAccept">Accept and continue</button>' +
+          '<button class="btn btn--quiet btn--lg" type="button" id="cookieDecline">Decline</button>' +
         '</div>' +
       '</div>';
 
-    /* Appending is all that is needed. The bar's resting position is on
-       screen, so there is no state it can get stuck in. */
-    document.body.appendChild(bar);
+    document.body.appendChild(gate);
+    lockScroll(true);
 
-    function close() {
-      bar.setAttribute('data-dismissed', 'true');
-      setTimeout(function () { bar.remove(); }, 220);
-    }
+    /* Keep the keyboard inside the dialog while it is up. */
+    const focusables = gate.querySelectorAll('button, a[href]');
+    const first = focusables[0];
+    const last  = focusables[focusables.length - 1];
+    setTimeout(function () { gate.querySelector('#cookieAccept').focus(); }, 0);
 
-    bar.querySelector('#cookieAccept').addEventListener('click', function () {
-      rememberChoice('accepted', signedIn);
-      close();
+    gate.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
-    bar.querySelector('#cookieDecline').addEventListener('click', function () {
+    gate.querySelector('#cookieAccept').addEventListener('click', function () {
+      rememberChoice('accepted', signedIn);
+      lockScroll(false);
+      gate.remove();
+    });
+
+    gate.querySelector('#cookieDecline').addEventListener('click', function () {
       rememberChoice('declined', signedIn);
-      close();
+      gate.remove();
       showCookieStop();
     });
+  }
+
+  function lockScroll(on) {
+    document.documentElement.style.overflow = on ? 'hidden' : '';
   }
 
   function init(page) {
