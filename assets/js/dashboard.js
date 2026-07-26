@@ -545,17 +545,43 @@ Boot.start('dashboard', function () {
               '<option value="IN"' + (user.market === 'IN' ? ' selected' : '') + '>Mostly India</option>' +
               '<option value="US"' + (user.market === 'US' ? ' selected' : '') + '>Mostly United States</option>' +
             '</select></div>' +
-          '<div class="form-group"><label class="check">' +
-            '<input type="checkbox" id="acDigest"' + (user.digestOptIn ? ' checked' : '') + '>' +
-            '<span>Email me the day\'s report</span></label></div>' +
           '<button class="btn" id="acSave">Save changes</button>' +
         '</div>' +
       '</div>' +
+
       '<div class="panel">' +
         '<div class="panel__head"><h3>Session</h3></div>' +
         '<div class="panel__body">' +
           '<p class="muted small">Member since ' + LS.fmtDate(user.joined.slice(0, 10)) + '.</p>' +
-          '<div class="row"><button class="btn btn--ghost" id="acSignOut">' + LS.icon('logout') + 'Sign out</button></div>' +
+          '<div class="notice notice--ok" id="acResetNote" hidden></div>' +
+          '<div class="row" style="gap:.7rem;flex-wrap:wrap">' +
+            '<button class="btn btn--ghost" id="acSignOut">' + LS.icon('logout') + 'Sign out</button>' +
+            '<button class="btn btn--ghost" id="acReset">' + LS.icon('mail') + 'Reset password</button>' +
+            '<button class="btn btn--danger" id="acDelete">' + LS.icon('close') + 'Delete account</button>' +
+          '</div>' +
+          '<p class="hint" style="margin-top:.9rem">Resetting sends a link to your email address. ' +
+          'You stay signed in here until you use it.</p>' +
+        '</div>' +
+      '</div>' +
+
+      /* Kept in its own panel, closed by default, and it asks you to type the
+         address out. Deleting an account cannot be undone. */
+      '<div class="panel" id="acDangerPanel" hidden>' +
+        '<div class="panel__head"><h3>Delete your account</h3></div>' +
+        '<div class="panel__body">' +
+          '<div class="notice notice--err">' + LS.icon('alert') +
+            '<span>This removes your account, your saved reports and your reading history. ' +
+            'It cannot be undone and we cannot get any of it back for you. ' +
+            'The reports themselves stay on the site.</span></div>' +
+          '<div class="form-group"><label for="acDeleteEmail">Type <strong>' + LS.esc(user.email) +
+            '</strong> to confirm</label>' +
+            '<input class="input" id="acDeleteEmail" type="email" autocomplete="off" ' +
+              'placeholder="' + LS.esc(user.email) + '"></div>' +
+          '<div class="notice notice--err" id="acDeleteError" hidden></div>' +
+          '<div class="row" style="gap:.7rem;flex-wrap:wrap">' +
+            '<button class="btn btn--danger" id="acDeleteGo" disabled>Permanently delete my account</button>' +
+            '<button class="btn btn--quiet" id="acDeleteCancel">Cancel</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
   }
@@ -628,8 +654,7 @@ Boot.start('dashboard', function () {
       saveBtn.disabled = true;
       Auth.update({
         name: document.getElementById('acName').value.trim() || user.name,
-        market: document.getElementById('acMarket').value,
-        digestOptIn: document.getElementById('acDigest').checked
+        market: document.getElementById('acMarket').value
       }).then(function (res) {
         saveBtn.disabled = false;
         const note = document.getElementById('savedNote');
@@ -645,6 +670,72 @@ Boot.start('dashboard', function () {
     });
     document.getElementById('acSignOut').addEventListener('click', function () {
       Promise.resolve(Auth.signOut()).then(function () { location.href = 'index.html'; });
+    });
+
+    /* ------------------------------------------------------ reset password
+       Supabase sends the link. We never see or set the new password here. */
+    const resetBtn = document.getElementById('acReset');
+    const resetNote = document.getElementById('acResetNote');
+    resetBtn.addEventListener('click', function () {
+      resetBtn.disabled = true;
+      const label = resetBtn.innerHTML;
+      resetBtn.innerHTML = 'Sending…';
+      Promise.resolve(Auth.sendPasswordReset()).then(function (res) {
+        resetBtn.disabled = false;
+        resetBtn.innerHTML = label;
+        resetNote.className = 'notice notice--' + (res.ok ? 'ok' : 'err');
+        resetNote.innerHTML = (res.ok ? LS.icon('check') : LS.icon('alert')) +
+          '<span>' + (res.ok
+            ? 'Reset link sent to <strong>' + LS.esc(user.email) + '</strong>. Check your inbox, and the spam folder if it is not there.'
+            : LS.esc(res.error)) + '</span>';
+        resetNote.hidden = false;
+      });
+    });
+
+    /* ------------------------------------------------------ delete account */
+    const dangerPanel = document.getElementById('acDangerPanel');
+    const deleteBtn   = document.getElementById('acDelete');
+    const emailInput  = document.getElementById('acDeleteEmail');
+    const confirmBtn  = document.getElementById('acDeleteGo');
+    const cancelBtn   = document.getElementById('acDeleteCancel');
+    const deleteError = document.getElementById('acDeleteError');
+
+    deleteBtn.addEventListener('click', function () {
+      dangerPanel.hidden = false;
+      dangerPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      emailInput.focus();
+    });
+
+    cancelBtn.addEventListener('click', function () {
+      dangerPanel.hidden = true;
+      emailInput.value = '';
+      confirmBtn.disabled = true;
+      deleteError.hidden = true;
+    });
+
+    /* The button stays dead until the address matches exactly. */
+    emailInput.addEventListener('input', function () {
+      confirmBtn.disabled =
+        emailInput.value.trim().toLowerCase() !== String(user.email).trim().toLowerCase();
+    });
+
+    confirmBtn.addEventListener('click', function () {
+      if (confirmBtn.disabled) return;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Deleting…';
+      deleteError.hidden = true;
+
+      Promise.resolve(Auth.deleteAccount()).then(function (res) {
+        if (!res.ok) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Permanently delete my account';
+          deleteError.innerHTML = LS.icon('alert') + '<span>' + LS.esc(res.error) + '</span>';
+          deleteError.hidden = false;
+          return;
+        }
+        /* Gone. Send them out to a page that does not need a session. */
+        location.replace('index.html?deleted=1');
+      });
     });
   }
 

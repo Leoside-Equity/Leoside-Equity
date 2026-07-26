@@ -78,7 +78,7 @@ Boot.start('index', function () {
 
   /* --------------------------------------------------------- recent grid */
   const sub = document.getElementById('latestSub');
-  if (sub && !REPORTS.length) sub.textContent = 'Nothing has gone out yet. This fills in from the first publishing day.';
+  if (sub && !REPORTS.length) sub.textContent = 'Please sit tight, the first report is on its way.';
 
   const grid = document.getElementById('latestGrid');
   if (grid) {

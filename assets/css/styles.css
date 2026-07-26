@@ -1207,6 +1207,83 @@ p  { margin: 0 0 1.1em; }
 .dlist .m { display: block; font-size: .79rem; color: var(--text-dim); margin-top: .2rem; }
 .dlist .r { margin-left: auto; text-align: right; flex: none; }
 
+/* ==========================================================================
+   COOKIE BANNER
+   Fixed to the bottom, slides up once, never blocks the page.
+   ========================================================================== */
+/* No entry animation, deliberately. Anything that starts the bar off screen
+   and relies on a transition or animation to bring it back can strand it there
+   if animation is throttled, disabled or interrupted, and a consent notice
+   that fails to appear is worse than one that appears without a flourish.
+   The bar simply is where it belongs. Only the dismissal animates, and if that
+   fails to run the bar is removed a moment later regardless. */
+.cookie-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 200;
+  background: var(--bg-elev);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, .18);
+  padding: max(.9rem, env(safe-area-inset-bottom, 0)) 0 .9rem;
+}
+.cookie-bar[data-dismissed="true"] {
+  transform: translateY(110%);
+  transition: transform .2s ease;
+}
+
+.cookie-bar__inner {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+.cookie-bar__text {
+  margin: 0;
+  flex: 1 1 320px;
+  min-width: 0;
+  font-size: .86rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.cookie-bar .btn { flex: 0 0 auto; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cookie-bar[data-dismissed="true"] { transition: none; }
+}
+
+/* ==========================================================================
+   OVERFLOW GUARDS
+   Long tickers, pasted URLs and citation lists must never push a container
+   sideways or slide under the aside column.
+   ========================================================================== */
+html, body { overflow-x: hidden; }
+
+.prose, .doc-body, .rcard, .rrow, .panel, .aside-card, .empty, .notice, .gate {
+  min-width: 0;
+}
+.prose p, .prose h2, .prose h3, .prose li,
+.doc-body p, .doc-body li, .doc-body h2, .doc-body h3 {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+/* A bare URL in a citation list is the usual culprit. */
+.prose a, .doc-body a, .dlist a, .rcard a, .rrow a { overflow-wrap: anywhere; }
+
+.article-meta { flex-wrap: wrap; row-gap: .5rem; }
+.article-meta > span { min-width: 0; }
+
+.keystats { min-width: 0; }
+.keystat .v { overflow-wrap: anywhere; }
+
+.dlist .t, .dlist .m, .metrics .t, .metrics .m { overflow-wrap: anywhere; }
+
+/* Tables and code blocks scroll inside themselves rather than widening the page. */
+.doc-body table, .metrics { display: block; max-width: 100%; overflow-x: auto; }
+.doc-body pre, .doc-body code { overflow-wrap: anywhere; white-space: pre-wrap; }
+
 /* Per report metrics table on the admin dashboard. */
 .metrics { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .metrics th {
@@ -1429,6 +1506,64 @@ p  { margin: 0 0 1.1em; }
   .gate { padding: 1.8rem 1.2rem; }
   .keystats { grid-template-columns: 1fr; }
   .article-meta #saveBtn { margin-left: 0 !important; }
+}
+
+/* ==========================================================================
+   MOBILE LAYOUT
+   The page was designed wide first. Below 780px the two column layouts have
+   to stack, the gutters have to come in, and every row of chips or buttons
+   has to be allowed to wrap rather than push the page sideways.
+   ========================================================================== */
+@media (max-width: 780px) {
+  /* Article and its sidebar stack, so the aside can no longer sit on top of
+     the prose or trap it in a narrow column. */
+  .article { grid-template-columns: 1fr; gap: 2.4rem; }
+  .article-aside { position: static; top: auto; max-height: none; }
+  .aside-card { min-width: 0; }
+
+  .card-grid { grid-template-columns: 1fr; }
+  .stat-row { grid-template-columns: 1fr 1fr; }
+
+  /* Anything that lays buttons or tags out in a line. */
+  .row, .section-head, .toolbar, .gate__actions, .gate__perks,
+  .hero__cta, .cta-band .row, .article-meta, .cadence__days { flex-wrap: wrap; }
+  .section-head { align-items: flex-start; gap: .9rem; }
+  .section-head .btn { flex: 0 0 auto; }
+
+  .seg { flex-wrap: wrap; }
+  .seg button { flex: 1 1 auto; }
+
+  /* Give long headings room instead of letting them run off the edge. */
+  h1 { font-size: clamp(1.85rem, 8vw, 2.6rem); overflow-wrap: anywhere; }
+  h2 { overflow-wrap: anywhere; }
+  .hero h1 { font-size: clamp(2rem, 9vw, 3rem); }
+  .lede { font-size: 1rem; }
+}
+
+@media (max-width: 560px) {
+  /* Tighter gutters. 24px each side eats a lot of a 360px screen. */
+  :root { --gutter: 16px; }
+  .wrap, .cookie-bar__inner, .site-nav { padding-left: 16px; padding-right: 16px; }
+  .section { padding-top: 2.6rem; padding-bottom: 2.6rem; }
+  .hero { padding-top: 2.4rem; padding-bottom: 2.4rem; }
+  .doc { padding-top: 2rem; padding-bottom: 3rem; }
+
+  .panel__body, .panel__head { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .rcard { padding: 1.2rem; }
+  .rrow { padding: 1.1rem 0; }
+  .stat-row { grid-template-columns: 1fr; }
+
+  /* Buttons go full width rather than half spilling off the edge. */
+  .hero__cta .btn, .gate__actions .btn, .cta-band .row .btn { width: 100%; }
+
+  .dlist li > div { flex-wrap: wrap; gap: .6rem !important; }
+  .dlist .r { margin-left: 0; }
+
+  .cookie-bar__inner { gap: .8rem; }
+  .cookie-bar .btn { width: 100%; }
+
+  .doc-toc ol { padding-left: 1.1rem; }
+  .breadcrumbs, .crumbs { flex-wrap: wrap; row-gap: .3rem; }
 }
 
 /* --------------------------------------------------------------------------

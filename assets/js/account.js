@@ -28,6 +28,7 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
       ['Every report, in full', 'Reports open end to end rather than stopping at the summary.'],
       ['Two markets, seven days', 'India Sunday to Wednesday, United States Thursday to Saturday.'],
       ['Your own dashboard', 'Reports organised by month, week and day, plus what you have saved.'],
+      ['Keep what matters', 'Save any report to your own list and pick it back up whenever you like.'],
       ['No cost, no card', 'There is no paid tier. We do not ask for payment details at any point.']
     ];
     perks.innerHTML = items.map(function (i) {
@@ -120,7 +121,6 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
         email: document.getElementById('email').value,
         password: pw.value,
         market: document.getElementById('market').value,
-        digestOptIn: document.getElementById('digest').checked,
         agreed: document.getElementById('terms').checked
       }).then(function (result) {
         busy(signupForm, false);

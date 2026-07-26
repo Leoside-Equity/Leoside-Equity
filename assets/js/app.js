@@ -288,7 +288,7 @@ const LS = (function () {
     return '<div class="schedule-strip"><div class="wrap schedule-strip__inner">' +
       '<span class="schedule-strip__label">Publishing calendar</span>' +
       '<div class="daydots">' + dots + '</div>' +
-      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; today covers <b>' + m.name + '</b></span>' +
+      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; Today covers <b>' + m.name + '</b></span>' +
     '</div></div>';
   }
   function mountSchedule() {
@@ -329,7 +329,7 @@ const LS = (function () {
           '</ul></div>' +
         '</div>' +
         '<div class="footer-legal">' +
-          '<b>Important.</b> Leoside Equity publishes general market commentary and educational analysis. Nothing on this site is personalised investment advice, an offer to buy or sell any security, or a recommendation tailored to your circumstances. We are not a registered investment adviser or research analyst in any jurisdiction. Markets carry risk, including the risk of losing the full amount invested. Do your own work and speak to a licensed professional before acting.' +
+          '<b>Important.</b> Leoside Equity publishes general market commentary and educational analysis. Nothing on this site is personalised investment advice, an offer to buy or sell any security, or a recommendation tailored to your circumstances. We are not a registered investment adviser or research analyst in any jurisdiction. Markets carry risk, including the risk of losing the full amount invested. Research the market on your own accord and speak to a licensed professional before acting.' +
         '</div>' +
         '<div class="footer-bottom">' +
           '<span>&copy; ' + year + ' ' + SITE.name + '. All rights reserved.</span>' +
@@ -339,10 +339,52 @@ const LS = (function () {
   }
 
   /* ------------------------------------------------------------ page setup */
+  /* ------------------------------------------------------- cookie banner
+     Fixed to the bottom until it is accepted, then never shown again. The
+     choice is kept in localStorage, which is itself strictly necessary
+     storage, so nothing here needs consent to record the consent.
+
+     Deliberately not a blocking overlay: a notice about storage that stops
+     you reading the privacy policy explaining that storage is worse than
+     useless. It sits above the page and waits. */
+  const COOKIE_KEY = 'leoside.cookies';
+
+  function mountCookieBanner() {
+    let accepted = null;
+    try { accepted = localStorage.getItem(COOKIE_KEY); } catch (e) { accepted = 'skip'; }
+    if (accepted) return;
+
+    const bar = document.createElement('div');
+    bar.className = 'cookie-bar';
+    bar.setAttribute('role', 'dialog');
+    bar.setAttribute('aria-live', 'polite');
+    bar.setAttribute('aria-label', 'Cookie notice');
+    bar.innerHTML =
+      '<div class="cookie-bar__inner">' +
+        '<p class="cookie-bar__text">' +
+          'We use a small amount of browser storage to keep you signed in, remember your ' +
+          'theme and hold your saved reports. No advertising trackers and nothing sold on. ' +
+          'See the <a class="link" href="privacy.html">privacy policy</a>.' +
+        '</p>' +
+        '<button class="btn btn--sm" type="button" id="cookieAccept">Accept and continue</button>' +
+      '</div>';
+
+    /* Appending is all that is needed. The bar's resting position is on
+       screen, so there is no state it can get stuck in. */
+    document.body.appendChild(bar);
+
+    bar.querySelector('#cookieAccept').addEventListener('click', function () {
+      try { localStorage.setItem(COOKIE_KEY, new Date().toISOString()); } catch (e) {}
+      bar.setAttribute('data-dismissed', 'true');
+      setTimeout(function () { bar.remove(); }, 220);
+    });
+  }
+
   function init(page) {
     mountHeader(page);
     mountSchedule();
     mountFooter();
+    mountCookieBanner();
   }
 
   return {

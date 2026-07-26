@@ -458,6 +458,72 @@ const Auth = (function () {
     });
   }
 
+  /* Sends a password reset link to the signed in address. Supabase owns the
+     email and the reset page, so no password is ever handled here. */
+  function sendPasswordReset(address) {
+    const email = normalise(address || (cachedUser && cachedUser.email));
+    if (!validEmail(email)) {
+      return Promise.resolve({ ok: false, error: 'No valid email address on this account.' });
+    }
+    if (!LIVE) {
+      return Promise.resolve({
+        ok: false,
+        error: 'Password resets need the backend, which is not connected yet.'
+      });
+    }
+    return Promise.resolve(
+      SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/signin.html' })
+    ).then(function (res) {
+      return res && res.error ? { ok: false, error: res.error.message } : { ok: true };
+    }).catch(function (e) {
+      return { ok: false, error: (e && e.message) || 'Could not send the reset email.' };
+    });
+  }
+
+  /* Deletes the signed in account for good.
+
+     This has to go through a database function. Supabase only exposes user
+     deletion through auth.admin, which needs the service_role key, and that
+     key must never appear in front end code: anyone reading the page source
+     would then be able to delete any account. delete_own_account() is a
+     security definer function that reads auth.uid() from the signed token and
+     can therefore only ever delete the caller's own row. Everything in the
+     public tables follows through the on delete cascade foreign keys. */
+  function deleteAccount() {
+    if (!cachedUser) return Promise.resolve({ ok: false, error: 'You are not signed in.' });
+
+    if (!LIVE) {
+      const all = Local.users();
+      delete all[cachedUser.email];
+      write(K_USERS, all);
+      try {
+        localStorage.removeItem(K_SAVED + ':' + cachedUser.email);
+        localStorage.removeItem(K_HISTORY + ':' + cachedUser.email);
+      } catch (e) {}
+      return Local.signOut().then(function () { return { ok: true }; });
+    }
+
+    return Promise.resolve(SB.rpc('delete_own_account')).then(function (res) {
+      if (res && res.error) {
+        const msg = res.error.message || '';
+        if (/could not find the function/i.test(msg)) {
+          return { ok: false, error: 'Account deletion is not set up on the database yet. ' +
+            'Run supabase/migrations/0009_account_deletion.sql.' };
+        }
+        return { ok: false, error: msg };
+      }
+      /* The row is gone but this browser still holds a token for it, so clear
+         the session before anything tries to use it again. */
+      cachedUser = null; cachedSaved = []; cachedHistory = [];
+      return Promise.resolve(SB.auth.signOut()).then(
+        function () { return { ok: true }; },
+        function () { return { ok: true }; }
+      );
+    }).catch(function (e) {
+      return { ok: false, error: (e && e.message) || 'Could not delete the account.' };
+    });
+  }
+
   /* Confirms with the server that the session is real, rather than trusting a
      cache that may have gone stale in another tab. Never throws: getUser()
      rejects outright when there is no session, which is a normal state here,
@@ -496,6 +562,7 @@ const Auth = (function () {
     signOut: signOut, current: current, update: update,
     initials: initials, validEmail: validEmail, passwordScore: passwordScore,
     saved: saved, isSaved: isSaved, toggleSave: toggleSave, verifySession: verifySession,
+    sendPasswordReset: sendPasswordReset, deleteAccount: deleteAccount,
     history: history, recordRead: recordRead, requireAuth: requireAuth
   };
 })();

@@ -77,7 +77,10 @@ Boot.start('reports', function () {
         '<span class="sep">|</span><span>' + LS.fmtDate(report.date) + '</span>' +
         '<span class="sep">|</span><span>' + (report.readMins || 1) + ' min read</span>' +
         '<span class="sep">|</span><span>' + LS.wordCount(report) + ' words</span>' +
-        '<button class="btn btn--ghost btn--sm" id="saveBtn" type="button" style="margin-left:auto"></button>' +
+        /* Only a signed in reader has a saved list, so only they get the button. */
+        (Auth.current()
+          ? '<button class="btn btn--ghost btn--sm" id="saveBtn" type="button" style="margin-left:auto"></button>'
+          : '') +
       '</div>' +
       '<div class="keystats">' +
         stat('Rating', report.rating) +
@@ -159,8 +162,12 @@ Boot.start('reports', function () {
         '<p class="small muted" style="margin:0">Indian market reports are written Sunday to Wednesday. ' +
         'United States market reports are written Thursday to Saturday. One report a day, seven days a week.</p></div>';
 
-    /* ------------------------------------------------------ save button */
+    /* ------------------------------------------------------ save button
+       Absent for signed out visitors, so everything below is skipped. */
     const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) wireSave();
+
+    function wireSave() {
 
     function paintSave(state) {
       const on = typeof state === 'boolean' ? state : Auth.isSaved(report.id);
@@ -210,6 +217,8 @@ Boot.start('reports', function () {
         window.alert('Something went wrong updating your saved list. Please try again.');
       }
     });
+
+    }  /* end wireSave */
 
     /* -------------------------------------------------- prev and next */
     let index = -1;
