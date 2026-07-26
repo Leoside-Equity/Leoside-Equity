@@ -42,11 +42,13 @@ const LS = (function () {
      Wanted: a square export with a TRANSPARENT background. The mark sits on
      a cream header in light mode and an ink one in dark, so a baked in dark
      panel would show as a box around it on the light theme. */
-  const LOGO_SRC = 'assets/img/logo.svg';
-  const LOGO_FALLBACK = 'assets/img/favicon.svg';
+  const LOGO_SRC = 'assets/img/logo.png';
+  const LOGO_FALLBACK = 'assets/img/logo.svg';
 
-  /* Falls back to the old mark if the new file is not in place yet, so the
-     header never shows a broken image icon while the artwork is being added. */
+  /* logo.png is the real artwork, background removed and cropped square so it
+     sits on the cream header and the ink one without a panel behind it.
+     logo-original.png keeps the untouched export. The svg is only a safety
+     net if the png ever goes missing. */
   function mark(cls) {
     return '<img class="brand__mark ' + (cls || '') + '" src="' + LOGO_SRC + '" ' +
       'alt="Leoside Equity" width="64" height="64" decoding="async" ' +

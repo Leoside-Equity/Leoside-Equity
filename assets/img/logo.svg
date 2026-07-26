@@ -2,77 +2,74 @@
   <title>Leoside Equity</title>
 
   <defs>
-    <!-- Brushed gold. Light along the top left, deeper through the middle,
-         with a bright band low down so the metal reads as polished rather
-         than flat at large sizes, and simply as gold when it is 34px. -->
-    <linearGradient id="leoGold" x1="8%" y1="0%" x2="92%" y2="100%">
-      <stop offset="0"    stop-color="#F4DEA4"/>
-      <stop offset="0.24" stop-color="#D9B563"/>
-      <stop offset="0.46" stop-color="#B98C33"/>
-      <stop offset="0.64" stop-color="#EBCE85"/>
-      <stop offset="0.82" stop-color="#C79B42"/>
-      <stop offset="1"    stop-color="#8F6620"/>
+    <linearGradient id="leoGold" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0"    stop-color="#F6E3AC"/>
+      <stop offset="0.22" stop-color="#DCBA6B"/>
+      <stop offset="0.45" stop-color="#BE9138"/>
+      <stop offset="0.63" stop-color="#EFD48E"/>
+      <stop offset="0.82" stop-color="#C89C43"/>
+      <stop offset="1"    stop-color="#916821"/>
     </linearGradient>
+
+    <!-- Wherever the rising line passes over the star or the lion, a channel
+         of background is cut through them first. That gap is what keeps the
+         two shapes reading as separate objects instead of fusing into one
+         mass, and it is how the reference handles the same crossing. -->
+    <mask id="leoArrowGap">
+      <rect width="100" height="100" fill="#fff"/>
+      <path d="M29 66 40 77 53 64 73 44" fill="none" stroke="#000"
+            stroke-width="12" stroke-linejoin="miter" stroke-linecap="butt"/>
+      <path d="M88 29 66.5 34.5 77.5 46.5Z" fill="#000" stroke="#000"
+            stroke-width="7" stroke-linejoin="miter"/>
+    </mask>
   </defs>
 
-  <g fill="url(#leoGold)">
+  <g mask="url(#leoArrowGap)">
+    <!-- ====================================================================
+         Eight point star as a frame: an outer {8/2} star on radius 48 with a
+         second on radius 42 punched out, so background shows through the
+         middle. That open centre is what stops the mark reading as a tile.
+         ==================================================================== -->
+    <path fill="url(#leoGold)" fill-rule="evenodd"
+          d="M98 50 83.94 64.06 83.94 83.94 64.06 83.94 50 98 35.94 83.94
+             16.06 83.94 16.06 64.06 2 50 16.06 35.94 16.06 16.06 35.94 16.06
+             50 2 64.06 16.06 83.94 16.06 83.94 35.94Z
+             M92 50 79.7 62.3 79.7 79.7 62.3 79.7 50 92 37.7 79.7
+             20.3 79.7 20.3 62.3 8 50 20.3 37.7 20.3 20.3 37.7 20.3
+             50 8 62.3 20.3 79.7 20.3 79.7 37.7Z"/>
 
-    <!-- Eight point star, two squares overlaid. Outer points sit on a radius
-         of 46 at every 45 degrees, the inner points where the two squares
-         cross at 0.765 of that radius, every 45 degrees offset by 22.5. -->
-    <path d="M96 50 82.53 63.47 82.53 82.53 63.47 82.53 50 96 36.53 82.53
-             17.47 82.53 17.47 63.47 4 50 17.47 36.53 17.47 17.47 36.53 17.47
-             50 4 63.47 17.47 82.53 17.47 82.53 36.53Z
-             M88.2 50 77.9 60.3 77.9 77.9 60.3 77.9 50 88.2 39.7 77.9
-             22.1 77.9 22.1 60.3 11.8 50 22.1 39.7 22.1 22.1 39.7 22.1
-             50 11.8 60.3 22.1 77.9 22.1 77.9 39.7Z"
-          fill-rule="evenodd"/>
+    <!-- ====================================================================
+         Mane. Six locks running out of the head to a point, on a radius that
+         keeps clear of the frame so a band of background stays visible
+         between them. The hole is where the face goes.
+         ==================================================================== -->
+    <path fill="url(#leoGold)" fill-rule="evenodd"
+          d="M44 15 52.6 23.1 63.9 26.5 61.25 38 63.9 49.5 52.6 52.9 44 61
+             35.4 52.9 24.1 49.5 26.75 38 24.1 26.5 35.4 23.1Z
+             M44 25.5C37.1 25.5 31.5 31.1 31.5 38 31.5 44.9 37.1 50.5 44 50.5
+             50.9 50.5 56.5 44.9 56.5 38 56.5 31.1 50.9 25.5 44 25.5Z"/>
 
-    <!-- Rising trend line. Steps down once then climbs away to the right,
-         the way a chart does before it breaks out. -->
-    <path d="M20.5 70.8 35.6 55.7 45.9 66 70.4 33.2 75.6 37.1 45.9 76.8
-             35.6 66.5 24.6 77.5Z"/>
-
-    <!-- Arrowhead, squared off to sit on the same diagonal as the line. -->
-    <path d="M62.6 20.6 84 16.2 79.6 37.6 72.8 30.8 69.4 27.4Z"/>
-
-    <!-- Mane. Flowing locks rather than radial spikes: each lobe curves out
-         of the head and finishes on a point. -->
-    <path d="M45 15.4C50.6 15.4 55.7 17.6 59.4 21.2L64.9 16.8 63.6 24.9
-             C66.5 27.7 68.5 31.3 69.3 35.3L77 35.9 70.8 41.2
-             C70.6 45.7 69.1 49.9 66.6 53.3L71.7 58.6 63.8 59.6
-             C60.4 62.6 56.1 64.5 51.4 65L49.6 72.9 43.6 67.3
-             C39.3 66.9 35.3 65.3 32 62.7L25 66.5 25.9 58.7
-             C23.2 55.4 21.4 51.3 20.9 46.8L14 43.1 20.3 38.1
-             C21 34 23 30.3 25.8 27.4L23.9 19.6 31.4 22.8
-             C35.2 18.2 39.8 15.4 45 15.4Z
-             M45 24.6C34.8 24.6 27.5 32.6 27.5 42.4 27.5 52.2 34.8 60.2 45 60.2
-             55.2 60.2 62.5 52.2 62.5 42.4 62.5 32.6 55.2 24.6 45 24.6Z"
-          fill-rule="evenodd"/>
-
-    <!-- Face. Drawn as separate gold features on open ground rather than a
-         filled head, which is what keeps it reading as a lion instead of a
-         disc once the mark is down at 34px. Nothing here relies on a
-         background colour, so it sits on cream and on ink equally. -->
-
-    <!-- Brow, one continuous angular arch across both eyes. -->
-    <path d="M30.6 35.4 38.2 30.4 45 33.6 51.8 30.4 59.4 35.4 55.4 39.2
-             45 36.6 34.6 39.2Z"/>
-
-    <!-- Eyes, set under the outer ends of the brow. -->
-    <path d="M33.4 41.2 41.4 42.4 39.4 46.2 34.2 45.2Z"/>
-    <path d="M56.6 41.2 55.8 45.2 50.6 46.2 48.6 42.4Z"/>
-
-    <!-- Muzzle and nose. -->
-    <path d="M45 43.8 50.8 51.4 45 54.6 39.2 51.4Z"/>
-
-    <!-- No jaw shape. The lower edge of the mane already draws the chin, and
-         adding a crescent there merged the two into one solid mass across the
-         bottom of the head. -->
-
-    <!-- No cheek marks. Any pair of them wide enough to see met the muzzle and
-         turned the middle of the face into one solid bar. The brow, the eyes
-         and the muzzle carry the face on their own, and at 34px less is what
-         survives anyway. -->
+    <!-- ====================================================================
+         Face. Separate gold pieces on open ground rather than a filled head.
+         A solid disc is exactly what turns a mark like this into a blob at
+         34px, so only the brow, the eyes and the muzzle are drawn.
+         ==================================================================== -->
+    <g fill="url(#leoGold)">
+      <!-- Chunky on purpose. Fine lines vanish or turn to fuzz at 34px, so
+           every piece here is at least three units thick. -->
+      <path d="M33.5 34 39.5 29.6 44 32.6 48.5 29.6 54.5 34 50.5 37.4 44 35.2 37.5 37.4Z"/>
+      <path d="M34.8 40 41.6 41.2 39.6 45 35.2 43.8Z"/>
+      <path d="M53.2 40 52.8 43.8 48.4 45 46.4 41.2Z"/>
+      <path d="M44 40.6 49.4 47.4 44 50.4 38.6 47.4Z"/>
+    </g>
   </g>
+
+  <!-- ======================================================================
+       The rising line, drawn last so it sits in the channel cut for it: one
+       step down at the low, then away to the upper right and out past the
+       star, which is the gesture the whole reference is built around.
+       ====================================================================== -->
+  <path d="M29 66 40 77 53 64 73 44" fill="none" stroke="url(#leoGold)"
+        stroke-width="5.5" stroke-linejoin="miter" stroke-linecap="butt"/>
+  <path fill="url(#leoGold)" d="M88 29 66.5 34.5 77.5 46.5Z"/>
 </svg>
