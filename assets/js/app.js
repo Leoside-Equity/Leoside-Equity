@@ -42,7 +42,7 @@ const LS = (function () {
      Wanted: a square export with a TRANSPARENT background. The mark sits on
      a cream header in light mode and an ink one in dark, so a baked in dark
      panel would show as a box around it on the light theme. */
-  const LOGO_SRC = 'assets/img/logo.png';
+  const LOGO_SRC = 'assets/img/logo.svg';
   const LOGO_FALLBACK = 'assets/img/favicon.svg';
 
   /* Falls back to the old mark if the new file is not in place yet, so the
