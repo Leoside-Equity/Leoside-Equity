@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard.html
+Disallow: /signin.html
+Disallow: /signup.html
+
+# Update this once the real domain is live.
+Sitemap: https://leosideequity.com/sitemap.xml

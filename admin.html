@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Publish · Leoside Equity</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="siteHeader"></header>
+
+<main id="main">
+  <div class="wrap doc" style="max-width:900px">
+    <header class="doc__head">
+      <p class="eyebrow eyebrow--plain">Admin</p>
+      <h1 id="adminTitle">Publish a report</h1>
+      <p class="doc__meta" id="adminMeta">Checking your access…</p>
+    </header>
+
+    <div id="adminBody" hidden>
+      <div class="notice notice--info" id="adminNote" hidden></div>
+
+      <div class="notice notice--info" id="editingBar" hidden></div>
+      <div class="notice notice--ok" id="autosaveBar" hidden></div>
+
+      <form id="publishForm" autocomplete="off">
+        <div class="stat-row" style="margin-bottom:1.4rem">
+          <div class="form-group"><label for="f-date">Publishing date</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-date" type="date" required></div>
+          <div class="form-group"><label for="f-market">Market</label>
+            <select class="select" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-market">
+              <option value="IN">Indian markets</option>
+              <option value="US">US markets</option>
+            </select>
+            <div class="hint" id="marketHint"></div></div>
+          <div class="form-group"><label for="f-ticker">Ticker</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-ticker" type="text" placeholder="RELIANCE" required></div>
+          <div class="form-group"><label for="f-exchange">Exchange</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-exchange" type="text" placeholder="NSE"></div>
+          <div class="form-group"><label for="f-sector">Sector</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-sector" type="text" placeholder="Financials"></div>
+        </div>
+
+        <div class="form-group"><label for="f-company">Company name</label>
+          <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-company" type="text" placeholder="Reliance Industries" required></div>
+
+        <div class="form-group"><label for="f-title">Headline</label>
+          <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-title" type="text" placeholder="The argument in one line" required></div>
+
+        <div class="form-group"><label for="f-standfirst">Standfirst</label>
+          <textarea class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-standfirst" rows="3" placeholder="Two sentences that state the argument before anyone clicks." required></textarea></div>
+
+        <div class="stat-row" style="margin-bottom:1.4rem">
+          <div class="form-group"><label for="f-rating">Rating</label>
+            <select class="select" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-rating">
+              <option>Buy</option><option>Accumulate</option><option selected>Hold</option><option>Reduce</option>
+            </select></div>
+          <div class="form-group"><label for="f-target">Target price</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-target" type="text" placeholder="₹1,720"></div>
+          <div class="form-group"><label for="f-last">Last close</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-last" type="text" placeholder="₹1,395"></div>
+          <div class="form-group"><label for="f-horizon">Horizon</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-horizon" type="text" value="12 months"></div>
+        </div>
+
+        <h3 style="margin-top:2.5rem">The report</h3>
+        <p class="muted small">One section per block. Separate paragraphs inside a section with a blank line.</p>
+        <div id="sections"></div>
+        <button class="btn btn--ghost btn--sm" type="button" id="addSection" style="margin-bottom:2rem">Add another section</button>
+
+        <div class="panel"><div class="panel__body">
+          <div class="row row--between">
+            <span class="muted small">Everything you type is kept on this device until you save it, so a refresh will not lose it.</span>
+            <span class="muted small" id="wordTally"></span>
+          </div>
+        </div></div>
+
+        <div class="row" style="margin-top:1.5rem;gap:.7rem">
+          <button class="btn btn--lg" type="button" id="publishBtn">Publish report</button>
+          <button class="btn btn--ghost btn--lg" type="button" id="draftBtn">Save draft</button>
+          <button class="btn btn--quiet btn--lg" type="button" id="newReport">New / clear form</button>
+          <a class="btn btn--quiet btn--lg" href="reports.html">View all reports</a>
+        </div>
+        <p class="muted small" id="saveHint" style="margin-top:.9rem"></p>
+      </form>
+
+      <section style="margin-top:3.5rem">
+        <div class="section-head" style="margin-bottom:1rem">
+          <div><h2 style="font-size:1.5rem">Manage drafts</h2>
+          <p>Saved but not published, so only you can see them. Published reports are edited and deleted from the <a class="link" href="reports.html">reports page</a>.</p></div>
+        </div>
+        <div class="panel"><div class="panel__body panel__body--flush">
+          <ul class="dlist" id="draftList"></ul>
+        </div></div>
+      </section>
+    </div>
+
+    <div id="adminDenied" hidden>
+      <div class="empty">
+        <h3>This page is not for you</h3>
+        <p>Publishing is limited to admin accounts. If this is your site, set <code>is_admin</code> to true on your row in the profiles table.</p>
+        <a class="btn btn--ghost btn--sm" href="index.html">Back to the home page</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="siteFooter"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

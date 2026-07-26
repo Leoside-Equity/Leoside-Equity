@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create a free account · Leoside Equity</title>
+<meta name="description" content="A free Leoside Equity account opens every research note in full, plus every report and your own reading dashboard.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="siteHeader"></header>
+
+<main id="main">
+  <div class="auth">
+
+    <section class="auth__panel on-ink">
+      <p class="eyebrow eyebrow--plain">Membership</p>
+      <h2>Free, and staying that way</h2>
+      <p class="lede">We ask for an account so we know who is reading and can send the day's note if you want it. That is the whole reason. There is no paid tier waiting behind this.</p>
+      <ul class="auth__list" id="perks"></ul>
+    </section>
+
+    <section class="auth__form-side">
+      <form class="auth__form" id="signupForm" novalidate>
+        <h1>Create your account</h1>
+        <p class="muted">Already have one? <a class="link" href="signin.html" id="toSignin">Sign in instead</a>.</p>
+
+        <div class="notice notice--err" id="formError" hidden></div>
+
+        <div class="form-group" id="g-name">
+          <label for="name">Name</label>
+          <input class="input" id="name" name="name" type="text" autocomplete="name" placeholder="How should we address you">
+          <div class="err">Please tell us what to call you.</div>
+        </div>
+
+        <div class="form-group" id="g-email">
+          <label for="email">Email address</label>
+          <input class="input" id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com">
+          <div class="err">That does not look like a valid email address.</div>
+        </div>
+
+        <div class="form-group" id="g-password">
+          <label for="password">Password</label>
+          <div class="pw-wrap">
+            <input class="input" id="password" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+            <button class="pw-toggle" type="button" id="pwToggle" aria-label="Show password">Show</button>
+          </div>
+          <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="hint" id="pwHint">Use at least 8 characters. Longer is better than complicated.</div>
+          <div class="err">Use at least 8 characters.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="market">Which market interests you most?</label>
+          <select class="select" id="market" name="market">
+            <option value="both">Both, send me everything</option>
+            <option value="IN">Mostly Indian markets</option>
+            <option value="US">Mostly United States markets</option>
+          </select>
+          <div class="hint">This only shapes what we highlight for you. You can read everything either way.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="check"><input type="checkbox" id="digest" checked>
+            <span>Email me the day's report. One message a day, nothing else, unsubscribe in one click.</span></label>
+        </div>
+
+        <div class="form-group" id="g-terms">
+          <label class="check"><input type="checkbox" id="terms">
+            <span>I have read and agree to the <a class="link" href="terms.html" target="_blank">terms of service</a>, the <a class="link" href="privacy.html" target="_blank">privacy policy</a> and the <a class="link" href="disclaimer.html" target="_blank">research disclaimer</a>.</span></label>
+          <div class="err">Please accept the terms before continuing.</div>
+        </div>
+
+        <button class="btn btn--block btn--lg" type="submit">Create free account</button>
+
+        <div class="divider">or</div>
+        <div class="oauth-row">
+          <button class="btn" type="button" data-oauth="Google">Continue with Google</button>
+        </div>
+        <div class="notice notice--info" id="oauthNote" hidden></div>
+
+        <p class="small muted" style="margin-top:1.6rem">Leoside Equity publishes general commentary, not investment advice. Nothing you read here is a recommendation for your circumstances.</p>
+      </form>
+    </section>
+
+  </div>
+</main>
+
+<footer id="siteFooter"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/account.js"></script>
+</body>
+</html>

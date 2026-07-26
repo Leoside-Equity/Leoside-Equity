@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · Leoside Equity</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="siteHeader"></header>
+
+<div class="dash">
+  <aside class="dash__side" id="dashSide" aria-label="Dashboard navigation">
+    <button class="dash__mobile-bar" id="sideToggle" aria-expanded="true">
+      <span>Dashboard menu</span>
+    </button>
+
+    <div class="dash__side-scroll" id="sideScroll">
+      <div class="dash__user" id="dashUser"></div>
+
+      <nav class="side-nav" id="sideNav" aria-label="Sections"></nav>
+
+      <p class="side-label">Reports by date</p>
+      <nav class="tree" id="tree" aria-label="Reports by month and week"></nav>
+    </div>
+  </aside>
+
+  <main class="dash__main" id="main"></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/cards.js"></script>
+<script src="assets/js/dashboard.js"></script>
+</body>
+</html>

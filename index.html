@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leoside Equity · Daily equity research on Indian and US markets</title>
+<meta name="description" content="A written equity research report every day. Indian markets Sunday to Wednesday, US markets Thursday to Saturday. Free to read with an account.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="siteHeader"></header>
+<div id="scheduleStrip"></div>
+
+<main id="main">
+
+  <!-- ------------------------------------------------------------- hero -->
+  <section class="hero">
+    <div class="wrap hero__inner">
+      <div>
+        <p class="eyebrow">Equity research, seven days a week</p>
+        <h1>Markets explained,<br><em>every single day.</em></h1>
+        <p class="lede">Leoside Equity publishes a written research report every day. Indian markets from Sunday to Wednesday, United States markets from Thursday to Saturday. Free to read from start to finish.</p>
+        <div class="hero__cta" id="heroCta"></div>
+        <p class="hero__note" id="heroNote"></p>
+
+        <div class="hero__stats" id="heroStats"></div>
+      </div>
+
+      <aside class="hero__feature" id="heroFeature" aria-label="Today's report"></aside>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- latest -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow eyebrow--plain">The desk</p>
+          <h2>Recent research</h2>
+          <p id="latestSub">The most recent coverage across both markets.</p>
+        </div>
+        <a class="btn btn--ghost" href="reports.html">Browse all reports</a>
+      </div>
+      <div class="card-grid" id="latestGrid"></div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------- market cadence -->
+  <section class="section section--sunken" id="cadence">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow eyebrow--plain">How the week is split</p>
+          <h2>Two markets, one predictable rhythm</h2>
+          <p>Every day of the week has a fixed market. You always know what is coming and when.</p>
+        </div>
+      </div>
+
+      <div class="cadence">
+        <article class="cadence__card cadence__card--in">
+          <span class="tag tag--in"><span class="dot"></span>India</span>
+          <h3 style="margin-top:1rem">Sunday to Wednesday</h3>
+          <p class="cadence__meta">Companies listed on the NSE and the BSE.</p>
+          <div class="cadence__days" id="daysIN" role="img" aria-label="Indian market coverage runs Sunday through Wednesday"></div>
+          <p class="cadence__meta"><strong>Four reports a week</strong>, published on Sunday, Monday, Tuesday and Wednesday.</p>
+        </article>
+
+        <article class="cadence__card cadence__card--us">
+          <span class="tag tag--us"><span class="dot"></span>United States</span>
+          <h3 style="margin-top:1rem">Thursday to Saturday</h3>
+          <p class="cadence__meta">Companies listed on the NYSE and the Nasdaq.</p>
+          <div class="cadence__days" id="daysUS" role="img" aria-label="US market coverage runs Thursday through Saturday"></div>
+          <p class="cadence__meta"><strong>Three reports a week</strong>, published on Thursday, Friday and Saturday.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------ why account -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow eyebrow--plain">Access</p>
+          <h2>Free to read. An account keeps it that way.</h2>
+          <p>Anyone can read the summary of every report. Signing in opens all of them, in full, for nothing.</p>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <article class="rcard">
+          <h3>Look before you sign up</h3>
+          <p class="rcard__excerpt" style="-webkit-line-clamp:6">Without an account you can see the summary of every report, along with the rating, the target and the key statistics. Enough to know whether it is worth your time.</p>
+        </article>
+        <article class="rcard">
+          <h3>Sign in to read it in full</h3>
+          <p class="rcard__excerpt" style="-webkit-line-clamp:6">An account takes about thirty seconds and costs nothing. It opens every report ever published, including every report ever published, with no limit on how much you read.</p>
+        </article>
+        <article class="rcard">
+          <h3>Your own dashboard</h3>
+          <p class="rcard__excerpt" style="-webkit-line-clamp:6">Members get a reading dashboard with reports organised by month, by week and by day, saved reports, and a record of what you have already read.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------------- cta -->
+  <section class="cta-band">
+    <div class="wrap">
+      <p class="eyebrow eyebrow--plain" style="justify-content:center">Membership</p>
+      <h2>Everything we publish, at no cost</h2>
+      <p>No card, no trial period, no upsell. Create an account and every report opens.</p>
+      <div class="row" id="ctaButtons">
+        <a class="btn btn--lg" href="signup.html">Create a free account</a>
+        <a class="btn btn--on-ink btn--lg" href="signin.html">I already have one</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="siteFooter"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/cards.js"></script>
+<script src="assets/js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reports · Leoside Equity</title>
+<meta name="description" content="Every report Leoside Equity has published, searchable by company, market, sector and rating.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="siteHeader"></header>
+<div id="scheduleStrip"></div>
+
+<main id="main">
+  <section class="section" style="padding-bottom:0">
+    <div class="wrap">
+      <p class="eyebrow eyebrow--plain">Reports</p>
+      <h1 style="margin-bottom:.6rem">Everything we have published</h1>
+      <p class="lede" style="max-width:62ch">Every report since day one, in one place. Filter by market, sector or rating, or search for a company by name or ticker.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="toolbar">
+        <div class="field grow" style="max-width:340px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input class="input input--search" id="q" type="search" placeholder="Company, ticker or theme" aria-label="Search reports">
+        </div>
+
+        <div class="seg" role="group" aria-label="Filter by market">
+          <button type="button" data-market="all" aria-pressed="true">All markets</button>
+          <button type="button" data-market="IN" aria-pressed="false">India</button>
+          <button type="button" data-market="US" aria-pressed="false">United States</button>
+        </div>
+
+        <select class="select" id="sector" aria-label="Filter by sector"><option value="all">All sectors</option></select>
+        <select class="select" id="rating" aria-label="Filter by rating">
+          <option value="all">All ratings</option>
+          <option value="Buy">Buy</option>
+          <option value="Accumulate">Accumulate</option>
+          <option value="Hold">Hold</option>
+          <option value="Reduce">Reduce</option>
+        </select>
+        <select class="select" id="sort" aria-label="Sort order">
+          <option value="new">Newest first</option>
+          <option value="old">Oldest first</option>
+          <option value="az">Company A to Z</option>
+        </select>
+
+        <span class="result-count" id="count"></span>
+      </div>
+
+      <div class="notice notice--info" id="archiveGateNote" hidden></div>
+      <div id="results"></div>
+    </div>
+  </section>
+
+  <section class="cta-band" id="archiveCta"></section>
+</main>
+
+<footer id="siteFooter"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/cards.js"></script>
+<script src="assets/js/archive.js"></script>
+</body>
+</html>

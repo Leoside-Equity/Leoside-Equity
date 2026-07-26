@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About · Leoside Equity</title>
+<meta name="description" content="What Leoside Equity is, who it is written for, and answers to the questions readers ask most often.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="siteHeader"></header>
+<div id="scheduleStrip"></div>
+
+<main id="main">
+  <section class="section" style="padding-bottom:1rem">
+    <div class="wrap wrap--tight">
+      <p class="eyebrow eyebrow--plain">About</p>
+      <h1>Learn the market by reading it</h1>
+      <p class="lede">Leoside Equity is a daily research site for people who want to understand how the stock market actually works, rather than just watch the numbers move.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:1.5rem">
+    <div class="wrap wrap--tight doc-body">
+
+      <h2>What this is</h2>
+      <p>A research report goes out every day, walking through a listed business the way an analyst would look at it. What the company sells, what actually moves its numbers, where the pressure points are, and what the current share price is asking you to believe.</p>
+      <p>You do not need a finance background to follow one. The reports are written so that a reader who is curious about markets can pick up the reasoning as they go, along with the vocabulary and the habits of thinking that make everything else easier to read. Work through a few of them and the annual reports, the earnings headlines and the arguments people have about a stock all start making a lot more sense.</p>
+      <p>The point is not to tell you what to buy. It is to show you how a business gets taken apart and put back together, so that eventually you can do it yourself.</p>
+
+      <h2 id="faq">Common questions</h2>
+
+      <h3>Is this investment advice?</h3>
+      <p>No. Everything published here is general commentary written for education and discussion. It does not take your financial position, goals, tax situation or risk tolerance into account. Read the <a class="link" href="disclaimer.html">research disclaimer</a> in full before acting on anything you find here.</p>
+
+      <h3>Are you a registered analyst or adviser?</h3>
+      <p>No. Leoside Equity is not registered with the Securities and Exchange Board of India, the United States Securities and Exchange Commission, or any other regulator, in any capacity. Nothing here should be treated as though it were.</p>
+
+      <h3>Do you hold positions in the companies you write about?</h3>
+      <p>Sometimes. We may note a position in a report, and no conclusion should be drawn from the absence of one. Assume a position may exist in anything we cover, and weigh every argument on its own merits.</p>
+
+      <h3>How is the research put together?</h3>
+      <p>That is set out on its own page. See <a class="link" href="method.html">our research method</a>.</p>
+
+      <h3>Can I share or republish a report?</h3>
+      <p>Link to it freely. Quoting a paragraph with attribution is fine. Republishing a report in full, or feeding the reports into a commercial product, is not. See the <a class="link" href="terms.html">terms of service</a>.</p>
+
+      <h3>How do I get the daily report by email?</h3>
+      <p>Tick the box when you create your account, or change it later under account settings. One message a day, nothing else, and one click to stop.</p>
+
+      <h3>Something in a report is wrong. What now?</h3>
+      <p>Write in. Corrections get made at the top of the report with the date and what changed, not silently in the text.</p>
+
+      <h2>Get in touch</h2>
+      <p>Questions, corrections, disagreements and company suggestions are all welcome at <a class="link" id="contactMail" href="#">the address below</a>. Replies are not guaranteed but everything gets read.</p>
+
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="wrap">
+      <p class="eyebrow eyebrow--plain" style="justify-content:center">Start reading</p>
+      <h2>Every report, at no cost</h2>
+      <p>Create an account and every report opens in full.</p>
+      <div class="row">
+        <a class="btn btn--lg" href="signup.html" id="aboutSignup">Create a free account</a>
+        <a class="btn btn--on-ink btn--lg" href="reports.html" id="aboutArchive">Browse the reports</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="siteFooter"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  Boot.start('about', function () {
+    var m = document.getElementById('contactMail');
+    m.href = 'mailto:' + SITE.email;
+    m.textContent = SITE.email;
+
+    /* No sign up prompt for someone already signed in. */
+    if (Auth.current()) {
+      var signup = document.getElementById('aboutSignup');
+      var archive = document.getElementById('aboutArchive');
+      if (signup) signup.remove();
+      if (archive) archive.className = 'btn btn--lg';
+    }
+  });
+</script>
+</body>
+</html>
