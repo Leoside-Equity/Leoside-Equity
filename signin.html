@@ -32,7 +32,28 @@
         <p class="muted">No account yet? <a class="link" href="signup.html" id="toSignup">Create a free one</a>.</p>
 
         <div class="notice notice--info" id="gateNote" hidden></div>
+        <div class="notice notice--ok" id="resetDone" hidden></div>
         <div class="notice notice--err" id="formError" hidden></div>
+
+        <div id="forgotPanel" hidden>
+          <div class="panel" style="margin-bottom:1.4rem">
+            <div class="panel__head"><h3>Reset your password</h3></div>
+            <div class="panel__body">
+              <p class="muted small" style="margin-top:0">Type the address on your account and we will send a link to choose a new password. Check it carefully before sending.</p>
+              <div class="form-group" id="g-forgot-email">
+                <label for="forgotEmail">Email address</label>
+                <input class="input" id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com">
+                <div class="err">Enter a valid email address.</div>
+              </div>
+              <div class="notice notice--err" id="forgotError" hidden></div>
+              <div class="notice notice--ok" id="forgotSent" hidden></div>
+              <div class="row" style="gap:.7rem;flex-wrap:wrap">
+                <button class="btn" type="button" id="forgotSend" disabled>Send the reset link</button>
+                <button class="btn btn--quiet" type="button" id="forgotCancel">Back to sign in</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div class="form-group" id="g-email">
           <label for="email">Email address</label>

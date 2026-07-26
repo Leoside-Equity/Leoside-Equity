@@ -673,20 +673,43 @@ Boot.start('dashboard', function () {
     });
 
     /* ------------------------------------------------------ reset password
-       Supabase sends the link. We never see or set the new password here. */
+       Two steps on purpose. The address is already known here so there is no
+       typo to worry about, but a single stray click should not spend an email
+       from a limited allowance. The first click shows which address it will
+       go to, the second sends it. */
     const resetBtn = document.getElementById('acReset');
     const resetNote = document.getElementById('acResetNote');
+    let resetArmed = false;
+    let resetTimer = null;
+    const resetLabel = resetBtn.innerHTML;
+
+    function disarmReset() {
+      resetArmed = false;
+      clearTimeout(resetTimer);
+      resetBtn.innerHTML = resetLabel;
+      resetBtn.classList.remove('btn--armed');
+    }
+
     resetBtn.addEventListener('click', function () {
+      if (!resetArmed) {
+        resetArmed = true;
+        resetBtn.classList.add('btn--armed');
+        resetBtn.innerHTML = LS.icon('mail') + 'Send link to ' + LS.esc(user.email) + '?';
+        resetTimer = setTimeout(disarmReset, 6000);
+        return;
+      }
+
+      disarmReset();
       resetBtn.disabled = true;
-      const label = resetBtn.innerHTML;
       resetBtn.innerHTML = 'Sending…';
+
       Promise.resolve(Auth.sendPasswordReset()).then(function (res) {
         resetBtn.disabled = false;
-        resetBtn.innerHTML = label;
+        resetBtn.innerHTML = resetLabel;
         resetNote.className = 'notice notice--' + (res.ok ? 'ok' : 'err');
         resetNote.innerHTML = (res.ok ? LS.icon('check') : LS.icon('alert')) +
           '<span>' + (res.ok
-            ? 'Reset link sent to <strong>' + LS.esc(user.email) + '</strong>. Check your inbox, and the spam folder if it is not there.'
+            ? 'Reset link sent to <strong>' + LS.esc(user.email) + '</strong>. It opens a page where you choose the new password. Check the spam folder if it does not arrive.'
             : LS.esc(res.error)) + '</span>';
         resetNote.hidden = false;
       });

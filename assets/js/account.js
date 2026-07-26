@@ -204,26 +204,84 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
       });
     });
 
-    const forgot = document.getElementById('forgot');
+    /* ------------------------------------------------------ forgot password
+       Nothing is sent until an address has been typed into this panel and the
+       send button pressed. It used to fire off the main sign in field the
+       moment the link was clicked, which burned an email on every typo. */
+    const forgotPanel  = document.getElementById('forgotPanel');
+    const forgotEmail  = document.getElementById('forgotEmail');
+    const forgotSend   = document.getElementById('forgotSend');
+    const forgotCancel = document.getElementById('forgotCancel');
+    const forgotError  = document.getElementById('forgotError');
+    const forgotSent   = document.getElementById('forgotSent');
+    const forgot       = document.getElementById('forgot');
+
+    function openForgot() {
+      clearInvalid();
+      forgotPanel.hidden = false;
+      /* Carry across whatever they already typed, as a starting point only. */
+      const typed = document.getElementById('email').value.trim();
+      if (typed) forgotEmail.value = typed;
+      forgotSend.disabled = !Auth.validEmail(forgotEmail.value);
+      forgotEmail.focus();
+      forgotPanel.scrollIntoView({ block: 'nearest' });
+    }
+
     if (forgot) forgot.addEventListener('click', function (e) {
       e.preventDefault();
-      if (!Auth.live) {
-        showError('Password resets need the backend, which is not connected yet. Once it is, this will send a reset link by email.');
-        return;
-      }
-      const email = document.getElementById('email').value;
+      openForgot();
+    });
+
+    /* Deep link from the reset page when a link has expired. */
+    if (params.get('forgot') === '1') openForgot();
+
+    /* Coming back after actually changing the password. */
+    if (params.get('reset') === '1') {
+      const done = document.getElementById('resetDone');
+      done.innerHTML = LS.icon('check') +
+        '<span>Password updated. Sign in with your new password.</span>';
+      done.hidden = false;
+    }
+
+    if (forgotCancel) forgotCancel.addEventListener('click', function () {
+      forgotPanel.hidden = true;
+      forgotError.hidden = true;
+      forgotSent.hidden = true;
+    });
+
+    /* The send button stays dead until the address is at least well formed,
+       so a half typed address cannot spend an email. */
+    if (forgotEmail) forgotEmail.addEventListener('input', function () {
+      forgotSend.disabled = !Auth.validEmail(forgotEmail.value);
+      forgotError.hidden = true;
+    });
+
+    if (forgotSend) forgotSend.addEventListener('click', function () {
+      const email = forgotEmail.value.trim();
       if (!Auth.validEmail(email)) {
-        setInvalid('g-email', 'Enter your email address first, then use this link.');
+        document.getElementById('g-forgot-email').classList.add('is-invalid');
         return;
       }
-      SB.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: location.origin + '/signin.html'
-      }).then(function (res) {
-        const err = document.getElementById('formError');
-        err.className = res.error ? 'notice notice--err' : 'notice notice--ok';
-        err.innerHTML = (res.error ? LS.icon('alert') : LS.icon('check')) +
-          '<span>' + (res.error ? LS.esc(res.error.message) : 'Reset link sent. Check your email.') + '</span>';
-        err.hidden = false;
+
+      forgotSend.disabled = true;
+      forgotSend.textContent = 'Sending…';
+      forgotError.hidden = true;
+
+      Promise.resolve(Auth.sendPasswordReset(email)).then(function (res) {
+        forgotSend.textContent = 'Send the reset link';
+        if (!res.ok) {
+          forgotSend.disabled = false;
+          forgotError.innerHTML = LS.icon('alert') + '<span>' + LS.esc(res.error) + '</span>';
+          forgotError.hidden = false;
+          return;
+        }
+        /* Deliberately does not say whether the address has an account. That
+           would let anyone check who is registered here. */
+        forgotSent.innerHTML = LS.icon('check') +
+          '<span>If <strong>' + LS.esc(email) + '</strong> has an account, a reset link is on its way. ' +
+          'The link opens a page where you choose the new password, and it can only be used once.</span>';
+        forgotSent.hidden = false;
+        forgotEmail.disabled = true;
       });
     });
   }

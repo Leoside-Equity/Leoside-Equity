@@ -1248,7 +1248,31 @@ p  { margin: 0 0 1.1em; }
   line-height: 1.55;
   color: var(--text-dim);
 }
+.cookie-bar__actions { display: flex; gap: .6rem; flex: 0 0 auto; flex-wrap: wrap; }
 .cookie-bar .btn { flex: 0 0 auto; white-space: nowrap; }
+
+/* Shown when storage is declined. There is no working site without it. */
+.cookie-stop {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+.cookie-stop__card {
+  max-width: 34rem; width: 100%;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 2.2rem;
+  box-shadow: var(--shadow-lg);
+}
+.cookie-stop__card h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+.cookie-stop__card p { color: var(--text-dim); font-size: .93rem; line-height: 1.65; margin: 0 0 1rem; }
+.cookie-stop__actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.6rem; }
+
+/* Armed state for a two step button, so the second press is a real decision. */
+.btn--armed { --btn-bg: var(--brass); --btn-fg: #fff; --btn-bd: var(--brass); }
 
 @media (prefers-reduced-motion: reduce) {
   .cookie-bar[data-dismissed="true"] { transition: none; }

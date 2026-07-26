@@ -458,12 +458,18 @@ const Auth = (function () {
     });
   }
 
-  /* Sends a password reset link to the signed in address. Supabase owns the
-     email and the reset page, so no password is ever handled here. */
+  /* Sends a password reset link. Supabase owns the email; no password is ever
+     handled here.
+
+     redirectTo must point at reset.html, not signin.html. The link carries a
+     recovery token which supabase-js exchanges for a session on arrival, and
+     signin.html sends anyone holding a session to the dashboard. Pointing it
+     there meant the reader was silently signed in and never got the chance to
+     type a new password. reset.html is the page that actually asks. */
   function sendPasswordReset(address) {
     const email = normalise(address || (cachedUser && cachedUser.email));
     if (!validEmail(email)) {
-      return Promise.resolve({ ok: false, error: 'No valid email address on this account.' });
+      return Promise.resolve({ ok: false, error: 'That does not look like a valid email address.' });
     }
     if (!LIVE) {
       return Promise.resolve({
@@ -472,7 +478,7 @@ const Auth = (function () {
       });
     }
     return Promise.resolve(
-      SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/signin.html' })
+      SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/reset.html' })
     ).then(function (res) {
       return res && res.error ? { ok: false, error: res.error.message } : { ok: true };
     }).catch(function (e) {

@@ -329,7 +329,7 @@ const LS = (function () {
           '</ul></div>' +
         '</div>' +
         '<div class="footer-legal">' +
-          '<b>Important.</b> Leoside Equity publishes general market commentary and educational analysis. Nothing on this site is personalised investment advice, an offer to buy or sell any security, or a recommendation tailored to your circumstances. We are not a registered investment adviser or research analyst in any jurisdiction. Markets carry risk, including the risk of losing the full amount invested. Research the market on your own accord and speak to a licensed professional before acting.' +
+          '<b>Important.</b> Leoside Equity publishes general market commentary and educational analysis. Nothing on this site is personalised investment advice, an offer to buy or sell any security, or a recommendation tailored to your circumstances. We are not a registered investment adviser or research analyst in any jurisdiction. Markets carry risk, including the risk of losing the full amount invested. Do your own research and speak to a licensed professional before acting on anything you read here.' +
         '</div>' +
         '<div class="footer-bottom">' +
           '<span>&copy; ' + year + ' ' + SITE.name + '. All rights reserved.</span>' +
@@ -340,19 +340,82 @@ const LS = (function () {
 
   /* ------------------------------------------------------------ page setup */
   /* ------------------------------------------------------- cookie banner
-     Fixed to the bottom until it is accepted, then never shown again. The
-     choice is kept in localStorage, which is itself strictly necessary
-     storage, so nothing here needs consent to record the consent.
+     Everything this site stores is strictly necessary: the sign in session,
+     the light or dark choice, and the saved reports list. There is no
+     advertising, no analytics and no third party tracker, so there is nothing
+     here that could be switched off and still leave a working site. That is
+     why declining ends in a stop screen rather than a reduced experience:
+     without somewhere to keep a session there is no signing in, and without
+     signing in there are no reports to read.
 
-     Deliberately not a blocking overlay: a notice about storage that stops
-     you reading the privacy policy explaining that storage is worse than
-     useless. It sits above the page and waits. */
+     Where the answer is kept, and why the two differ:
+
+       Accepted while signed in  -> localStorage. Permanent. Never asked again
+                                    on this browser, which is what an account
+                                    holder should expect.
+       Accepted while signed out -> sessionStorage. Asked again next visit,
+                                    since there is no account to attach a
+                                    lasting preference to.
+       Declined                  -> sessionStorage only. Never written to
+                                    long term storage, because writing a
+                                    permanent record for somebody who just
+                                    refused permanent records is not on. */
   const COOKIE_KEY = 'leoside.cookies';
 
+  function cookieChoice() {
+    try {
+      if (localStorage.getItem(COOKIE_KEY) === 'accepted') return 'accepted';
+      return sessionStorage.getItem(COOKIE_KEY);
+    } catch (e) {
+      /* Storage blocked entirely. Nothing to ask about and nothing to store. */
+      return 'unavailable';
+    }
+  }
+
+  function rememberChoice(choice, signedIn) {
+    try {
+      if (choice === 'accepted' && signedIn) localStorage.setItem(COOKIE_KEY, 'accepted');
+      sessionStorage.setItem(COOKIE_KEY, choice);
+    } catch (e) {}
+  }
+
+  function showCookieStop() {
+    const stop = document.createElement('div');
+    stop.className = 'cookie-stop';
+    stop.setAttribute('role', 'dialog');
+    stop.setAttribute('aria-modal', 'true');
+    stop.setAttribute('aria-label', 'Storage required');
+    stop.innerHTML =
+      '<div class="cookie-stop__card">' +
+        '<h2>Leoside Equity needs browser storage</h2>' +
+        '<p>We only store what the site cannot run without: your sign in session, ' +
+        'your light or dark preference, and the reports you save. There is no advertising, ' +
+        'no analytics and no third party tracking, and nothing is ever sold or shared.</p>' +
+        '<p>Because a sign in has to be remembered somewhere, there is no version of the ' +
+        'site that works without it. You can read what we store, and why, in the ' +
+        '<a class="link" href="privacy.html">privacy policy</a>.</p>' +
+        '<div class="cookie-stop__actions">' +
+          '<button class="btn btn--lg" type="button" id="cookieReconsider">Accept and continue</button>' +
+          '<a class="btn btn--quiet btn--lg" href="https://www.google.com">Leave the site</a>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(stop);
+    document.documentElement.style.overflow = 'hidden';
+
+    stop.querySelector('#cookieReconsider').addEventListener('click', function () {
+      rememberChoice('accepted', !!(typeof Auth !== 'undefined' && Auth.current && Auth.current()));
+      document.documentElement.style.overflow = '';
+      stop.remove();
+    });
+  }
+
   function mountCookieBanner() {
-    let accepted = null;
-    try { accepted = localStorage.getItem(COOKIE_KEY); } catch (e) { accepted = 'skip'; }
-    if (accepted) return;
+    const choice = cookieChoice();
+    if (choice === 'accepted' || choice === 'unavailable') return;
+    if (choice === 'declined') { showCookieStop(); return; }
+
+    const signedIn = !!(typeof Auth !== 'undefined' && Auth.current && Auth.current());
 
     const bar = document.createElement('div');
     bar.className = 'cookie-bar';
@@ -363,20 +426,33 @@ const LS = (function () {
       '<div class="cookie-bar__inner">' +
         '<p class="cookie-bar__text">' +
           'We use a small amount of browser storage to keep you signed in, remember your ' +
-          'theme and hold your saved reports. No advertising trackers and nothing sold on. ' +
-          'See the <a class="link" href="privacy.html">privacy policy</a>.' +
+          'theme and hold your saved reports. No advertising, no analytics, no tracking, ' +
+          'and nothing sold on. See the <a class="link" href="privacy.html">privacy policy</a>.' +
         '</p>' +
-        '<button class="btn btn--sm" type="button" id="cookieAccept">Accept and continue</button>' +
+        '<div class="cookie-bar__actions">' +
+          '<button class="btn btn--sm" type="button" id="cookieAccept">Accept and continue</button>' +
+          '<button class="btn btn--quiet btn--sm" type="button" id="cookieDecline">Decline</button>' +
+        '</div>' +
       '</div>';
 
     /* Appending is all that is needed. The bar's resting position is on
        screen, so there is no state it can get stuck in. */
     document.body.appendChild(bar);
 
-    bar.querySelector('#cookieAccept').addEventListener('click', function () {
-      try { localStorage.setItem(COOKIE_KEY, new Date().toISOString()); } catch (e) {}
+    function close() {
       bar.setAttribute('data-dismissed', 'true');
       setTimeout(function () { bar.remove(); }, 220);
+    }
+
+    bar.querySelector('#cookieAccept').addEventListener('click', function () {
+      rememberChoice('accepted', signedIn);
+      close();
+    });
+
+    bar.querySelector('#cookieDecline').addEventListener('click', function () {
+      rememberChoice('declined', signedIn);
+      close();
+      showCookieStop();
     });
   }
 
