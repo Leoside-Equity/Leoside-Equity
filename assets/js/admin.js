@@ -158,7 +158,7 @@ Boot.start('admin', function () {
     /* Suggestion only. The dropdown stays editable and authoritative. */
     marketEl.value = LS.marketForDate(dateEl.value);
     document.getElementById('f-horizon').value = '12 months';
-    document.getElementById('f-rating').value = 'Hold';
+    document.getElementById('f-rating').value = 'Fairly valued';
     syncUrl();
     paintMarket();
     paintButtons();
@@ -178,7 +178,18 @@ Boot.start('admin', function () {
     document.getElementById('f-company').value = row.company || '';
     document.getElementById('f-title').value = row.title || '';
     document.getElementById('f-standfirst').value = row.standfirst || '';
-    document.getElementById('f-rating').value = row.rating || 'Hold';
+    /* A report written before the stances changed may hold a value that is no
+       longer in the list. Offer it back rather than silently rewriting it on
+       the next save. */
+    const stanceEl = document.getElementById('f-rating');
+    if (row.rating && !Array.prototype.some.call(stanceEl.options,
+          function (o) { return o.value === row.rating; })) {
+      const legacy = document.createElement('option');
+      legacy.value = row.rating;
+      legacy.textContent = row.rating + ' (retired)';
+      stanceEl.appendChild(legacy);
+    }
+    stanceEl.value = row.rating || 'Fairly valued';
     document.getElementById('f-target').value = row.target || '';
     document.getElementById('f-last').value = row.last_price || '';
     document.getElementById('f-horizon').value = row.horizon || '12 months';

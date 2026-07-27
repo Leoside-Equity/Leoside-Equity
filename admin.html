@@ -59,15 +59,16 @@
           <textarea class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-standfirst" rows="3" placeholder="Two sentences that state the argument before anyone clicks." required></textarea></div>
 
         <div class="stat-row" style="margin-bottom:1.4rem">
-          <div class="form-group"><label for="f-rating">Rating</label>
+          <div class="form-group"><label for="f-rating">Valuation stance</label>
             <select class="select" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-rating">
-              <option>Buy</option><option>Accumulate</option><option selected>Hold</option><option>Reduce</option>
-            </select></div>
-          <div class="form-group"><label for="f-target">Target price</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-target" type="text" placeholder="₹1,720"></div>
+              <option>Undervalued</option><option selected>Fairly valued</option><option>Overvalued</option>
+            </select>
+            <div class="hint">How the market price compares with your estimate of intrinsic value.</div></div>
+          <div class="form-group"><label for="f-target">Fair value band</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-target" type="text" placeholder="₹1,650 to ₹1,790"></div>
           <div class="form-group"><label for="f-last">Last close</label>
             <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-last" type="text" placeholder="₹1,395"></div>
-          <div class="form-group"><label for="f-horizon">Horizon</label>
+          <div class="form-group"><label for="f-horizon">Projected horizon</label>
             <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-horizon" type="text" value="12 months"></div>
         </div>
 

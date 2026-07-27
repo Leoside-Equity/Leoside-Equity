@@ -122,8 +122,15 @@ const LS = (function () {
     const m = MARKETS[code];
     return '<span class="tag tag--' + code.toLowerCase() + '"><span class="dot"></span>' + m.short + '</span>';
   }
+  /* "Fairly valued" has a space in it, so the modifier is slugified rather
+     than lowercased, otherwise it would split into two class names. */
   function ratingTag(rating) {
-    return '<span class="rating rating--' + rating.toLowerCase() + '">' + rating + '</span>';
+    const label = String(rating || '').trim();
+    if (!label) return '';
+    const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return '<span class="rating rating--' + slug + '" title="Valuation stance: how the market price ' +
+      'compares with our estimate of intrinsic value. Not a recommendation to transact.">' +
+      esc(label) + '</span>';
   }
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {

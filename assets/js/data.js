@@ -58,10 +58,10 @@ const MARKETS = {
      company: 'Company Name Limited',
      exchange: 'NSE',
      sector: 'Financials',      // free text, the filter list builds itself
-     rating: 'Buy',             // Buy | Accumulate | Hold | Reduce
-     target: '₹1,200',
+     rating: 'Undervalued',     // Undervalued | Fairly valued | Overvalued
+     target: '₹1,150 to ₹1,260',// fair value band, an estimate of worth
      last: '₹980',
-     horizon: '12 months',
+     horizon: '12 months',      // projected horizon the assumptions were framed around
      readMins: 6,
      title: 'The headline argument in one line',
      standfirst: 'Two sentences that state the argument before anyone clicks.',

@@ -57,7 +57,7 @@ Boot.start('index', function () {
         '<h3><a href="' + LS.reportUrl(latest.id) + '">' + LS.esc(latest.title) + '</a></h3>' +
         '<p>' + LS.esc(latest.standfirst) + '</p>' +
         '<div class="ticker-line"><span>' + LS.esc(latest.company) + '</span><b>' + LS.esc(latest.ticker) + '</b></div>' +
-        '<div class="ticker-line"><span>Target price</span><b>' + LS.esc(latest.target) + '</b></div>' +
+        '<div class="ticker-line"><span>Fair value band</span><b>' + LS.esc(latest.target) + '</b></div>' +
         '<div class="ticker-line"><span>Published</span><b>' + LS.fmtDate(latest.date, 'short') + '</b></div>' +
         '<a class="btn btn--block" style="margin-top:1.1rem" href="' + LS.reportUrl(latest.id) + '">' +
           'Open the report ' + LS.icon('arrow') + '</a>';

@@ -70,7 +70,7 @@ Boot.start('reports', function () {
     if (!REPORTS.length) {
       outEl.innerHTML = '<div class="empty"><h3>No reports yet</h3>' +
         '<p>Nothing has been published yet. Every report that goes out will be listed here, ' +
-        'searchable by company, market, sector and rating.</p>' +
+        'searchable by company, market, sector and valuation stance.</p>' +
         '<a class="btn btn--ghost btn--sm" href="index.html">Back to the home page</a></div>';
       return;
     }

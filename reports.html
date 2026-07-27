@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reports · Leoside Equity</title>
-<meta name="description" content="Every report Leoside Equity has published, searchable by company, market, sector and rating.">
+<meta name="description" content="Every report Leoside Equity has published, searchable by company, market, sector and valuation stance.">
 <link rel="icon" href="assets/img/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
     <div class="wrap">
       <p class="eyebrow eyebrow--plain">Reports</p>
       <h1 style="margin-bottom:.6rem">Everything we have published</h1>
-      <p class="lede" style="max-width:62ch">Every report since day one, in one place. Filter by market, sector or rating, or search for a company by name or ticker.</p>
+      <p class="lede" style="max-width:62ch">Every report since day one, in one place. Filter by market, sector or valuation stance, or search for a company by name or ticker.</p>
     </div>
   </section>
 
@@ -42,12 +42,11 @@
         </div>
 
         <select class="select" id="sector" aria-label="Filter by sector"><option value="all">All sectors</option></select>
-        <select class="select" id="rating" aria-label="Filter by rating">
-          <option value="all">All ratings</option>
-          <option value="Buy">Buy</option>
-          <option value="Accumulate">Accumulate</option>
-          <option value="Hold">Hold</option>
-          <option value="Reduce">Reduce</option>
+        <select class="select" id="rating" aria-label="Filter by valuation stance">
+          <option value="all">All stances</option>
+          <option value="Undervalued">Undervalued</option>
+          <option value="Fairly valued">Fairly valued</option>
+          <option value="Overvalued">Overvalued</option>
         </select>
         <select class="select" id="sort" aria-label="Sort order">
           <option value="new">Newest first</option>

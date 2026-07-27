@@ -329,10 +329,19 @@ p  { margin: 0 0 1.1em; }
   letter-spacing: .09em;
   text-transform: uppercase;
 }
-.rating--buy        { background: var(--pos-wash); color: var(--pos); }
-.rating--accumulate { background: var(--pos-wash); color: var(--pos); }
+/* Valuation stances. Deliberately not red and green: those read as sell and
+   buy, which is exactly the inference the labels are meant to avoid. Two
+   neutral tones and a plain one, distinguishable without implying an action. */
+.rating--undervalued   { background: var(--brass-wash, var(--bg-sunken)); color: var(--brass); }
+.rating--overvalued    { background: var(--bg-sunken); color: var(--text-dim); }
+.rating--fairly-valued { background: var(--bg-sunken); color: var(--text-dim); }
+
+/* Older reports saved before the change keep their styling rather than
+   rendering unstyled. */
+.rating--buy        { background: var(--bg-sunken); color: var(--text-dim); }
+.rating--accumulate { background: var(--bg-sunken); color: var(--text-dim); }
 .rating--hold       { background: var(--bg-sunken); color: var(--text-dim); }
-.rating--reduce     { background: var(--neg-wash); color: var(--neg); }
+.rating--reduce     { background: var(--bg-sunken); color: var(--text-dim); }
 
 .delta--pos { color: var(--pos); font-weight: 600; }
 .delta--neg { color: var(--neg); font-weight: 600; }

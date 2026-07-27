@@ -83,10 +83,10 @@ Boot.start('reports', function () {
           : '') +
       '</div>' +
       '<div class="keystats">' +
-        stat('Rating', report.rating) +
-        stat('Target price', report.target) +
+        stat('Valuation stance', report.rating) +
+        stat('Fair value band', report.target) +
         stat('Last close', report.last) +
-        stat('Horizon', report.horizon) +
+        stat('Projected horizon', report.horizon) +
         stat('Market', MARKETS[report.market].short) +
       '</div>';
 
@@ -96,7 +96,11 @@ Boot.start('reports', function () {
         '<b>Disclosure and disclaimer</b>' +
         'This report is general commentary produced for education and discussion. It is not personalised investment advice, ' +
         'not an offer or solicitation to buy or sell any security, and not a recommendation suited to your particular ' +
-        'circumstances. ' + SITE.name + ' is not a registered investment adviser or research analyst. Figures are drawn from ' +
+        'circumstances. A valuation stance describes how the current market price compares with our estimate of ' +
+        'intrinsic value on the date of writing. It is an observation about price, not an instruction to transact: ' +
+        'Undervalued does not mean buy, Overvalued does not mean sell, and neither says anything about whether a ' +
+        'security is suitable for you. A fair value band is an estimate produced by a model, not a price forecast. ' +
+        SITE.name + ' is not a registered investment adviser or research analyst. Figures are drawn from ' +
         'public filings and other sources believed to be reliable but are not guaranteed to be accurate or complete. ' +
         'A position may be held in any security mentioned, whether or not a disclosure appears here. ' +
         'Markets carry risk, including total loss of capital. ' +
