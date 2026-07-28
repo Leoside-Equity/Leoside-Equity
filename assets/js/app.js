@@ -29,6 +29,7 @@ const LS = (function () {
     alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17.2v.4"/></svg>',
     mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>',
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></svg>',
+    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M4 20h16"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.9 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4 13.9H4a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 5.1 7.2L5 7.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>'
   };
 
@@ -163,6 +164,26 @@ const LS = (function () {
       'compares with our estimate of intrinsic value. Not a recommendation to transact.">' +
       esc(label) + '</span>';
   }
+  /* ------------------------------------------------------------ contact link
+     Opens Gmail's compose window with the address already filled in, rather
+     than handing off to mailto: and whatever desktop client happens to be
+     registered. `su` carries a subject when one is given.
+
+     Opened in a new tab so nobody loses the page they were reading, and with
+     rel="noopener" because a link that opens a window otherwise hands that
+     window a reference back to this one. */
+  function mailHref(subject) {
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to=' +
+      encodeURIComponent(SITE.email) +
+      (subject ? '&su=' + encodeURIComponent(subject) : '');
+  }
+
+  function mailLink(label, subject, cls) {
+    return '<a' + (cls ? ' class="' + cls + '"' : '') +
+      ' href="' + mailHref(subject) + '" target="_blank" rel="noopener">' +
+      esc(label || SITE.email) + '</a>';
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
@@ -236,6 +257,7 @@ const LS = (function () {
         brand('index.html') +
         '<nav class="site-nav" id="siteNav" aria-label="Primary">' + navLinks(page, user) + '</nav>' +
         '<div class="site-header__actions">' +
+          '<span id="installSlot"></span>' +
           '<button class="icon-btn" id="themeToggle" aria-label="Switch theme"></button>' +
           right +
           '<button class="icon-btn nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">' + icon('menu') + '</button>' +
@@ -392,7 +414,7 @@ const LS = (function () {
             '<li><a href="terms.html">Terms of service</a></li>' +
             '<li><a href="privacy.html">Privacy policy</a></li>' +
             '<li><a href="disclaimer.html">Research disclaimer</a></li>' +
-            '<li><a href="mailto:' + SITE.email + '">' + SITE.email + '</a></li>' +
+            '<li>' + mailLink(SITE.email) + '</li>' +
           '</ul></div>' +
         '</div>' +
         '<div class="footer-legal">' +
@@ -478,90 +500,104 @@ const LS = (function () {
     document.addEventListener('keydown', onKey);
   }
 
-  /* ----------------------------------------------------------- scroll reveal
-     Section headings and cards rise a little as they come into view.
+  /* There was a mountReveal() here that faded sections in as they scrolled
+     into view. It is gone, and the CSS that went with it is gone.
 
-     Two rules keep this from ever costing anyone content. The hiding is done
-     by a class this function puts on <html>, so a browser that never runs the
-     script, or one that has no IntersectionObserver, simply shows everything
-     from the start. And each element is unobserved once it has arrived, so
-     nothing re-hides on the way back up.
+     It hid content at opacity 0 and relied on JavaScript to bring it back.
+     When that failed, and it failed twice on the live site, the result was not
+     a missing animation: an element at opacity 0 still takes up its box, so
+     headings became gaps and whole sections became blank space. An
+     IntersectionObserver was tried, then a scroll handler, and neither was
+     worth the risk it carried.
 
-     Sticky elements are left out on purpose: a transform on a sticky ancestor
-     creates a containing block and breaks the sticking, which is what the
-     week section depends on. */
-  function mountReveal() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+     Content that is on the page must be on the screen. Do not add this back. */
 
-    const targets = Array.prototype.slice.call(document.querySelectorAll(
-      '.section-head, .section .card-grid > *, .cta-band .wrap, .doc-body > h2'
-    ));
-    if (!targets.length) return;
+  /* ------------------------------------------------------------ install
+     The site is a progressive web app, so it installs to a home screen or a
+     desktop and runs without browser chrome. It is the same app either way,
+     talking to the same Supabase project, so a report saved in the installed
+     copy is the same row as one saved in the browser and shows up in the
+     admin numbers identically. There is no second codebase and no sync.
 
-    document.documentElement.classList.add('reveal-ready');
+     Chrome, Edge and Android fire beforeinstallprompt and give a real button.
+     iOS has no such event, so Safari users get the Share, then Add to Home
+     Screen instruction instead, which is the only route Apple allows without
+     going through the App Store. */
+  let deferredPrompt = null;
 
-    /* A short stagger inside each group, so a row of cards arrives in sequence
-       rather than snapping in all at once. */
-    let previousParent = null;
-    let step = 0;
-    targets.forEach(function (el) {
-      if (el.parentElement !== previousParent) { previousParent = el.parentElement; step = 0; }
-      el.style.setProperty('--reveal-delay', (step * 70) + 'ms');
-      step++;
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+  }
+
+  function isIosSafari() {
+    const ua = navigator.userAgent;
+    /* iPadOS reports as a Mac, so touch points are what separate a modern iPad
+       from a desktop. */
+    const ios = /iPad|iPhone|iPod/.test(ua) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    return ios && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  }
+
+  function mountInstall() {
+    const host = document.getElementById('installSlot');
+    if (!host) return;
+
+    /* Already installed, so there is nothing to offer. */
+    if (isStandalone()) { host.remove(); return; }
+
+    if (isIosSafari()) {
+      host.innerHTML =
+        '<button class="btn btn--ghost btn--sm" type="button" id="installBtn">' +
+        icon('download') + 'Get the app</button>';
+      document.getElementById('installBtn').addEventListener('click', function () {
+        window.alert(
+          'Add Leoside Equity to your home screen\n\n' +
+          '1. Tap the Share button at the bottom of Safari\n' +
+          '2. Scroll down and tap "Add to Home Screen"\n' +
+          '3. Tap Add\n\n' +
+          'It opens like any other app, with your account already signed in.'
+        );
+      });
+      return;
+    }
+
+    /* Everywhere else the button only appears once the browser has told us the
+       app is actually installable. Showing it unconditionally would mean a
+       button that sometimes does nothing. */
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      host.innerHTML =
+        '<button class="btn btn--ghost btn--sm" type="button" id="installBtn">' +
+        icon('download') + 'Get the app</button>';
+
+      document.getElementById('installBtn').addEventListener('click', function () {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function () {
+          /* The prompt is single use. */
+          deferredPrompt = null;
+          host.innerHTML = '';
+        });
+      });
     });
 
-    /* Deliberately a scroll handler and not an IntersectionObserver.
+    window.addEventListener('appinstalled', function () {
+      deferredPrompt = null;
+      host.innerHTML = '';
+    });
+  }
 
-       The observer version left whole sections blank on the live site. Its
-       callbacks are delivered off the main thread's normal flow and can be
-       starved or never scheduled at all, and when that happens with content
-       hidden at opacity zero the result is not a missing animation, it is a
-       missing page. A scroll handler runs when the browser says the page
-       scrolled, which is the same event that makes the content matter.
-
-       Cheap enough to do plainly: the list is a dozen elements, each is
-       dropped from it the moment it arrives, and the handler unbinds itself
-       when the list is empty. */
-    let pending = targets.slice();
-
-    function sweep() {
-      const limit = window.innerHeight * 0.92;
-      pending = pending.filter(function (el) {
-        const box = el.getBoundingClientRect();
-        /* Anything at or above the fold line, including anything already
-           scrolled past, which is what a deep link or a refresh partway down
-           the page lands on. */
-        if (box.top < limit) { el.classList.add('is-revealed'); return false; }
-        return true;
+  /* Registered after load so it never competes with the first paint. */
+  function registerWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function (err) {
+        console.warn('[Leoside] service worker did not register:', err);
       });
-      if (!pending.length) {
-        window.removeEventListener('scroll', onScroll);
-        window.removeEventListener('resize', sweep);
-      }
-    }
-
-    /* Throttled by timestamp rather than by requestAnimationFrame, which does
-       not fire in a background tab. */
-    let last = 0;
-    function onScroll() {
-      const now = Date.now();
-      if (now - last < 80) return;
-      last = now;
-      sweep();
-    }
-
-    sweep();                                   /* whatever is on screen now */
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', sweep);
-
-    /* Last resort. If anything at all is still hidden after a few seconds,
-       show it. Nothing on this site is worth withholding for an effect. */
-    setTimeout(function () {
-      targets.forEach(function (el) { el.classList.add('is-revealed'); });
-      pending = [];
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', sweep);
-    }, 4000);
+    });
   }
 
   function init(page) {
@@ -569,7 +605,8 @@ const LS = (function () {
     mountSchedule();
     mountFooter();
     mountCookieNotice();
-    mountReveal();
+    mountInstall();
+    registerWorker();
   }
 
   return {
@@ -579,6 +616,7 @@ const LS = (function () {
     marketForDate: marketForDate, marketForToday: marketForToday, weekOfMonth: weekOfMonth,
     market: market, hasValuation: hasValuation,
     displayName: displayName, avatar: avatar,
+    mailHref: mailHref, mailLink: mailLink,
     reportUrl: reportUrl, byId: byId,
     paragraphs: paragraphs, wordCount: wordCount, preview: preview, excerpt: excerpt,
     marketTag: marketTag, ratingTag: ratingTag, esc: esc, paragraphs: paragraphs,

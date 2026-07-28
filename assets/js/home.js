@@ -172,9 +172,6 @@ Boot.start('index', function () {
     cards.innerHTML = REGION_ORDER.map(function (code, i) {
       const r = REGIONS[code];
 
-      /* A market with one entry has already said its days in the eyebrow, so
-         the row would only repeat them. A market with several, which is India
-         and its two different weekend jobs, needs them called out. */
       /* A market with one entry has already said its days in the eyebrow, so a
          labelled row would only repeat them. India has two different weekend
          jobs and needs both called out. */
@@ -193,9 +190,6 @@ Boot.start('index', function () {
         '<h3 class="weekcard__where">' + LS.esc(r.name) + '</h3>' +
         '<p class="weekcard__lede">' + LS.esc(r.lede) + '</p>' +
         rows +
-        '<ul class="weekcard__focus">' +
-          r.focus.map(function (f) { return '<li>' + LS.esc(f) + '</li>'; }).join('') +
-        '</ul>' +
         '<p class="weekcard__foot"><strong>' + r.count +
           (r.count === 1 ? ' report' : ' reports') + ' a week</strong>' +
           '<span>' + LS.esc(r.venues) + '</span></p>' +

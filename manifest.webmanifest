@@ -1,0 +1,51 @@
+{
+  "name": "Leoside Equity",
+  "short_name": "Leoside",
+  "description": "Daily equity research across the United States, the United Kingdom and India. One written report a day, free to read.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0E141C",
+  "theme_color": "#0E141C",
+  "categories": ["finance", "news", "education"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "assets/img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Latest report",
+      "short_name": "Latest",
+      "url": "/index.html"
+    },
+    {
+      "name": "All reports",
+      "short_name": "Reports",
+      "url": "/reports.html"
+    },
+    {
+      "name": "Your dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard.html"
+    }
+  ]
+}

@@ -119,22 +119,15 @@
    One rule here rather than a per component patch each time it bites. */
 [hidden] { display: none !important; }
 
-/* Scroll reveal. Everything is visible by default; the hidden state only
-   applies once app.js has confirmed it can bring things back, so a browser
-   that never runs the script shows the whole page as normal. */
-.reveal-ready .section-head,
-.reveal-ready .section .card-grid > *,
-.reveal-ready .cta-band .wrap,
-.reveal-ready .doc-body > h2 {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .3, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-}
-.reveal-ready .is-revealed {
-  opacity: 1;
-  transform: none;
-}
+/* There was a scroll reveal here. It has been removed on purpose.
+
+   It hid headings and cards at opacity 0 and brought them back as they came
+   into view. Twice it left whole sections blank, and because an element at
+   opacity 0 still occupies its box, the failure did not look like a missing
+   animation, it looked like the page had gaping holes in it where headings
+   should be. Both an IntersectionObserver and a scroll handler were tried.
+
+   Content that is on the page must be on the screen. Do not reintroduce this. */
 
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
@@ -759,20 +752,6 @@ h2 { letter-spacing: -.016em; }
 }
 .weekcard__days dd { margin: 0; font-size: .9rem; line-height: 1.7; color: var(--text-dim); }
 
-/* Three short phrases, so the card can be skimmed as well as read. */
-.weekcard__focus {
-  list-style: none; padding: 0;
-  margin: 1.3rem 0 0;
-  display: flex; flex-wrap: wrap; gap: .4rem;
-}
-.weekcard__focus li {
-  font-size: .74rem; font-weight: 500;
-  color: var(--text-dim);
-  border: 1px solid var(--line);
-  border-radius: 100px;
-  padding: .28rem .7rem;
-}
-
 .weekcard__foot {
   display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
   margin: 1.5rem 0 0; padding-top: 1.1rem;
@@ -1343,31 +1322,68 @@ h2 { letter-spacing: -.016em; }
 .cal-list__what { flex: 0 0 auto; }
 .cal-list__when { font-size: .82rem; color: var(--text-dim); }
 
-/* On the wider document pages the same list reads better as a row, where
-   there is room for the days to sit alongside without wrapping. */
-.cal-list--doc li {
-  flex-direction: row; align-items: center;
-  gap: .9rem;
-}
-/* Wide enough for the longest market name, so the day ranges beside them all
-   start on the same line rather than each one following its own tag. */
-.cal-list--doc .cal-list__what { min-width: 10rem; }
-
-/* The same list standing on its own in a prose page rather than in an aside. */
+/* Standing on its own in a prose page rather than in an aside: a proper
+   schedule block. Each market gets a row carrying its own colour down the left
+   edge, the country set in the display face, and the days beside it. */
 .cal-list--doc {
   list-style: none; padding: 0;
-  margin: 1.4rem 0 1.8rem;
+  margin: 1.6rem 0 2rem;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   overflow: hidden;
+  background: var(--bg-elev);
 }
 .cal-list--doc li {
-  margin: 0; padding: .85rem 1.1rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 1.05rem 1.3rem 1.05rem 1.6rem;
   border-top: 1px solid var(--line-soft);
+  transition: background .18s ease;
 }
 .cal-list--doc li:first-child { border-top: 0; }
-.cal-list--doc .cal-list__when { font-size: .9rem; }
-.cal-list--doc .cal-list__when strong { color: var(--text); }
+.cal-list--doc li:hover { background: var(--bg-sunken); }
+
+/* The colour spine, matching how a market is coloured everywhere else. */
+.cal-list--doc li::before {
+  content: "";
+  position: absolute; inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--line);
+}
+.cal-list--doc li:has(.tag--in)::before { background: var(--india); }
+.cal-list--doc li:has(.tag--us)::before { background: var(--us); }
+.cal-list--doc li:has(.tag--uk)::before { background: var(--uk); }
+
+/* The country reads as a heading here rather than as a pill: inside a table of
+   three rows the pill was doing no work the colour was not already doing. */
+.cal-list--doc .cal-list__what {
+  background: none; border: 0; padding: 0;
+  font-family: var(--f-display);
+  font-size: 1.05rem; font-weight: 600;
+  letter-spacing: 0; text-transform: none;
+  color: var(--text);
+}
+.cal-list--doc .cal-list__what .dot { width: 7px; height: 7px; }
+.cal-list--doc li:has(.tag--in) .dot { background: var(--india); }
+.cal-list--doc li:has(.tag--us) .dot { background: var(--us); }
+.cal-list--doc li:has(.tag--uk) .dot { background: var(--uk); }
+
+.cal-list--doc .cal-list__when {
+  font-family: var(--f-ui);
+  font-size: .78rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+@media (max-width: 560px) {
+  .cal-list--doc li { grid-template-columns: 1fr; gap: .3rem; }
+  .cal-list--doc .cal-list__when { text-align: left; }
+}
 
 .toc a { display: block; font-size: .88rem; color: var(--text-dim); padding: .3rem 0 .3rem .8rem; border-left: 2px solid var(--line); }
 .toc a:hover { color: var(--brass); border-color: var(--brass); }
@@ -1879,21 +1895,24 @@ html, body { overflow-x: clip; }
   position: relative;
   overflow: hidden;
 }
-/* An oversized wordmark bled off the bottom edge. Almost subliminal at this
-   opacity, but it gives the foot of the page some weight instead of trailing
-   off into small print. */
+/* A wordmark sitting behind the foot of the page in brass, cropped by the
+   bottom edge so only the upper part of the letterforms shows. Enough to read
+   as "Leoside" without competing with anything.
+
+   Sized and placed to clear the disclosure panel and the copyright line above
+   it: it lives in the band below them, not behind them. */
 .site-footer::before {
   content: "Leoside";
   position: absolute;
-  left: 50%; bottom: -.34em;
+  left: 50%; bottom: -1.6rem;
   transform: translateX(-50%);
   font-family: var(--f-display);
-  font-size: clamp(6rem, 19vw, 17rem);
+  font-size: clamp(3.4rem, 8.5vw, 7.5rem);
   font-weight: 700;
-  line-height: .8;
-  letter-spacing: -.03em;
-  color: var(--text-on-ink);
-  opacity: .035;
+  line-height: .78;
+  letter-spacing: -.02em;
+  color: var(--brass-2);
+  opacity: .13;
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
@@ -1919,6 +1938,9 @@ html, body { overflow-x: clip; }
   display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;
   padding-top: 1.8rem;
   font-size: .82rem;
+  /* Clears the band the wordmark occupies, so the copyright line never sits
+     on top of it. */
+  padding-bottom: 3.2rem;
 }
 .footer-legal {
   margin-top: 1.8rem;

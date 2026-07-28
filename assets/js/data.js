@@ -52,44 +52,44 @@ const SITE = {
    `days` is the only place the Indian week is broken down. The home page reads
    it; nothing else does.
    -------------------------------------------------------------------------- */
+/* Keep the descriptions short and factual. They say what a market's week
+   contains and nothing else: no methodology, no comparisons between markets,
+   and no claims about a market's character that a report would have to live
+   up to. Three or four lines each is the ceiling. */
 const REGIONS = {
   US: {
     code: 'US', slug: 'us', name: 'United States', currency: '$',
     venues: 'NYSE and Nasdaq',
-    lede: 'The deepest, most heavily covered market in the world, which is exactly why it rewards reading closely.',
+    lede: 'Companies listed in New York, covered through the middle of the week.',
     valuation: true,
     /* Each entry is [when, what]. This is the only place on the site where a
-       market's week is described in any detail. */
+       market's week is described at all. */
     days: [
       ['Monday to Wednesday',
-       'Three American companies, one a day. Each report starts with the business itself, what it actually sells and to whom, then works through the numbers that move it: revenue quality, margin direction, what the balance sheet can absorb. Only then does it turn to price, and to what the current valuation is quietly assuming about the years ahead.']
-    ],
-    /* Short phrases used where there is only room for a list. */
-    focus: ['The business before the numbers', 'Earnings quality and balance sheet', 'What the price already assumes']
+       'One company each day, listed on the NYSE or the Nasdaq. The report covers the business, the numbers behind it and where the share price stands against them.']
+    ]
   },
   UK: {
     code: 'UK', slug: 'uk', name: 'United Kingdom', currency: '£',
     venues: 'London Stock Exchange',
-    lede: 'Older, narrower and more cyclical than New York, and persistently overlooked because of it.',
+    lede: 'Companies listed in London, covered at the end of the week.',
     valuation: true,
     days: [
       ['Thursday and Friday',
-       'Two London listings, one a day, given exactly the same treatment as the American names. London skews towards banks, miners, energy and consumer staples, so the questions lean harder on cycles, capital discipline and what a business earns at the bottom of one rather than the top.']
-    ],
-    focus: ['Cyclicality and capital discipline', 'Dividend cover and cash generation', 'Where the cycle actually sits']
+       'One company each day from the London Stock Exchange, covering the business, the numbers behind it and where the share price stands against them.']
+    ]
   },
   IN: {
     code: 'IN', slug: 'in', name: 'India', currency: '₹',
     venues: 'NSE and BSE',
-    lede: 'Read from the top down across the weekend, because the direction of the whole market is the story worth telling.',
+    lede: 'The Indian market as a whole, covered across the weekend.',
     valuation: false,
     days: [
       ['Sunday',
-       'Where the market as a whole is heading. The indices are the surface; underneath sit rates, inflation, the currency and the flow of money in and out of the country. The report follows what those are doing to each other and what it sets up for the week ahead.'],
+       'Where the market is heading overall. The indices, and the rates, inflation, currency and flows behind them.'],
       ['Saturday',
-       'One sector at a time, taken apart properly. What is driving it right now, which parts of the story are already in the price, where the risk is concentrated, and the honest case both for and against it from here.']
-    ],
-    focus: ['Index direction and what drives it', 'Rates, inflation, currency and flows', 'One sector, argued both ways']
+       'One sector at a time. What is driving it, where the risk sits, and the case for and against it from here.']
+    ]
   }
 };
 
