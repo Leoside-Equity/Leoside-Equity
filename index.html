@@ -42,13 +42,19 @@
     <div class="wrap">
       <div class="section-head">
         <div>
-          <p class="eyebrow eyebrow--plain">The desk</p>
+          <p class="eyebrow eyebrow--plain" data-index="01">The desk</p>
           <h2>Recent research</h2>
           <p id="latestSub">The most recent coverage across every market.</p>
         </div>
         <a class="btn btn--ghost" href="reports.html">Browse all reports</a>
       </div>
-      <div class="card-grid" id="latestGrid"></div>
+    </div>
+
+    <!-- Breaks out of .wrap so the track can run to both edges of the screen
+         and read as a continuous belt rather than a boxed row. home.js fills
+         it and decides whether it should move at all. -->
+    <div class="marquee" id="latestMarquee">
+      <div class="marquee__track" id="latestGrid"></div>
     </div>
   </section>
 
@@ -60,7 +66,7 @@
     <div class="wrap">
       <div class="weekstack">
         <div class="weekstack__intro">
-          <p class="eyebrow eyebrow--plain">The week</p>
+          <p class="eyebrow eyebrow--plain" data-index="02">The week</p>
           <h2>Three markets,<br>one rhythm</h2>
           <p>Every day has a fixed market, so you always know what is coming.</p>
           <a class="btn btn--ghost" href="method.html">How the research is done</a>
@@ -75,7 +81,7 @@
     <div class="wrap">
       <div class="section-head">
         <div>
-          <p class="eyebrow eyebrow--plain">Access</p>
+          <p class="eyebrow eyebrow--plain" data-index="03">Access</p>
           <h2>Free to read. An account keeps it that way.</h2>
           <p>Anyone can read the summary of every report. Signing in opens all of them, in full, for nothing.</p>
         </div>
@@ -84,11 +90,11 @@
       <div class="card-grid">
         <article class="rcard">
           <h3>Look before you sign up</h3>
-          <p class="rcard__excerpt" style="-webkit-line-clamp:6">Without an account you can see the summary of every report, along with the valuation stance, the fair value band and the key statistics. Enough to know whether it is worth your time.</p>
+          <p class="rcard__excerpt" style="-webkit-line-clamp:6">Without an account you can see the summary of every report, along with the key statistics that go with it. Enough to know whether it is worth your time.</p>
         </article>
         <article class="rcard">
           <h3>Sign in to read it in full</h3>
-          <p class="rcard__excerpt" style="-webkit-line-clamp:6">An account takes about thirty seconds and costs nothing. It opens every report ever published, including every report ever published, with no limit on how much you read.</p>
+          <p class="rcard__excerpt" style="-webkit-line-clamp:6">An account takes about thirty seconds and costs nothing. It opens every report we have ever published, with no limit on how much you read.</p>
         </article>
         <article class="rcard">
           <h3>Your own dashboard</h3>

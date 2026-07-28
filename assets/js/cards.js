@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — shared report card and row templates
+   Leoside Equity: shared report card and row templates
    ========================================================================== */
 
 const Cards = (function () {

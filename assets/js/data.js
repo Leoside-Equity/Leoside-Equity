@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — site configuration and report data
+   Leoside Equity: site configuration and report data
    --------------------------------------------------------------------------
    One idea runs through this file: a report belongs to a country, and nothing
    else about its shape is the site's business. Sunday's Indian note may be a

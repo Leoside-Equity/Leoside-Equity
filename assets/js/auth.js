@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — account layer
+   Leoside Equity: account layer
    --------------------------------------------------------------------------
    Two backends behind one interface, chosen by CONFIG.USE_SUPABASE.
 

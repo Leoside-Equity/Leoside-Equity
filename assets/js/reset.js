@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — set a new password after following a reset link
+   Leoside Equity: set a new password after following a reset link
    --------------------------------------------------------------------------
    What was going wrong before this page existed.
 

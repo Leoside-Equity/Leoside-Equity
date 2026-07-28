@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — backend configuration
+   Leoside Equity: backend configuration
    --------------------------------------------------------------------------
    Both keys below are PUBLIC, client side keys. They are meant to be visible
    in the browser and are safe in this file and in a public git repository.

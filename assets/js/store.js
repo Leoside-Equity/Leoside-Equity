@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — report store and page boot
+   Leoside Equity: report store and page boot
    --------------------------------------------------------------------------
    Data.load()      fills the REPORTS array. In local mode it is already full
                     from data.js; in Supabase mode it calls list_reports(),

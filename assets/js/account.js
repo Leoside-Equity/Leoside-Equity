@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — sign up and sign in forms
+   Leoside Equity: sign up and sign in forms
    Both pages share this file. Everything routes through the Auth module, so
    it behaves the same whether the site is on localStorage or on Supabase.
    ========================================================================== */

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — shared shell: brand mark, header, footer, utilities
+   Leoside Equity: shared shell: brand mark, header, footer, utilities
    Injects the chrome into every page so navigation lives in one file.
    ========================================================================== */
 
@@ -247,11 +247,18 @@ const LS = (function () {
     wireHeader(!!user);
   }
 
-  /* What to call somebody: the name they gave, falling back to the part of
-     the address before the @ so the pill is never empty. */
+  /* What to call somebody: exactly the name they gave, in full.
+
+     This used to take the first word, which decided on their behalf that
+     "Utkarsh Kailash" wanted to be called "Utkarsh". Somebody who wants a
+     short name can enter a short name; that is what the field is for. The
+     pill has a max-width and ellipsis for the rare name that will not fit.
+
+     Falls back to the part of the address before the @, so it is never
+     blank on an account created without a name. */
   function displayName(user) {
     const name = String((user && user.name) || '').trim();
-    if (name) return name.split(/\s+/)[0];
+    if (name) return name;
     const local = String((user && user.email) || '').split('@')[0];
     return local || 'Member';
   }

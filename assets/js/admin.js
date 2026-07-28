@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — publishing screen
+   Leoside Equity: publishing screen
    --------------------------------------------------------------------------
    Writes through public.upsert_report(), which checks profiles.is_admin in
    the database before it touches anything. Hiding this page in the browser is

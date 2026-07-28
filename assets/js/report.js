@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — single report page, including the sign in gate
+   Leoside Equity: single report page, including the sign in gate
    --------------------------------------------------------------------------
    The page never decides for itself how much of a report to show. It asks
    Data.getReport() and renders whatever comes back: a `preview` string with
@@ -282,7 +282,7 @@ Boot.start('reports', function () {
 
   function stat(label, value) {
     return '<div class="keystat"><span class="l">' + LS.esc(label) + '</span><span class="v">' +
-      LS.esc(value || '—') + '</span></div>';
+      LS.esc(value || 'Not stated') + '</span></div>';
   }
 
 });

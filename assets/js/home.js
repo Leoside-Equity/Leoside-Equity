@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — home page
+   Leoside Equity: home page
    ========================================================================== */
 Boot.start('index', function () {
   'use strict';
@@ -34,12 +34,9 @@ Boot.start('index', function () {
   if (stats) {
     /* Counted from the schedule rather than typed in, so the numbers cannot
        drift out of step with the week the site actually publishes. */
-    const regions = {};
-    for (let i = 0; i < 7; i++) regions[LS.market(SITE.schedule[i]).region] = true;
-
     const items = [];
     if (REPORTS.length) items.push([REPORTS.length, 'Reports published', true]);
-    items.push([Object.keys(regions).length, 'Markets covered', true]);
+    items.push([REGION_ORDER.length, 'Markets covered', true]);
     items.push([7, 'Reports a week', true]);
     items.push(['Free', 'Now and always', false]);
     stats.innerHTML = items.map(function (i) {
@@ -81,19 +78,68 @@ Boot.start('index', function () {
     }
   }
 
-  /* --------------------------------------------------------- recent grid */
+  /* ------------------------------------------------------- recent research
+     A belt of cards drifting left, which stops the moment a pointer or the
+     keyboard reaches it so nothing slides away mid read.
+
+     The animation moves the track by exactly half its width, and the cards are
+     duplicated once, so the moment it completes it is showing the same thing
+     it started with and the reset is invisible. That is why the duplicate set
+     exists rather than any cleverness in JavaScript.
+
+     It only animates when there is more than a screenful to show. With two
+     reports a scrolling belt looks broken, so a short list simply sits still. */
   const sub = document.getElementById('latestSub');
   if (sub && !REPORTS.length) sub.textContent = 'Please sit tight, the first report is on its way.';
 
-  const grid = document.getElementById('latestGrid');
-  if (grid) {
-    grid.innerHTML = REPORTS.length
-      ? REPORTS.slice(0, 6).map(Cards.card).join('')
-      : '';
+  const marquee = document.getElementById('latestMarquee');
+  const track = document.getElementById('latestGrid');
+
+  if (track && marquee) {
     if (!REPORTS.length) {
-      grid.outerHTML = '<div class="empty"><h3>No reports published yet</h3>' +
+      marquee.outerHTML =
+        '<div class="wrap"><div class="empty"><h3>No reports published yet</h3>' +
         '<p>Reports appear here from the first publishing day, newest first.</p>' +
-        '<a class="btn btn--ghost btn--sm" href="reports.html">See all reports</a></div>';
+        '<a class="btn btn--ghost btn--sm" href="reports.html">See all reports</a></div></div>';
+    } else {
+      const cards = REPORTS.slice(0, 8).map(Cards.card).join('');
+      track.innerHTML = cards;
+
+      /* Measured synchronously. Reading scrollWidth forces layout, so the
+         number is real as soon as the markup is in.
+
+         Deliberately not inside requestAnimationFrame: rAF does not fire while
+         a tab is in the background, so opening the site in a background tab
+         would leave the belt unbuilt until the tab was looked at. */
+      const overflows = track.scrollWidth > marquee.clientWidth;
+      const wantsMotion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      if (!overflows || !wantsMotion) {
+        /* A duplicate set in a list short enough to fit would read as the same
+           report printed twice, so a short list keeps the look and holds still. */
+        marquee.classList.add('marquee--static');
+      } else {
+        const original = document.createElement('div');
+        original.className = 'marquee__set';
+        original.innerHTML = cards;
+
+        /* aria-hidden on the copy: a screen reader should hear each report
+           once, not twice. */
+        const copy = document.createElement('div');
+        copy.className = 'marquee__set';
+        copy.setAttribute('aria-hidden', 'true');
+        copy.innerHTML = cards;
+
+        track.innerHTML = '';
+        track.appendChild(original);
+        track.appendChild(copy);
+
+        /* Paced by distance rather than a fixed duration, so a longer belt
+           does not race past faster than a short one. */
+        const seconds = Math.max(18, Math.round(track.scrollWidth / 2 / 55));
+        track.style.setProperty('--marquee-duration', seconds + 's');
+        marquee.classList.add('marquee--running');
+      }
     }
   }
 

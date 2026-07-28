@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — member dashboard
+   Leoside Equity: member dashboard
    Sidebar: month and year, then week, then individual publishing dates.
    Main area is a small hash router: #overview #saved #history #account #day=…
    ========================================================================== */

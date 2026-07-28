@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Leoside Equity — archive page: search, filter, sort, group by month
+   Leoside Equity: archive page: search, filter, sort, group by month
    ========================================================================== */
 Boot.start('reports', function () {
   'use strict';
