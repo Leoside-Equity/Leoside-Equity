@@ -491,54 +491,77 @@ const LS = (function () {
      creates a containing block and breaks the sticking, which is what the
      week section depends on. */
   function mountReveal() {
-    if (!('IntersectionObserver' in window)) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const targets = document.querySelectorAll(
+    const targets = Array.prototype.slice.call(document.querySelectorAll(
       '.section-head, .section .card-grid > *, .cta-band .wrap, .doc-body > h2'
-    );
+    ));
     if (!targets.length) return;
 
     document.documentElement.classList.add('reveal-ready');
-
-    let arrived = 0;
-
-    const io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-revealed');
-        arrived++;
-        io.unobserve(entry.target);
-      });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: .08 });
 
     /* A short stagger inside each group, so a row of cards arrives in sequence
        rather than snapping in all at once. */
     let previousParent = null;
     let step = 0;
-    Array.prototype.forEach.call(targets, function (el) {
+    targets.forEach(function (el) {
       if (el.parentElement !== previousParent) { previousParent = el.parentElement; step = 0; }
       el.style.setProperty('--reveal-delay', (step * 70) + 'ms');
       step++;
-      io.observe(el);
     });
 
-    /* Safety net.
+    /* Deliberately a scroll handler and not an IntersectionObserver.
 
-       An observer that never fires would leave the whole page at opacity zero,
-       which is a far worse outcome than losing an animation. There are real
-       conditions where callbacks are starved: a tab that is never painted, a
-       throttled background tab, some embedded webviews.
+       The observer version left whole sections blank on the live site. Its
+       callbacks are delivered off the main thread's normal flow and can be
+       starved or never scheduled at all, and when that happens with content
+       hidden at opacity zero the result is not a missing animation, it is a
+       missing page. A scroll handler runs when the browser says the page
+       scrolled, which is the same event that makes the content matter.
 
-       So: if nothing at all has arrived shortly after load, assume the
-       observer is not going to deliver and show everything. Checking that
-       nothing arrived, rather than blanket revealing on a timer, means a
-       working page keeps the effect for content further down. */
+       Cheap enough to do plainly: the list is a dozen elements, each is
+       dropped from it the moment it arrives, and the handler unbinds itself
+       when the list is empty. */
+    let pending = targets.slice();
+
+    function sweep() {
+      const limit = window.innerHeight * 0.92;
+      pending = pending.filter(function (el) {
+        const box = el.getBoundingClientRect();
+        /* Anything at or above the fold line, including anything already
+           scrolled past, which is what a deep link or a refresh partway down
+           the page lands on. */
+        if (box.top < limit) { el.classList.add('is-revealed'); return false; }
+        return true;
+      });
+      if (!pending.length) {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', sweep);
+      }
+    }
+
+    /* Throttled by timestamp rather than by requestAnimationFrame, which does
+       not fire in a background tab. */
+    let last = 0;
+    function onScroll() {
+      const now = Date.now();
+      if (now - last < 80) return;
+      last = now;
+      sweep();
+    }
+
+    sweep();                                   /* whatever is on screen now */
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', sweep);
+
+    /* Last resort. If anything at all is still hidden after a few seconds,
+       show it. Nothing on this site is worth withholding for an effect. */
     setTimeout(function () {
-      if (arrived > 0) return;
-      io.disconnect();
-      Array.prototype.forEach.call(targets, function (el) { el.classList.add('is-revealed'); });
-    }, 2500);
+      targets.forEach(function (el) { el.classList.add('is-revealed'); });
+      pending = [];
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', sweep);
+    }, 4000);
   }
 
   function init(page) {

@@ -12,11 +12,19 @@ Boot.start('dashboard', function () {
   const user = Auth.current();
   const main = document.getElementById('main');
 
-  /* ------------------------------------------------------------ user card */
-  document.getElementById('dashUser').innerHTML =
-    '<span class="avatar avatar--lg">' + LS.esc(Auth.initials(user)) + '</span>' +
-    '<span style="min-width:0"><span class="name">' + LS.esc(user.name) + '</span>' +
-    '<span class="mail">' + LS.esc(user.email) + '</span></span>';
+  /* ------------------------------------------------------------ user card
+     Goes through LS.avatar rather than drawing initials directly, so an
+     uploaded photo appears here as well as in the header. Drawn as a function
+     because saving a new photo has to repaint it; reading Auth.current() each
+     time keeps it off a stale copy of the user. */
+  function paintUserCard() {
+    const current = Auth.current() || user;
+    document.getElementById('dashUser').innerHTML =
+      LS.avatar(current, 'avatar--lg') +
+      '<span style="min-width:0"><span class="name">' + LS.esc(current.name) + '</span>' +
+      '<span class="mail">' + LS.esc(current.email) + '</span></span>';
+  }
+  paintUserCard();
 
   /* --------------------------------------------------------- archive index */
   const byDate = {};
@@ -778,10 +786,12 @@ Boot.start('dashboard', function () {
           note.className = res.partial ? 'notice notice--info' : 'notice notice--ok';
           note.innerHTML = LS.icon(res.partial ? 'info' : 'check') +
             '<span>' + LS.esc(res.partial ? res.error : 'Saved.') + '</span>';
-          /* The header carries the name and the picture, so it has to be
-             redrawn or it keeps showing what things used to be. */
+          /* The header and the sidebar card both carry the name and the
+             picture, so both have to be redrawn or they keep showing what
+             things used to be. */
           pendingAvatar = undefined;
           LS.init('dashboard');
+          paintUserCard();
         } else {
           note.className = 'notice notice--err';
           note.innerHTML = LS.icon('alert') + '<span>' + LS.esc((res && res.error) || 'We could not save that.') + '</span>';

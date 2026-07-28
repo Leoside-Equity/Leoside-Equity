@@ -259,7 +259,21 @@ h2 { letter-spacing: -.016em; }
 .wrap { width: 100%; max-width: var(--wrap); margin-inline: auto; padding-inline: 24px; }
 .wrap--tight { max-width: var(--wrap-tight); }
 .section { padding: clamp(3.2rem, 6vw, 5.5rem) 0; }
-.section--sunken { background: var(--bg-sunken); border-block: 1px solid var(--line-soft); }
+/* Edges that fade out towards the gutters rather than ruling hard across the
+   full width, so a change of surface reads as a shift rather than a seam. */
+.section--sunken {
+  background: var(--bg-sunken);
+  border-block: 0;
+  position: relative;
+}
+.section--sunken::before, .section--sunken::after {
+  content: "";
+  position: absolute; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line) 22%, var(--line) 78%, transparent);
+}
+.section--sunken::before { top: 0; }
+.section--sunken::after { bottom: 0; }
 .stack > * + * { margin-top: 1rem; }
 .row { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
 .row--between { justify-content: space-between; }
@@ -821,8 +835,38 @@ h2 { letter-spacing: -.016em; }
   align-items: center;
   padding: clamp(3.5rem, 7vw, 6rem) 0;
 }
+/* A slow drift of warm light behind the hero. Long period and low opacity on
+   purpose: it should register as the page being alive, not as an animation
+   asking to be watched. Sits under the grid and above the flat background. */
+.hero__aurora {
+  position: absolute; inset: -30% -10% auto -10%;
+  height: 150%;
+  background:
+    radial-gradient(38% 44% at 22% 30%, rgba(198,161,90,.20), transparent 70%),
+    radial-gradient(30% 38% at 78% 62%, rgba(143,178,218,.14), transparent 72%),
+    radial-gradient(26% 34% at 55% 18%, rgba(179,160,220,.12), transparent 70%);
+  filter: blur(28px);
+  pointer-events: none;
+  animation: aurora-drift 34s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to   { transform: translate3d(4%, 3%, 0) scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__aurora { animation: none; }
+}
+
 .hero h1 { color: var(--text-on-ink); margin-bottom: 1.1rem; }
-.hero h1 em { font-style: italic; color: var(--brass-2); }
+/* The emphasised line picks up the brass as a gradient rather than a flat
+   fill, which is what stops a two line headline reading as one flat block. */
+.hero h1 em {
+  font-style: italic;
+  background: linear-gradient(100deg, var(--brass-3), var(--brass-2) 45%, var(--brass));
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
 .hero .lede { color: var(--text-on-ink-2); max-width: 48ch; }
 .hero .eyebrow { color: var(--brass-2); }
 .hero .eyebrow::after { background: var(--line-ink); }
@@ -1832,7 +1876,29 @@ html, body { overflow-x: clip; }
   border-top: 1px solid var(--line-ink);
   padding: 3.4rem 0 2rem;
   font-size: .9rem;
+  position: relative;
+  overflow: hidden;
 }
+/* An oversized wordmark bled off the bottom edge. Almost subliminal at this
+   opacity, but it gives the foot of the page some weight instead of trailing
+   off into small print. */
+.site-footer::before {
+  content: "Leoside";
+  position: absolute;
+  left: 50%; bottom: -.34em;
+  transform: translateX(-50%);
+  font-family: var(--f-display);
+  font-size: clamp(6rem, 19vw, 17rem);
+  font-weight: 700;
+  line-height: .8;
+  letter-spacing: -.03em;
+  color: var(--text-on-ink);
+  opacity: .035;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+.site-footer > * { position: relative; z-index: 1; }
 .site-footer a { color: var(--text-on-ink-2); transition: color .18s ease; }
 .site-footer a:hover { color: var(--brass-2); }
 .footer-grid {
