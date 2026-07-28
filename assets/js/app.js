@@ -30,6 +30,9 @@ const LS = (function () {
     mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>',
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></svg>',
     download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M4 20h16"/></svg>',
+    /* The iOS share glyph, so the hint can point at the actual button. */
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:inline;width:1em;height:1em;vertical-align:-.15em"><path d="M12 3v12M8.5 6.5 12 3l3.5 3.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.9 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4 13.9H4a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 5.1 7.2L5 7.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>'
   };
 
@@ -519,10 +522,22 @@ const LS = (function () {
      copy is the same row as one saved in the browser and shows up in the
      admin numbers identically. There is no second codebase and no sync.
 
-     Chrome, Edge and Android fire beforeinstallprompt and give a real button.
-     iOS has no such event, so Safari users get the Share, then Add to Home
-     Screen instruction instead, which is the only route Apple allows without
-     going through the App Store. */
+     The button is ALWAYS shown, and this is the important part.
+
+     An earlier version only drew it after beforeinstallprompt fired, and the
+     result was a button nobody ever saw. That event is far less reliable than
+     its documentation suggests: Firefox and Safari never fire it at all,
+     Chrome suppresses it once a user has dismissed the prompt, it does not
+     fire on an http origin, and it will not fire again for a session after
+     being used. Hanging the only route to installing on it meant that most
+     visitors had no route at all.
+
+     So the button is permanent and its behaviour degrades:
+
+       best case   the browser handed us a prompt, so clicking runs it
+       otherwise   a panel with the exact steps for that browser
+
+     Nobody is ever shown a button that does nothing. */
   let deferredPrompt = null;
 
   function isStandalone() {
@@ -530,64 +545,168 @@ const LS = (function () {
            window.navigator.standalone === true;
   }
 
-  function isIosSafari() {
+  function isIos() {
+    /* iPadOS reports itself as a Mac, so touch points are what separate a
+       modern iPad from a desktop. */
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  /* Which set of instructions to show when there is no prompt to run. */
+  function installSteps() {
     const ua = navigator.userAgent;
-    /* iPadOS reports as a Mac, so touch points are what separate a modern iPad
-       from a desktop. */
-    const ios = /iPad|iPhone|iPod/.test(ua) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    return ios && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    const mobile = isIos() || /Android/.test(ua);
+
+    if (isIos()) {
+      return {
+        title: 'Add Leoside to your home screen',
+        note: 'Safari on iPhone and iPad installs web apps from the Share menu.',
+        steps: [
+          'Tap the Share button, the square with an arrow coming out of it',
+          'Scroll down the list and tap "Add to Home Screen"',
+          'Tap Add'
+        ]
+      };
+    }
+    if (/Android/.test(ua)) {
+      return {
+        title: 'Install Leoside on your phone',
+        note: 'Chrome installs it as a normal app, with its own icon.',
+        steps: [
+          'Tap the three dot menu at the top right of Chrome',
+          'Tap "Add to Home screen", or "Install app" if you see it',
+          'Confirm'
+        ]
+      };
+    }
+    if (/Firefox/.test(ua)) {
+      return {
+        title: 'Leoside on Firefox',
+        note: 'Firefox on the desktop does not install web apps. The site works normally here, and installing is available in Chrome, Edge or Safari.',
+        steps: []
+      };
+    }
+    return {
+      title: 'Install Leoside on your computer',
+      note: 'Chrome and Edge install it as a desktop app with its own window.',
+      steps: [
+        'Look for the install icon at the right hand end of the address bar, a screen with a downward arrow',
+        'If it is not there, open the three dot menu and choose "Cast, save and share", then "Install page as app"',
+        'Confirm'
+      ],
+      /* Explains the common case where the icon is genuinely absent. */
+      footnote: mobile ? '' : 'If neither appears, the app is most likely already installed.'
+    };
+  }
+
+  function showInstallHelp() {
+    const info = installSteps();
+
+    const panel = document.createElement('div');
+    panel.className = 'installhelp';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', 'installHelpTitle');
+    panel.innerHTML =
+      '<div class="installhelp__card">' +
+        '<button class="installhelp__close" type="button" aria-label="Close">' + icon('close') + '</button>' +
+        '<h3 id="installHelpTitle">' + esc(info.title) + '</h3>' +
+        '<p>' + esc(info.note) + '</p>' +
+        (info.steps.length
+          ? '<ol class="installhelp__steps">' +
+              info.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ol>'
+          : '') +
+        (info.footnote ? '<p class="small muted">' + esc(info.footnote) + '</p>' : '') +
+        '<p class="small muted">It opens in its own window, signed in as you already are, ' +
+        'and everything you save stays on your account.</p>' +
+      '</div>';
+
+    document.body.appendChild(panel);
+
+    function close() {
+      panel.remove();
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    panel.querySelector('.installhelp__close').addEventListener('click', close);
+    panel.addEventListener('click', function (e) { if (e.target === panel) close(); });
+    document.addEventListener('keydown', onKey);
+    panel.querySelector('.installhelp__close').focus();
   }
 
   function mountInstall() {
     const host = document.getElementById('installSlot');
     if (!host) return;
 
-    /* Already installed, so there is nothing to offer. */
+    /* Already running as an app, so there is nothing to offer. */
     if (isStandalone()) { host.remove(); return; }
 
-    if (isIosSafari()) {
-      host.innerHTML =
-        '<button class="btn btn--ghost btn--sm" type="button" id="installBtn">' +
-        icon('download') + 'Get the app</button>';
-      document.getElementById('installBtn').addEventListener('click', function () {
-        window.alert(
-          'Add Leoside Equity to your home screen\n\n' +
-          '1. Tap the Share button at the bottom of Safari\n' +
-          '2. Scroll down and tap "Add to Home Screen"\n' +
-          '3. Tap Add\n\n' +
-          'It opens like any other app, with your account already signed in.'
-        );
-      });
-      return;
-    }
+    host.innerHTML =
+      '<button class="btn btn--ghost btn--sm install-btn" type="button" id="installBtn">' +
+      icon('download') + '<span>Get the app</span></button>';
 
-    /* Everywhere else the button only appears once the browser has told us the
-       app is actually installable. Showing it unconditionally would mean a
-       button that sometimes does nothing. */
+    document.getElementById('installBtn').addEventListener('click', function () {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function () {
+          deferredPrompt = null;   /* single use */
+        });
+        return;
+      }
+      showInstallHelp();
+    });
+
+    /* If the event does turn up, the same button quietly gets the real prompt
+       behind it. Registered after the button exists so there is no window in
+       which the event is captured but nothing can use it. */
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
       deferredPrompt = e;
-      host.innerHTML =
-        '<button class="btn btn--ghost btn--sm" type="button" id="installBtn">' +
-        icon('download') + 'Get the app</button>';
-
-      document.getElementById('installBtn').addEventListener('click', function () {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function () {
-          /* The prompt is single use. */
-          deferredPrompt = null;
-          host.innerHTML = '';
-        });
-      });
     });
 
     window.addEventListener('appinstalled', function () {
       deferredPrompt = null;
-      host.innerHTML = '';
+      host.remove();
+      mountIosBanner.dismiss();
+    });
+
+    mountIosBanner();
+  }
+
+  /* ------------------------------------------------------- iOS install hint
+     Safari gives no install button of its own and fires no event, so on iOS
+     the only way anyone learns this is installable is being told. Shown once,
+     low down, dismissible, and never again after that. */
+  const IOS_HINT_KEY = 'leoside.ios_install_hint';
+
+  function mountIosBanner() {
+    if (!isIos() || isStandalone()) return;
+    try { if (localStorage.getItem(IOS_HINT_KEY) === 'dismissed') return; } catch (e) { return; }
+
+    const bar = document.createElement('div');
+    bar.className = 'iosbar';
+    bar.id = 'iosInstallBar';
+    bar.setAttribute('role', 'region');
+    bar.setAttribute('aria-label', 'Install this app');
+    bar.innerHTML =
+      '<img class="iosbar__icon" src="' + LOGO_SRC + '" alt="" width="34" height="34">' +
+      '<p class="iosbar__text"><strong>Add Leoside to your home screen</strong>' +
+      'Tap ' + icon('share') + ' then <b>Add to Home Screen</b>.</p>' +
+      '<button class="iosbar__close" type="button" aria-label="Dismiss">' + icon('close') + '</button>';
+
+    document.body.appendChild(bar);
+    bar.querySelector('.iosbar__close').addEventListener('click', function () {
+      mountIosBanner.dismiss();
     });
   }
+
+  mountIosBanner.dismiss = function () {
+    const bar = document.getElementById('iosInstallBar');
+    if (bar) bar.remove();
+    try { localStorage.setItem(IOS_HINT_KEY, 'dismissed'); } catch (e) {}
+  };
 
   /* Registered after load so it never competes with the first paint. */
   function registerWorker() {
@@ -600,12 +719,60 @@ const LS = (function () {
     });
   }
 
+  /* --------------------------------------------------------------- tab bar
+     Installed on a phone or a tablet, the site gets a bottom tab bar instead
+     of the hamburger menu. Reaching the top of a phone screen to open a menu
+     is the single worst thing about a web app pretending to be an app, and a
+     thumb sits naturally at the bottom.
+
+     Both conditions are required. On a desktop there is a full navigation row
+     already, and in a browser tab a fixed bar at the bottom would collide with
+     the browser's own toolbar. So: standalone, and a narrow screen.
+
+     Rendered from the same page key the header uses, so the active tab and
+     the active nav item can never disagree. */
+  function mountTabBar(page) {
+    if (!isStandalone()) return;
+    if (!window.matchMedia('(max-width: 900px)').matches) return;
+    if (document.getElementById('tabBar')) return;
+
+    const user = Auth.current();
+    const tabs = [
+      { href: 'index.html',   label: 'Latest',    key: 'index',     icon: 'home' },
+      { href: 'reports.html', label: 'Reports',   key: 'reports',   icon: 'doc' }
+    ];
+    if (user) {
+      tabs.push({ href: 'dashboard.html', label: 'Saved', key: 'dashboard', icon: 'bookmark' });
+      tabs.push({ href: 'dashboard.html#account', label: 'Account', key: 'account', icon: 'user' });
+    } else {
+      tabs.push({ href: 'about.html',  label: 'About',   key: 'about',  icon: 'info' });
+      tabs.push({ href: 'signin.html', label: 'Sign in', key: 'signin', icon: 'user' });
+    }
+
+    const bar = document.createElement('nav');
+    bar.className = 'tabbar';
+    bar.id = 'tabBar';
+    bar.setAttribute('aria-label', 'Primary');
+    bar.innerHTML = tabs.map(function (t) {
+      const on = t.key === page;
+      return '<a href="' + t.href + '" class="tabbar__item' + (on ? ' is-active' : '') + '"' +
+        (on ? ' aria-current="page"' : '') + '>' +
+        icon(t.icon) + '<span>' + esc(t.label) + '</span></a>';
+    }).join('');
+
+    document.body.appendChild(bar);
+    /* Keeps the bar from covering the last of the page, and clears the home
+       indicator on a notched iPhone. */
+    document.documentElement.classList.add('has-tabbar');
+  }
+
   function init(page) {
     mountHeader(page);
     mountSchedule();
     mountFooter();
     mountCookieNotice();
     mountInstall();
+    mountTabBar(page);
     registerWorker();
   }
 

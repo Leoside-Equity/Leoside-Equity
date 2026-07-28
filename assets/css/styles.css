@@ -1684,6 +1684,259 @@ h2 { letter-spacing: -.016em; }
 .dlist .r { margin-left: auto; text-align: right; flex: none; }
 
 /* ==========================================================================
+   FLIP CARD
+   Used for the publishing week on the about page. The face is a closed cover;
+   the reverse carries the schedule.
+
+   Both faces are in the DOM from the start and the whole card is a button, so
+   a browser that never runs the flip still has the schedule on the page. That
+   is deliberate: nothing here withholds content pending JavaScript.
+   ========================================================================== */
+.flipcard {
+  perspective: 1400px;
+  margin: 1.6rem 0 2rem;
+}
+.flipcard__inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transform-style: preserve-3d;
+  transition: transform .72s cubic-bezier(.2, .75, .25, 1);
+  /* Set from the taller of the two faces once they are measured, so the block
+     below never jumps as the card turns. */
+  min-height: 15rem;
+}
+.flipcard.is-flipped .flipcard__inner { transform: rotateY(180deg); }
+
+.flipcard__face {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-elev);
+  padding: 1.8rem 1.9rem;
+  -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ front */
+.flipcard__face--front {
+  justify-content: center;
+  background:
+    radial-gradient(120% 90% at 15% 0%, color-mix(in srgb, var(--brass) 12%, transparent), transparent 62%),
+    var(--bg-ink);
+  border-color: var(--line-ink);
+}
+/* The three market colours as a row of rules, so the cover hints at what is
+   underneath without spelling any of it out. */
+.flipcard__marks { display: flex; gap: .4rem; margin-bottom: 1.4rem; }
+.flipcard__mark { width: 2.4rem; height: 3px; border-radius: 2px; opacity: .85; }
+.flipcard__mark--in { background: var(--india); }
+.flipcard__mark--us { background: var(--us); }
+.flipcard__mark--uk { background: var(--uk); }
+
+.flipcard__kicker {
+  font-family: var(--f-ui);
+  font-size: .7rem; font-weight: 600; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--brass-2);
+  margin-bottom: .5rem;
+}
+.flipcard__title {
+  font-family: var(--f-display);
+  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2rem);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text-on-ink);
+}
+.flipcard__hint {
+  display: inline-flex; align-items: center; gap: .4rem;
+  margin-top: auto; padding-top: 1.4rem;
+  font-family: var(--f-ui);
+  font-size: .74rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-on-ink-2);
+}
+.flipcard__hint svg { width: 14px; height: 14px; transition: transform .25s ease; }
+.flipcard__inner:hover .flipcard__hint { color: var(--brass-2); }
+.flipcard__inner:hover .flipcard__hint svg { transform: translateX(3px); }
+
+/* A slow sheen across the cover, so it reads as something to touch. */
+.flipcard__face--front::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.06) 50%, transparent 60%);
+  transform: translateX(-120%);
+  transition: transform .8s ease;
+}
+.flipcard__inner:hover .flipcard__face--front::after { transform: translateX(120%); }
+
+/* ------------------------------------------------------------------- back */
+.flipcard__face--back {
+  transform: rotateY(180deg);
+  padding: 1.5rem 1.6rem;
+}
+.flipcard__backhead {
+  font-family: var(--f-ui);
+  font-size: .7rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: .9rem;
+}
+.flipcard__hint--back { color: var(--text-dim); padding-top: 1rem; }
+.flipcard__hint--back svg { transform: rotate(180deg); }
+.flipcard__inner:hover .flipcard__hint--back { color: var(--brass); }
+.flipcard__inner:hover .flipcard__hint--back svg { transform: rotate(180deg) translateX(3px); }
+
+/* Inside the card the list supplies its own frame, so it drops its border. */
+.cal-list--flush { margin: 0; border: 0; border-radius: 0; background: none; }
+.cal-list--flush li { padding-left: 1rem; }
+
+/* Turning a card in three dimensions is exactly the kind of movement that
+   causes trouble for some people. Reduced motion gets a cross fade instead. */
+@media (prefers-reduced-motion: reduce) {
+  .flipcard__inner { transition: none; }
+  .flipcard.is-flipped .flipcard__inner { transform: none; }
+  .flipcard__face--back { transform: none; opacity: 0; pointer-events: none; }
+  .flipcard.is-flipped .flipcard__face--back { opacity: 1; pointer-events: auto; }
+  .flipcard.is-flipped .flipcard__face--front { opacity: 0; }
+}
+
+/* ==========================================================================
+   APP INSTALL
+   The header button, the panel it opens when the browser gives us no prompt
+   to run, and the one time hint shown to iOS Safari.
+   ========================================================================== */
+.install-btn svg { width: 15px; height: 15px; }
+
+.installhelp {
+  position: fixed; inset: 0; z-index: 320;
+  display: grid; place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg-ink) 72%, transparent);
+  backdrop-filter: blur(4px);
+}
+.installhelp__card {
+  position: relative;
+  width: 100%; max-width: 30rem;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 2rem 2.1rem;
+  box-shadow: var(--shadow-lg);
+}
+.installhelp__card h3 { margin: 0 0 .7rem; font-size: 1.3rem; }
+.installhelp__card p { color: var(--text-dim); font-size: .92rem; line-height: 1.6; margin: 0 0 1rem; }
+.installhelp__close {
+  position: absolute; top: .7rem; right: .7rem;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  background: none; border: 0; border-radius: 8px;
+  color: var(--text-dim); cursor: pointer;
+}
+.installhelp__close:hover { color: var(--text); }
+.installhelp__close svg { width: 16px; height: 16px; }
+
+.installhelp__steps {
+  counter-reset: step;
+  list-style: none;
+  padding: 0; margin: 0 0 1.2rem;
+  display: flex; flex-direction: column; gap: .8rem;
+}
+.installhelp__steps li {
+  position: relative;
+  padding-left: 2.2rem;
+  font-size: .9rem; line-height: 1.55; color: var(--text-2);
+}
+.installhelp__steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute; left: 0; top: -.1rem;
+  width: 1.5rem; height: 1.5rem;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--brass-wash);
+  color: var(--brass);
+  font-size: .74rem; font-weight: 700;
+}
+
+/* A strip along the bottom of Safari on iOS, above the home indicator. */
+.iosbar {
+  position: fixed;
+  left: .75rem; right: .75rem;
+  bottom: calc(.75rem + env(safe-area-inset-bottom, 0px));
+  z-index: 300;
+  display: flex; align-items: center; gap: .8rem;
+  padding: .8rem .9rem;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+}
+.iosbar__icon { border-radius: 8px; flex: none; }
+.iosbar__text {
+  margin: 0; flex: 1;
+  font-size: .8rem; line-height: 1.45; color: var(--text-dim);
+}
+.iosbar__text strong { display: block; color: var(--text); font-size: .86rem; margin-bottom: .1rem; }
+.iosbar__text b { color: var(--text-2); }
+.iosbar__close {
+  flex: none;
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  background: none; border: 0; border-radius: 8px;
+  color: var(--text-dim); cursor: pointer;
+}
+.iosbar__close svg { width: 15px; height: 15px; }
+
+/* ==========================================================================
+   TAB BAR
+   Only drawn when the app is installed AND the screen is phone or tablet
+   sized. In a browser tab this would fight the browser's own bottom toolbar,
+   and on a desktop the header nav already does the job.
+   ========================================================================== */
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 250;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+  backdrop-filter: saturate(150%) blur(14px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.tabbar__item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .22rem;
+  padding: .6rem .3rem .55rem;
+  font-size: .66rem; font-weight: 600; letter-spacing: .04em;
+  color: var(--text-dim);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.tabbar__item svg { width: 21px; height: 21px; }
+.tabbar__item.is-active { color: var(--brass); }
+/* A short rule above the active tab rather than a filled pill, which keeps it
+   in the same visual language as the underlined header nav. */
+.tabbar__item.is-active::before {
+  content: "";
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 26px; height: 2px;
+  background: var(--brass);
+  border-radius: 0 0 2px 2px;
+}
+
+/* Room at the foot of the page so the bar never covers the last of it. */
+.has-tabbar .site-footer { padding-bottom: calc(4.8rem + env(safe-area-inset-bottom, 0px)); }
+.has-tabbar .cookie-notice { bottom: calc(4.9rem + env(safe-area-inset-bottom, 0px)); }
+
+/* ==========================================================================
    STORAGE NOTICE
    A floating bar in the bottom corner. No backdrop, no inset: 0, nothing
    covering the page. Everything the site stores is strictly necessary, so
@@ -1895,24 +2148,33 @@ html, body { overflow-x: clip; }
   position: relative;
   overflow: hidden;
 }
-/* A wordmark sitting behind the foot of the page in brass, cropped by the
-   bottom edge so only the upper part of the letterforms shows. Enough to read
-   as "Leoside" without competing with anything.
+/* The wordmark closing the page out. It sits in its own band underneath the
+   copyright line rather than behind anything, so there is no overlap to
+   manage, and it is cropped just enough by the bottom edge to feel like part
+   of the page rather than a caption.
 
-   Sized and placed to clear the disclosure panel and the copyright line above
-   it: it lives in the band below them, not behind them. */
+   Full word, brass, and large enough to read at a glance. Earlier passes had
+   it either so faint it was unidentifiable or so large it ran through the
+   disclosure panel. */
 .site-footer::before {
-  content: "Leoside";
+  content: "Leoside Equity";
   position: absolute;
-  left: 50%; bottom: -1.6rem;
+  left: 50%; bottom: -.22em;
   transform: translateX(-50%);
   font-family: var(--f-display);
-  font-size: clamp(3.4rem, 8.5vw, 7.5rem);
+  font-size: clamp(2.6rem, 9vw, 6.5rem);
   font-weight: 700;
-  line-height: .78;
-  letter-spacing: -.02em;
-  color: var(--brass-2);
-  opacity: .13;
+  line-height: 1;
+  letter-spacing: -.025em;
+  /* Fades from readable at the top to nothing at the crop, so the cut edge
+     reads as intentional rather than as text running off the screen. */
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--brass-2) 42%, transparent),
+    color-mix(in srgb, var(--brass-2) 6%, transparent) 82%,
+    transparent);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
@@ -1938,9 +2200,9 @@ html, body { overflow-x: clip; }
   display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;
   padding-top: 1.8rem;
   font-size: .82rem;
-  /* Clears the band the wordmark occupies, so the copyright line never sits
-     on top of it. */
-  padding-bottom: 3.2rem;
+  /* Reserves the band the wordmark occupies, with headroom over the mark's own
+     clamp so the two cannot touch at any viewport width. */
+  padding-bottom: clamp(3rem, 10vw, 7rem);
 }
 .footer-legal {
   margin-top: 1.8rem;

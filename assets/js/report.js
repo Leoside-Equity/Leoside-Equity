@@ -172,22 +172,13 @@ Boot.start('reports', function () {
       (sameMarket.length
         ? '<div class="aside-card"><h4>More ' + LS.esc(m.name) + ' coverage</h4><ul>' +
             sameMarket.map(Cards.mini).join('') + '</ul></div>' : '') +
+      /* No publishing calendar in this column. Somebody reading a report knows
+         which market they are in and what day it is; the schedule belongs on
+         the pages that explain the site, not alongside the writing. It is
+         still on the home page, the about page and the method page. */
       (alsoRead.length
         ? '<div class="aside-card"><h4>Recently published</h4><ul>' +
-            alsoRead.map(Cards.mini).join('') + '</ul></div>' : '') +
-      /* Built from the schedule so it cannot describe a week the site no
-         longer publishes. Tag above, days below: side by side, the tags landed
-         wherever the day text happened to end and nothing lined up. */
-      '<div class="aside-card"><h4>Publishing calendar</h4><ul class="cal-list">' +
-        REGION_ORDER.map(function (code) {
-          const r = REGIONS[code];
-          return '<li>' +
-            '<span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
-            LS.esc(r.name) + '</span>' +
-            '<span class="cal-list__when">' + LS.esc(r.dayLabel) + '</span>' +
-          '</li>';
-        }).join('') +
-      '</ul><p class="small muted" style="margin:1rem 0 0">One report a day, seven days a week.</p></div>';
+            alsoRead.map(Cards.mini).join('') + '</ul></div>' : '');
 
     /* ------------------------------------------------------ save button
        Absent for signed out visitors, so everything below is skipped. */

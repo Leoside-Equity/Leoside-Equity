@@ -105,17 +105,82 @@
     m.textContent = SITE.email;
 
     /* The week, read straight off SITE.schedule so this page cannot describe
-       a rota the rest of the site no longer runs. */
+       a rota the rest of the site no longer runs.
+
+       Built as a card that turns over when it is clicked. The face invites the
+       turn; the reverse carries the schedule.
+
+       The reverse is written into the DOM at the same moment as the face, and
+       the whole thing is a <button> wrapping real markup rather than anything
+       revealed later. If the flip never happens the schedule is still there to
+       be read, which is the property that matters. */
     var host = document.getElementById('aboutWeek');
     if (host) {
-      host.innerHTML = '<ul class="cal-list cal-list--doc">' + REGION_ORDER.map(function (code) {
+      var rows = REGION_ORDER.map(function (code) {
         var r = REGIONS[code];
-        /* Tag first so the min-width on it lines every day range up in a
-           column, rather than each tag starting wherever its text ended. */
         return '<li><span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
           LS.esc(r.name) + '</span>' +
           '<span class="cal-list__when">' + LS.esc(r.dayLabel) + '</span></li>';
-      }).join('') + '</ul>';
+      }).join('');
+
+      host.innerHTML =
+        '<div class="flipcard" id="weekFlip">' +
+          '<button class="flipcard__inner" type="button" aria-expanded="false" ' +
+            'aria-controls="weekFlipBack" id="weekFlipBtn">' +
+
+            '<span class="flipcard__face flipcard__face--front">' +
+              '<span class="flipcard__marks" aria-hidden="true">' +
+                REGION_ORDER.map(function (code) {
+                  return '<span class="flipcard__mark flipcard__mark--' + REGIONS[code].slug + '"></span>';
+                }).join('') +
+              '</span>' +
+              '<span class="flipcard__kicker">Seven days, three markets</span>' +
+              '<span class="flipcard__title">How the week divides</span>' +
+              '<span class="flipcard__hint">' + LS.icon('chevron') + 'Turn the card</span>' +
+            '</span>' +
+
+            '<span class="flipcard__face flipcard__face--back" id="weekFlipBack">' +
+              '<span class="flipcard__backhead">The publishing week</span>' +
+              '<ul class="cal-list cal-list--doc cal-list--flush">' + rows + '</ul>' +
+              '<span class="flipcard__hint flipcard__hint--back">' + LS.icon('chevron') + 'Turn back</span>' +
+            '</span>' +
+
+          '</button>' +
+        '</div>';
+
+      var flip = document.getElementById('weekFlip');
+      var btn  = document.getElementById('weekFlipBtn');
+
+      btn.addEventListener('click', function () {
+        var open = flip.classList.toggle('is-flipped');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+
+      /* Both faces are absolutely positioned, so the card has no height of its
+         own. Measure each one and take the taller, otherwise the block below
+         shifts when the card turns. Measured by unsetting the absolute
+         positioning briefly rather than by guessing at a fixed height, which
+         would be wrong the moment the text changed. */
+      function sizeCard() {
+        var faces = flip.querySelectorAll('.flipcard__face');
+        var tallest = 0;
+        Array.prototype.forEach.call(faces, function (face) {
+          var prev = face.style.cssText;
+          face.style.position = 'static';
+          face.style.opacity = '0';
+          tallest = Math.max(tallest, face.offsetHeight);
+          face.style.cssText = prev;
+        });
+        if (tallest) btn.style.minHeight = tallest + 'px';
+      }
+
+      sizeCard();
+      /* Re-measure when the text rewraps at a new width. */
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(sizeCard, 150);
+      });
     }
 
     /* No sign up prompt for someone already signed in. */

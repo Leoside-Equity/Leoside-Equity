@@ -63,20 +63,24 @@ const REGIONS = {
     lede: 'Companies listed in New York, covered through the middle of the week.',
     valuation: true,
     /* Each entry is [when, what]. This is the only place on the site where a
-       market's week is described at all. */
+       market's week is described at all.
+
+       Write each market its own description. Three near identical sentences
+       with the country swapped reads like a template, which is exactly what
+       it was before. */
     days: [
       ['Monday to Wednesday',
-       'One company each day, listed on the NYSE or the Nasdaq. The report covers the business, the numbers behind it and where the share price stands against them.']
+       'Three reports before the week is half over, one company each day from the NYSE or the Nasdaq. Each starts with what the business actually does and ends at what its shares currently cost.']
     ]
   },
   UK: {
     code: 'UK', slug: 'uk', name: 'United Kingdom', currency: '£',
     venues: 'London Stock Exchange',
-    lede: 'Companies listed in London, covered at the end of the week.',
+    lede: 'Companies listed in London, covered as the week closes.',
     valuation: true,
     days: [
       ['Thursday and Friday',
-       'One company each day from the London Stock Exchange, covering the business, the numbers behind it and where the share price stands against them.']
+       'Two reports to close the week out, drawn from the London Stock Exchange. Figures are quoted in sterling, and a company gets the same amount of room here as it would anywhere else.']
     ]
   },
   IN: {
@@ -86,9 +90,9 @@ const REGIONS = {
     valuation: false,
     days: [
       ['Sunday',
-       'Where the market is heading overall. The indices, and the rates, inflation, currency and flows behind them.'],
+       'Where the market is heading as a whole, read through the indices and the rates, inflation, currency and flows sitting underneath them.'],
       ['Saturday',
-       'One sector at a time. What is driving it, where the risk sits, and the case for and against it from here.']
+       'One sector taken on its own. What is driving it at the moment, where the risk is concentrated, and the case for and against it from here.']
     ]
   }
 };
