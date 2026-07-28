@@ -538,7 +538,11 @@ const LS = (function () {
        otherwise   a panel with the exact steps for that browser
 
      Nobody is ever shown a button that does nothing. */
-  let deferredPrompt = null;
+  /* The prompt is captured by an inline script in every page head, because the
+     event fires long before this file runs at the end of the body. Missing it
+     was the whole reason clicking the button showed instructions instead of
+     the browser's own install dialog. */
+  let deferredPrompt = window.__leosideInstall || null;
 
   function isStandalone() {
     return window.matchMedia('(display-mode: standalone)').matches ||
@@ -648,22 +652,29 @@ const LS = (function () {
       icon('download') + '<span>Get the app</span></button>';
 
     document.getElementById('installBtn').addEventListener('click', function () {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function () {
-          deferredPrompt = null;   /* single use */
+      /* Re-read at click time as well as at load. On a slow connection the
+         event can land in the window between this script running and anyone
+         reaching for the button. */
+      const prompt = deferredPrompt || window.__leosideInstall;
+      if (prompt) {
+        prompt.prompt();
+        prompt.userChoice.then(function () {
+          /* Single use. Both references have to go or the next click calls a
+             spent prompt and silently does nothing. */
+          deferredPrompt = null;
+          window.__leosideInstall = null;
         });
         return;
       }
       showInstallHelp();
     });
 
-    /* If the event does turn up, the same button quietly gets the real prompt
-       behind it. Registered after the button exists so there is no window in
-       which the event is captured but nothing can use it. */
+    /* Still listening here in case the event arrives after the head script has
+       done its work, which happens when the service worker registers late. */
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
       deferredPrompt = e;
+      window.__leosideInstall = e;
     });
 
     window.addEventListener('appinstalled', function () {
@@ -720,20 +731,17 @@ const LS = (function () {
   }
 
   /* --------------------------------------------------------------- tab bar
-     Installed on a phone or a tablet, the site gets a bottom tab bar instead
-     of the hamburger menu. Reaching the top of a phone screen to open a menu
-     is the single worst thing about a web app pretending to be an app, and a
-     thumb sits naturally at the bottom.
-
-     Both conditions are required. On a desktop there is a full navigation row
-     already, and in a browser tab a fixed bar at the bottom would collide with
-     the browser's own toolbar. So: standalone, and a narrow screen.
+     On a phone the site gets a bottom tab bar and the hamburger menu goes.
+     Two ways to reach the same four places is one too many, and the one at the
+     top of the screen is the one a thumb cannot reach.
 
      Rendered from the same page key the header uses, so the active tab and
      the active nav item can never disagree. */
   function mountTabBar(page) {
-    if (!isStandalone()) return;
-    if (!window.matchMedia('(max-width: 900px)').matches) return;
+    /* Any phone or tablet, installed or not. Reaching the top of the screen
+       for a menu is the worst part of using a site on a phone, and there is no
+       reason a browser tab should get the worse of the two navigations. */
+    if (!window.matchMedia('(max-width: 780px)').matches) return;
     if (document.getElementById('tabBar')) return;
 
     const user = Auth.current();
@@ -766,6 +774,37 @@ const LS = (function () {
     document.documentElement.classList.add('has-tabbar');
   }
 
+  function removeTabBar() {
+    const bar = document.getElementById('tabBar');
+    if (bar) bar.remove();
+    document.documentElement.classList.remove('has-tabbar');
+  }
+
+  /* Rotating a tablet, or dragging a desktop window narrow, has to move the
+     navigation with it. Without this the bar drawn at phone width survives
+     into a desktop layout, and the hamburger it replaced stays hidden. */
+  function watchWidth(page) {
+    const phone = window.matchMedia('(max-width: 780px)');
+    const sync = function () {
+      if (phone.matches) mountTabBar(page);
+      else removeTabBar();
+    };
+
+    /* Both listeners on purpose. The media query change event is the precise
+       one, firing only when the threshold is actually crossed, but it does not
+       arrive in every environment. window.resize always does, and sync is
+       cheap and idempotent: mountTabBar returns early if the bar is already
+       there, removeTabBar does nothing if it is not. */
+    if (phone.addEventListener) phone.addEventListener('change', sync);
+    else if (phone.addListener) phone.addListener(sync);
+
+    let timer;
+    window.addEventListener('resize', function () {
+      clearTimeout(timer);
+      timer = setTimeout(sync, 120);
+    });
+  }
+
   function init(page) {
     mountHeader(page);
     mountSchedule();
@@ -773,6 +812,7 @@ const LS = (function () {
     mountCookieNotice();
     mountInstall();
     mountTabBar(page);
+    watchWidth(page);
     registerWorker();
   }
 

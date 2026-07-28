@@ -761,14 +761,32 @@ h2 { letter-spacing: -.016em; }
 .weekcard__foot strong { color: var(--text); font-weight: 600; }
 .weekcard__foot span::before { content: "·"; margin-right: .5rem; }
 
-/* Sticky stacking needs a scroll container taller than the viewport to have
-   anything to do. On a short screen the cards simply sit in a column. */
-@media (max-width: 900px), (max-height: 620px) {
-  .weekstack { grid-template-columns: 1fr; gap: 2rem; }
+/* On a narrow screen the two columns become one, but the cards keep stacking.
+   Dropping to a plain column here was what made the section read as one long
+   block of text on a phone: the whole point of the section is that the cards
+   pile up as you go, and that works just as well in a single column.
+
+   The heading stops being sticky, because holding it in place above the stack
+   would eat most of a phone screen. */
+@media (max-width: 900px) {
+  .weekstack { grid-template-columns: 1fr; gap: 1.6rem; }
   .weekstack__intro { position: static; }
   .weekstack__intro p { max-width: none; }
-  .weekstack__cards { padding-bottom: 0; gap: 1rem; }
-  .weekcard { position: static; box-shadow: none; padding: 1.5rem 1.6rem; }
+  .weekstack__cards { padding-bottom: 30vh; gap: 1.1rem; }
+  .weekcard {
+    padding: 1.5rem 1.6rem;
+    /* Tighter offsets so three stacked cards do not push the top one off a
+       short screen. */
+    top: calc(var(--header-h) + 1rem + (var(--i) * .9rem));
+  }
+}
+
+/* Sticky stacking needs room to move. On a genuinely short viewport, a phone
+   in landscape, the cards fall back to a plain column rather than jittering
+   against each other. */
+@media (max-height: 560px) {
+  .weekstack__cards { padding-bottom: 0; }
+  .weekcard { position: static; box-shadow: none; }
 }
 
 /* --------------------------------------------------------------------------
@@ -1026,6 +1044,23 @@ h2 { letter-spacing: -.016em; }
 }
 .rcard h3 a { transition: color .18s ease; }
 .rcard:hover h3 a { color: var(--brass); }
+
+/* The whole card is the link, not just the headline.
+
+   Done with a stretched overlay on the heading's own anchor rather than by
+   wrapping the card in one: the card carries tags and, for an admin, buttons,
+   and a button nested inside an anchor is invalid markup that swallows its
+   own clicks. The overlay sits under anything positioned above it. */
+.rcard h3 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+/* Anything genuinely interactive has to sit above the overlay or it stops
+   being clickable. Admin controls only appear on the list rows today, but the
+   rule belongs with the overlay that would otherwise cover them. */
+.rcard .rrow__admin, .rcard button, .rcard .btn { position: relative; z-index: 2; }
 .rcard__excerpt {
   font-size: .91rem;
   color: var(--text-dim);
@@ -2145,41 +2180,9 @@ html, body { overflow-x: clip; }
   border-top: 1px solid var(--line-ink);
   padding: 3.4rem 0 2rem;
   font-size: .9rem;
-  position: relative;
-  overflow: hidden;
 }
-/* The wordmark closing the page out. It sits in its own band underneath the
-   copyright line rather than behind anything, so there is no overlap to
-   manage, and it is cropped just enough by the bottom edge to feel like part
-   of the page rather than a caption.
-
-   Full word, brass, and large enough to read at a glance. Earlier passes had
-   it either so faint it was unidentifiable or so large it ran through the
-   disclosure panel. */
-.site-footer::before {
-  content: "Leoside Equity";
-  position: absolute;
-  left: 50%; bottom: -.22em;
-  transform: translateX(-50%);
-  font-family: var(--f-display);
-  font-size: clamp(2.6rem, 9vw, 6.5rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -.025em;
-  /* Fades from readable at the top to nothing at the crop, so the cut edge
-     reads as intentional rather than as text running off the screen. */
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--brass-2) 42%, transparent),
-    color-mix(in srgb, var(--brass-2) 6%, transparent) 82%,
-    transparent);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-}
-.site-footer > * { position: relative; z-index: 1; }
+/* No oversized wordmark across the foot of the page. It was tried at several
+   sizes and opacities and never earned its space. */
 .site-footer a { color: var(--text-on-ink-2); transition: color .18s ease; }
 .site-footer a:hover { color: var(--brass-2); }
 .footer-grid {
@@ -2200,9 +2203,6 @@ html, body { overflow-x: clip; }
   display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;
   padding-top: 1.8rem;
   font-size: .82rem;
-  /* Reserves the band the wordmark occupies, with headroom over the mark's own
-     clamp so the two cannot touch at any viewport width. */
-  padding-bottom: clamp(3rem, 10vw, 7rem);
 }
 .footer-legal {
   margin-top: 1.8rem;
@@ -2266,8 +2266,18 @@ html, body { overflow-x: clip; }
   .site-nav a { padding: .85rem 0; border-bottom: 1px solid var(--line-soft); font-size: .98rem; }
   .site-nav a[aria-current="page"]::after { display: none; }
   .site-nav a[aria-current="page"] { color: var(--brass); }
+  /* The hamburger only exists as a fallback. Where the tab bar is drawn it is
+     removed entirely: two routes to the same four pages, one of them out of
+     thumb reach, is one route too many. */
   .nav-toggle { display: inline-flex; }
+  .has-tabbar .nav-toggle,
+  .has-tabbar .site-nav { display: none; }
   .user-pill__name { display: none; }
+
+  /* The install button keeps its icon and drops its label, so it survives the
+     narrow header instead of being pushed out of it. */
+  .install-btn { padding-inline: .55rem; }
+  .install-btn span { display: none; }
   .schedule-strip__today { margin-left: 0; width: 100%; }
   .hero__stats { gap: 1.6rem; }
   .toolbar { padding: .9rem; }
@@ -2280,8 +2290,13 @@ html, body { overflow-x: clip; }
 }
 
 @media (max-width: 560px) {
-  /* Sign in and sign up move into the menu so the bar cannot overflow. */
-  .site-header__actions .btn { display: none; }
+  /* Sign in and sign up move into the menu so the bar cannot overflow.
+
+     The install button is exempt. This rule was hiding it on every phone,
+     which is why "Get the app" never appeared on Android: it is a .btn inside
+     the header actions like the auth links were, but unlike them it has
+     nowhere else to go. It keeps its icon and drops its label above. */
+  .site-header__actions .btn:not(.install-btn) { display: none; }
   .site-nav .nav-auth { display: block; }
   .site-nav .nav-auth:last-child { color: var(--brass); font-weight: 600; border-bottom: 0; }
 

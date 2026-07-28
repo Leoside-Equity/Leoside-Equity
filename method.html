@@ -18,6 +18,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
 <script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<script>/* Captured here, in the head, because beforeinstallprompt fires long before app.js runs at the end of the body. Missing it means no native install prompt is ever available. */
+(function(){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__leosideInstall=e;});})();</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -42,7 +44,6 @@
 
       <h2 id="scope">What gets covered</h2>
       <p>Three markets across the week, with the four pillars below applied to every report. What changes between them is the altitude, not the method.</p>
-      <div id="methodWeek"></div>
       <p>Most reports examine one listed business closely. Some pull back to a sector or to a market as a whole, where the same four questions are asked of many companies at once: aggregate earnings quality rather than one income statement, structural position rather than one firm's moat, valuation against history rather than a single discounted cash flow. A company read without the conditions it operates in is half a picture, and a view on a market that never touches a balance sheet is the other half.</p>
 
       <h2 id="quantitative">1. Quantitative foundation, the numbers</h2>
@@ -98,18 +99,9 @@
 <script src="assets/js/store.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-  Boot.start('method', function () {
-    /* The week, built from SITE.schedule so this page cannot drift out of
-       step with the rota the rest of the site runs. */
-    var host = document.getElementById('methodWeek');
-    if (!host) return;
-    host.innerHTML = '<ul class="cal-list cal-list--doc">' + REGION_ORDER.map(function (code) {
-      var r = REGIONS[code];
-      return '<li><span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
-        LS.esc(r.name) + '</span>' +
-        '<span class="cal-list__when">' + LS.esc(r.dayLabel) + '</span></li>';
-    }).join('') + '</ul>';
-  });
+  /* No schedule list on this page. It is about how a report is written, not
+     when. The week lives on the home page and the about page. */
+  Boot.start('method');
 
   document.getElementById('backBtn').addEventListener('click', function () {
     // Go back if the visitor arrived from somewhere on the site, otherwise home.
