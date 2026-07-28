@@ -42,24 +42,26 @@ Everything is driven by `assets/js/data.js`. Add an object to the top of the `RE
 
 ```js
 {
-  id: 'ticker-2026-08-03',        // unique, used in the URL
-  date: '2026-08-03',             // YYYY-MM-DD, suggests the slot for that day
-  market: 'US',                   // 'IN_MACRO' | 'US' | 'UK' | 'IN_SECTOR'
-  ticker: 'TICKER',               // a symbol, an index, or a sector code
-  company: 'Company Name Inc.',   // the company, the market, or the industry
+  id: 'aapl-2026-08-03',          // unique, used in the URL
+  date: '2026-08-03',             // YYYY-MM-DD, suggests the market for that day
+  market: 'US',                   // 'US' | 'UK' | 'IN'
+  ticker: 'AAPL',                 // a symbol, an index, or a sector
+  company: 'Apple Inc.',          // the company, the market, or the industry
   exchange: 'Nasdaq',
   sector: 'Technology',
-  rating: 'Undervalued',          // Undervalued | Fairly valued | Overvalued
-  target: '$150 to $168',         // an estimate of worth, not a forecast
-  last: '$121',
-  horizon: '12 months',
   readMins: 6,
   title: 'The headline argument in one line',
   standfirst: 'Two sentences that state the thesis before anyone clicks.',
   body: [
     { h: 'Section heading', p: ['First paragraph.', 'Second paragraph.'] },
     { h: 'Another section', p: ['And so on.'] }
-  ]
+  ],
+
+  // Only on markets where REGIONS[market].valuation is true, so US and UK:
+  rating: 'Undervalued',          // Undervalued | Fairly valued | Overvalued
+  target: '$150 to $168',         // an estimate of worth, not a forecast
+  last: '$121',
+  horizon: '12 months'
 }
 ```
 
@@ -74,29 +76,38 @@ With nothing published every page has a proper empty state, so the site still lo
 Set in `SITE.schedule` in `data.js`, keyed by JavaScript weekday where Sunday is 0:
 
 ```js
-schedule: { 0:'IN_MACRO', 1:'US', 2:'US', 3:'US', 4:'UK', 5:'UK', 6:'IN_SECTOR' }
+schedule: { 0:'IN', 1:'US', 2:'US', 3:'US', 4:'UK', 5:'UK', 6:'IN' }
 ```
 
-| Day | Slot | What goes out |
-| --- | --- | --- |
-| Sunday | `IN_MACRO` | The Indian market as a whole. Indices, rates, inflation, flows |
-| Monday to Wednesday | `US` | One NYSE or Nasdaq listed company a day |
-| Thursday and Friday | `UK` | One London listed company a day |
-| Saturday | `IN_SECTOR` | One Indian sector taken apart |
+| Day | Market |
+| --- | --- |
+| Monday to Wednesday | United States |
+| Thursday and Friday | United Kingdom |
+| Saturday and Sunday | India |
 
-Three things come off this one object and nothing restates them by hand: the day strip under the header, the week map on the home page, and the coverage list on the about, method and report pages. `MARKETS[code].days`, `.count` and `.dayLabel` are all derived at the bottom of `data.js`, so "Monday to Wednesday" and "3 reports a week" are computed, never typed.
+**A report belongs to a country, and that is all the site stores about its shape.** `market` is `IN`, `US` or `UK`. An earlier version stored the calendar slot instead — `IN_MACRO` on Sunday, `IN_SECTOR` on Saturday — which froze every Sunday into "the whole market" and stamped the distinction onto every card and tag. Storing the country leaves any day free to be whatever it needs to be. Migration `0013` collapses the old codes, and `LS.market()` still maps them so nothing published under the old scheme breaks.
 
-**Three countries, three colours.** `REGIONS` holds them: India amber, the United States slate blue, the United Kingdom violet. Both Indian slots share amber because they are both India, and a fourth colour would have implied a fourth country.
+**Three countries, three colours.** India amber, the United States slate blue, the United Kingdom violet, from `REGIONS`.
 
-**The site never announces the shape of a report.** Tags say `India`, not `India · Sector`. The split between the Sunday market view and the Saturday sector view is stated once, in `REGIONS.IN.detail`, which is what the home page's market split renders. Everywhere else a report is simply Indian. That keeps any given day free to be whatever it needs to be without a badge elsewhere on the site contradicting it.
+**The Indian week is spelled out in exactly one place**: `REGIONS.IN.days` in `data.js`, which the home page's week section renders. Nowhere else repeats it.
 
-One report record covers every shape. `COVERAGE` exists only to rename four fields on the publishing form, so an index outlook is not typed into a box labelled `Ticker`. Nothing reader facing reads it. No extra columns, no second table.
+`REGIONS[code].weekdays`, `.count`, `.dayLabel` and `.startDay` are derived at the bottom of `data.js`, so "Monday to Wednesday" and "3 reports a week" are computed, never typed. `describeDays()` treats the week as a circle, which is why India reads as "Saturday and Sunday" rather than as the two ends of the week.
+
+**`REGIONS[code].valuation`** decides whether the price fields apply. A note on a whole market or a sector is an argument about direction, not a number against a share price, so India carries no valuation stance, fair value, last price or horizon: the publishing form hides those boxes and the report page omits the block rather than printing dashes.
 
 **It never needs manual updating.** The strip under the header always runs Sunday to Saturday. Which chip is marked as today, and the date printed beside it, come from `new Date()`, which is the reader's own device clock and timezone. Someone in Bengaluru and someone in New York can see different days highlighted at the same moment, each correct for them. Nothing animates or flashes; today simply carries a brass outline.
 
 Report dates are equally safe. A `date` string like `2026-08-03` is parsed with `new Date(2026, 7, 3)` in `LS.parseDate()`, which builds local midnight. Parsing it the obvious way, `new Date('2026-08-03')`, would be read as UTC and would show the wrong weekday for anyone west of Greenwich. That is why the helper exists, and why every date on the site should go through it rather than through `Date.parse`.
 
-Change one value in `schedule` and the header strip, the home page explainer, the market colour coding, the archive filters and the dashboard all follow.
+Change one value in `schedule` and the header strip, the home page week section, the market colour coding, the filters and the dashboard all follow.
+
+## One CSS rule worth knowing about
+
+`html, body` use `overflow-x: clip`, **not** `hidden`. This matters more than it looks.
+
+`overflow-x: hidden` computes `overflow-y: auto`, which turns `<body>` into a scroll container. Every `position: sticky` element on the page then resolves against that container instead of the viewport, and because it never scrolls, nothing sticks. That silently broke the site header and left the reading progress bar — which is offset by the header height — drawing a line across the middle of every article. `clip` does the same clipping job without establishing a scroll container.
+
+If sticky positioning ever stops working somewhere on this site, check for an `overflow: hidden` ancestor first.
 
 ## Two modes
 

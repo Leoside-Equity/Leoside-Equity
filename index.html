@@ -26,7 +26,7 @@
       <div>
         <p class="eyebrow">Equity research, seven days a week</p>
         <h1>Markets explained,<br><em>every single day.</em></h1>
-        <p class="lede">A written research report every day. US equities midweek, London on Thursday and Friday, India across the weekend. Free to read from start to finish.</p>
+        <p class="lede">Leoside Equity publishes a written research report every day. US equities midweek, London on Thursday and Friday, India across the weekend. Free to read from start to finish.</p>
         <div class="hero__cta" id="heroCta"></div>
         <p class="hero__note" id="heroNote"></p>
 
@@ -52,20 +52,21 @@
     </div>
   </section>
 
-  <!-- ------------------------------------------------------- the week map -->
+  <!-- ------------------------------------------------------- the week
+       The heading holds still on the left while the market cards stack up
+       against it on the right. Cards are generated from SITE.schedule by
+       home.js, so this markup never names a day or a country. -->
   <section class="section section--sunken" id="cadence">
     <div class="wrap">
-      <div class="section-head">
-        <div>
+      <div class="weekstack">
+        <div class="weekstack__intro">
           <p class="eyebrow eyebrow--plain">The week</p>
-          <h2>Three markets, one predictable rhythm</h2>
+          <h2>Three markets,<br>one rhythm</h2>
           <p>Every day has a fixed market, so you always know what is coming.</p>
+          <a class="btn btn--ghost" href="method.html">How the research is done</a>
         </div>
+        <div class="weekstack__cards" id="weekCards"></div>
       </div>
-
-      <!-- Both of these are generated from SITE.schedule by home.js -->
-      <div class="weekribbon" id="weekRibbon" role="img" aria-label="The publishing week, day by day"></div>
-      <div class="cadence" id="weekCards"></div>
     </div>
   </section>
 

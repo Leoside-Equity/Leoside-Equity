@@ -534,86 +534,121 @@ p  { margin: 0 0 1.1em; }
 .schedule-strip__today b { color: var(--brass-2); font-weight: 600; }
 
 /* --------------------------------------------------------------------------
-   THE WEEK MAP
-   The publishing week on the home page: a seven day ribbon across the top,
-   then one card per coverage slot. Both are generated from SITE.schedule, so
-   changing the schedule changes this block and nothing has to be redrawn.
+   THE WEEK
+   The publishing week on the home page. The heading holds still on the left
+   while the market cards stack against it on the right: each card is sticky
+   at a slightly lower offset than the one before, so the card above stays
+   visible as a stub behind the one covering it.
+
+   Generated from SITE.schedule, so changing the schedule changes this block.
    -------------------------------------------------------------------------- */
-
-/* The ribbon. Seven slim columns, one per day, carrying a day name and a
-   colour and nothing else. It is a key to the cards below, not a second copy
-   of them. */
-.weekribbon {
+/* No align-items: start here. A start-aligned grid item shrinks to its own
+   content, which leaves a sticky child no room to travel inside, so the
+   heading would scroll away like any other block. Letting the column stretch
+   to the full height of the row is what gives it something to stick within. */
+.weekstack {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: .35rem;
-  margin-bottom: 2rem;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: 4rem;
 }
-.weekribbon__day {
-  position: relative;
-  border-radius: var(--r);
+
+/* Held in place for the length of the stack. The offset clears the sticky
+   header plus a little breathing room. */
+.weekstack__intro {
+  position: sticky;
+  top: calc(var(--header-h) + 3.5rem);
+  align-self: start;
+  height: fit-content;
+}
+.weekstack__intro h2 { margin-bottom: .8rem; }
+.weekstack__intro p { color: var(--text-dim); margin-bottom: 1.6rem; max-width: 34ch; }
+
+.weekstack__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  /* Room below the last card so it can reach its sticky offset and hold there,
+     rather than the section ending and releasing the whole stack at once. A
+     sticky element stops sticking when its containing block runs out, so this
+     padding is what buys the last card its travel. */
+  padding-bottom: 38vh;
+}
+
+.weekcard {
+  position: sticky;
+  /* Each card parks 1.15rem lower than the one before it, which is what
+     leaves the stub of the card behind visible. --i comes from home.js. */
+  top: calc(var(--header-h) + 2.5rem + (var(--i) * 1.15rem));
   background: var(--bg-elev);
-  border: 1px solid var(--line);
-  padding: .55rem .3rem;
-  text-align: center;
-  overflow: hidden;
-}
-/* The colour bar along the top edge is the only thing that says which market. */
-.weekribbon__day::before {
-  content: "";
-  position: absolute; inset: 0 0 auto 0;
-  height: 2px;
-  background: var(--line);
-}
-.weekribbon__day--in::before { background: var(--india); }
-.weekribbon__day--us::before { background: var(--us); }
-.weekribbon__day--uk::before { background: var(--uk); }
-
-.weekribbon__d {
-  display: block;
-  font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--text-dim);
-}
-.weekribbon__day--today { border-color: var(--brass-2); }
-.weekribbon__day--today .weekribbon__d { color: var(--brass); }
-
-/* The cards. One per country, in the order the week meets them. Days, place,
-   one line. Anything more belongs on the about page, not here. */
-.cadence {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-}
-.cadence__card {
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: 1.5rem 1.6rem;
-  background: var(--bg-elev);
-  position: relative;
+  padding: 2rem 2.1rem;
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
-.cadence__card::before {
+/* The colour spine, the only thing that says which market. */
+.weekcard::before {
   content: "";
   position: absolute; inset: 0 auto 0 0;
   width: 3px;
 }
-.cadence__card--in::before { background: var(--india); }
-.cadence__card--us::before { background: var(--us); }
-.cadence__card--uk::before { background: var(--uk); }
-.cadence__card--today { border-color: color-mix(in srgb, var(--brass) 40%, var(--line)); }
+.weekcard--in::before { background: var(--india); }
+.weekcard--us::before { background: var(--us); }
+.weekcard--uk::before { background: var(--uk); }
 
-/* Which days, in the quiet interface face. The country is the headline. */
-.cadence__when {
+.weekcard__top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.4rem;
+}
+.weekcard__n {
   font-family: var(--f-ui);
-  font-size: .72rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  font-size: .72rem; font-weight: 700; letter-spacing: .14em;
   color: var(--text-dim);
-  margin: 0 0 .5rem;
 }
-.cadence__where {
-  font-size: 1.3rem;
-  margin: 0 0 .6rem;
+.weekcard__today {
+  font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--brass);
+  border: 1px solid color-mix(in srgb, var(--brass) 35%, transparent);
+  border-radius: 100px;
+  padding: .2rem .55rem;
 }
-.cadence__meta { font-size: .88rem; color: var(--text-dim); margin: 0; line-height: 1.6; }
+.weekcard__when {
+  font-family: var(--f-ui);
+  font-size: .72rem; font-weight: 600; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 .35rem;
+}
+.weekcard__where { font-size: 1.65rem; margin: 0 0 1rem; }
+.weekcard__body { font-size: .92rem; line-height: 1.7; color: var(--text-dim); margin: 0; }
+
+/* Only drawn for a market whose week has more than one job in it. */
+.weekcard__days { margin: 0; display: flex; flex-direction: column; gap: .9rem; }
+.weekcard__days dt {
+  font-family: var(--f-ui);
+  font-size: .68rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: .25rem;
+}
+.weekcard__days dd { margin: 0; font-size: .9rem; line-height: 1.65; color: var(--text-dim); }
+
+.weekcard__foot {
+  display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
+  margin: 1.6rem 0 0; padding-top: 1.1rem;
+  border-top: 1px solid var(--line-soft, var(--line));
+  font-size: .8rem; color: var(--text-dim);
+}
+.weekcard__foot strong { color: var(--text); font-weight: 600; }
+.weekcard__foot span::before { content: "·"; margin-right: .5rem; }
+
+/* Sticky stacking needs a scroll container taller than the viewport to have
+   anything to do. On a short screen the cards simply sit in a column. */
+@media (max-width: 900px), (max-height: 620px) {
+  .weekstack { grid-template-columns: 1fr; gap: 2rem; }
+  .weekstack__intro { position: static; }
+  .weekstack__intro p { max-width: none; }
+  .weekstack__cards { padding-bottom: 0; gap: 1rem; }
+  .weekcard { position: static; box-shadow: none; padding: 1.5rem 1.6rem; }
+}
 
 /* --------------------------------------------------------------------------
    10. Hero
@@ -888,14 +923,19 @@ p  { margin: 0 0 1.1em; }
 /* --------------------------------------------------------------------------
    13. Article / report page
    -------------------------------------------------------------------------- */
+/* Reading progress. Pinned to the very top edge of the viewport, above the
+   header rather than below it: anchored at var(--header-h) it tracked where
+   the header would be, so once the page scrolled it drew a line straight
+   through the middle of the text. */
 .readbar {
   position: fixed;
-  top: var(--header-h);
+  top: 0;
   left: 0;
   height: 2px;
-  background: var(--brass);
+  background: linear-gradient(90deg, var(--brass), var(--brass-2));
   width: 0;
-  z-index: 55;
+  z-index: 70;
+  transition: width .12s linear;
 }
 
 .article-head { padding: 3rem 0 2rem; border-bottom: 1px solid var(--line); }
@@ -1017,14 +1057,25 @@ p  { margin: 0 0 1.1em; }
 .aside-card a:hover { color: var(--brass); }
 .aside-card .when { font-size: .76rem; color: var(--text-dim); display: block; margin-top: .25rem; }
 
-/* The publishing week inside an aside card: days on the left, slot on the
-   right. Overrides the block layout aside-card gives its list items. */
+/* The publishing week inside an aside card. Tag first, days underneath, each
+   row stacked. Laying them out side by side left every tag at a different
+   x position, because the day ranges are different lengths. */
 .cal-list li {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: .6rem; flex-wrap: wrap;
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: .4rem;
 }
-.cal-list__when { font-size: .82rem; color: var(--text-dim); }
 .cal-list__what { flex: 0 0 auto; }
+.cal-list__when { font-size: .82rem; color: var(--text-dim); }
+
+/* On the wider document pages the same list reads better as a row, where
+   there is room for the days to sit alongside without wrapping. */
+.cal-list--doc li {
+  flex-direction: row; align-items: center;
+  gap: .9rem;
+}
+/* Wide enough for the longest market name, so the day ranges beside them all
+   start on the same line rather than each one following its own tag. */
+.cal-list--doc .cal-list__what { min-width: 10rem; }
 
 /* The same list standing on its own in a prose page rather than in an aside. */
 .cal-list--doc {
@@ -1400,7 +1451,18 @@ p  { margin: 0 0 1.1em; }
    Long tickers, pasted URLs and citation lists must never push a container
    sideways or slide under the aside column.
    ========================================================================== */
-html, body { overflow-x: hidden; }
+/* `clip`, not `hidden`.
+
+   overflow-x: hidden computes to overflow-y: auto, which turns <body> into a
+   scroll container. Every position: sticky element then resolves against that
+   container instead of the viewport, and since it never scrolls, nothing ever
+   sticks: the site header stopped pinning and the reading progress bar, which
+   is offset by the header height, ended up drawing a line across the middle
+   of the article.
+
+   overflow-x: clip does the same job without establishing a scroll container,
+   so sticky keeps working. */
+html, body { overflow-x: clip; }
 
 .prose, .doc-body, .rcard, .rrow, .panel, .aside-card, .empty, .notice, .gate {
   min-width: 0;
@@ -1572,7 +1634,6 @@ html, body { overflow-x: hidden; }
 @media (max-width: 900px) {
   .auth { grid-template-columns: 1fr; }
   .auth__panel { order: 2; padding: 2.5rem 24px; }
-  .cadence { grid-template-columns: 1fr; }
   .rrow { grid-template-columns: 1fr; gap: .6rem; }
   .rrow__right { flex-direction: row; align-items: center; }
   .rrow__when { order: -1; }
@@ -1667,7 +1728,7 @@ html, body { overflow-x: hidden; }
 
   /* Anything that lays buttons or tags out in a line. */
   .row, .section-head, .toolbar, .gate__actions, .gate__perks,
-  .hero__cta, .cta-band .row, .article-meta, .cadence__head { flex-wrap: wrap; }
+  .hero__cta, .cta-band .row, .article-meta { flex-wrap: wrap; }
   .section-head { align-items: flex-start; gap: .9rem; }
   .section-head .btn { flex: 0 0 auto; }
 

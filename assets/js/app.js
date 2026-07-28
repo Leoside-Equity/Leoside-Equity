@@ -88,32 +88,33 @@ const LS = (function () {
   function marketForToday() { return SITE.schedule[new Date().getDay()]; }
   function weekOfMonth(iso) { return Math.floor((parseDate(iso).getDate() - 1) / 7) + 1; }
 
-  /* ------------------------------------------------------ coverage lookups
-     Reports written under the old two slot week still carry `IN` or `US`.
-     Those codes no longer exist in MARKETS, and a report is not worth losing
-     over a label, so they are mapped onto the closest current slot instead of
-     being allowed to throw. Anything else unrecognised falls back to Sunday's
-     slot, which keeps a page rendering while the console says what happened.
+  /* -------------------------------------------------------- market lookup
+     A report carries a country code. Reports written under earlier versions
+     of the week carry a slot code instead, and a report is not worth losing
+     over a label, so those are mapped onto the country they belonged to.
+     Anything else unrecognised falls back to Sunday's market, which keeps the
+     page rendering while the console says what happened.
 
-     Every part of the site goes through market() rather than reading MARKETS
+     Every part of the site goes through market() rather than reading REGIONS
      directly, so there is exactly one place where an unknown code is handled. */
-  const LEGACY_MARKETS = { IN: 'IN_SECTOR', US: 'US' };
+  const LEGACY_MARKETS = { IN_MACRO: 'IN', IN_SECTOR: 'IN' };
   const warned = {};
 
   function market(code) {
-    if (MARKETS[code]) return MARKETS[code];
+    if (REGIONS[code]) return REGIONS[code];
     const mapped = LEGACY_MARKETS[code];
-    if (mapped && MARKETS[mapped]) return MARKETS[mapped];
+    if (mapped && REGIONS[mapped]) return REGIONS[mapped];
     if (!warned[code]) {
       warned[code] = true;
       console.warn('[Leoside] unknown market code "' + code + '". Falling back to ' + SITE.schedule[0] + '.');
     }
-    return MARKETS[SITE.schedule[0]];
+    return REGIONS[SITE.schedule[0]];
   }
-  /* The labels for a report's key statistics, which depend on whether it is a
-     company note, a market outlook or a sector study. */
-  function coverage(code) { return COVERAGE[market(code).kind]; }
-  function regionOf(code) { return REGIONS[market(code).region]; }
+
+  /* Whether the price fields apply. A note on a whole market or a sector is an
+     argument about direction rather than a number against a share price, so
+     the valuation block is omitted entirely rather than printed empty. */
+  function hasValuation(code) { return !!market(code).valuation; }
 
   function reportUrl(id) { return 'report.html?id=' + encodeURIComponent(id); }
   function byId(id) { return REPORTS.find(function (r) { return r.id === id; }); }
@@ -150,7 +151,7 @@ const LS = (function () {
      what a day is allowed to contain. */
   function marketTag(code) {
     const m = market(code);
-    return '<span class="tag tag--' + m.slug + '"><span class="dot"></span>' + esc(m.short) + '</span>';
+    return '<span class="tag tag--' + m.slug + '"><span class="dot"></span>' + esc(m.name) + '</span>';
   }
   /* "Fairly valued" has a space in it, so the modifier is slugified rather
      than lowercased, otherwise it would split into two class names. */
@@ -336,7 +337,7 @@ const LS = (function () {
     for (let i = 0; i < 7; i++) {
       const m = market(SITE.schedule[i]);
       dots += '<span class="daydot daydot--' + m.slug + (i === todayIdx ? ' daydot--today' : '') + '"' +
-        ' title="' + DAYS[i] + ' · ' + esc(m.regionName) + '">' +
+        ' title="' + DAYS[i] + ' · ' + esc(m.name) + '">' +
         '<span class="sq"></span>' + DAYS_S[i] + '</span>';
     }
 
@@ -346,7 +347,7 @@ const LS = (function () {
     return '<div class="schedule-strip"><div class="wrap schedule-strip__inner">' +
       '<span class="schedule-strip__label">Publishing calendar</span>' +
       '<div class="daydots">' + dots + '</div>' +
-      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; Today covers <b>' + esc(m.regionName) + '</b></span>' +
+      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; Today covers <b>' + esc(m.name) + '</b></span>' +
     '</div></div>';
   }
   function mountSchedule() {
@@ -365,8 +366,7 @@ const LS = (function () {
         '<div class="footer-grid">' +
           '<div class="footer-about">' +
             brand('index.html') +
-            '<p>' + esc(SITE.tagline) + ' The Indian market on Sunday, American companies through midweek, ' +
-            'London on Thursday and Friday, and an Indian sector on Saturday.</p>' +
+            '<p>' + esc(SITE.tagline) + ' One written report a day, free to read.</p>' +
           '</div>' +
           '<div><h5>Research</h5><ul>' +
             '<li><a href="reports.html">All reports</a></li>' +
@@ -483,7 +483,7 @@ const LS = (function () {
     MONTHS: MONTHS, MONTHS_S: MONTHS_S, DAYS: DAYS, DAYS_S: DAYS_S,
     parseDate: parseDate, toISO: toISO, fmtDate: fmtDate,
     marketForDate: marketForDate, marketForToday: marketForToday, weekOfMonth: weekOfMonth,
-    market: market, coverage: coverage, regionOf: regionOf,
+    market: market, hasValuation: hasValuation,
     displayName: displayName, avatar: avatar,
     reportUrl: reportUrl, byId: byId,
     paragraphs: paragraphs, wordCount: wordCount, preview: preview, excerpt: excerpt,

@@ -27,8 +27,7 @@ Boot.start('reports', function () {
 
   function legacyRegion(code) {
     if (!code) return '';
-    const m = MARKETS[code];
-    return m ? m.region : (REGIONS[code] ? code : '');
+    return REGIONS[code] ? code : (LS.market(code) || {}).code || '';
   }
 
   /* Sector list is derived from the data so new reports need no config. */

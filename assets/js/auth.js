@@ -329,12 +329,44 @@ const Auth = (function () {
       if (changes.name !== undefined) row.name = changes.name;
       if (changes.market !== undefined) row.market = normaliseMarkets(changes.market);
       if (changes.avatar !== undefined) row.avatar = changes.avatar;
-      return SB.from('profiles').update(row).eq('id', cachedUser.id)
-        .then(function (res) {
-          if (res.error) return { ok: false, error: res.error.message };
+
+      const write = function (payload) {
+        return SB.from('profiles').update(payload).eq('id', cachedUser.id);
+      };
+
+      return Promise.resolve(write(row)).then(function (res) {
+        if (!res.error) {
           Object.assign(cachedUser, changes);
           return { ok: true, user: cachedUser };
+        }
+
+        /* A project that has not run migration 0013 has no avatar column, and
+           PostgREST rejects the whole statement over it. Losing a name change
+           because a photo could not be stored is the wrong trade, so the rest
+           is saved and the message says exactly what is missing. */
+        const missingAvatar = row.avatar !== undefined &&
+          /avatar/i.test(res.error.message || '') &&
+          /(column|schema cache|find)/i.test(res.error.message || '');
+
+        if (!missingAvatar) return { ok: false, error: res.error.message };
+
+        const withoutAvatar = Object.assign({}, row);
+        delete withoutAvatar.avatar;
+        if (!Object.keys(withoutAvatar).length) {
+          return { ok: false, error: 'Profile photos need database migration 0013. Everything else still saves.' };
+        }
+
+        return Promise.resolve(write(withoutAvatar)).then(function (retry) {
+          if (retry.error) return { ok: false, error: retry.error.message };
+          const applied = Object.assign({}, changes);
+          delete applied.avatar;
+          Object.assign(cachedUser, applied);
+          return {
+            ok: true, user: cachedUser, partial: true,
+            error: 'Saved, except the photo: this project still needs database migration 0013.'
+          };
         });
+      });
     },
 
     /* Resolves to { ok } or { ok: false, error }. Nothing is swallowed here

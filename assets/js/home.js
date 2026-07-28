@@ -73,7 +73,6 @@ Boot.start('index', function () {
         '<h3>The first report is on its way</h3>' +
         '<p>Nothing has been published yet. Create a free account now and every report will be open to you from day one.</p>' +
         '<div class="ticker-line"><span>Today covers</span><b>' + LS.esc(m.name) + '</b></div>' +
-        '<div class="ticker-line"><span>Today\'s format</span><b>' + LS.esc(LS.coverage(m.code).label) + '</b></div>' +
         '<div class="ticker-line"><span>Publishing</span><b>Seven days a week</b></div>' +
         '<div class="ticker-line"><span>Cost</span><b>Free</b></div>' +
         '<a class="btn btn--block" style="margin-top:1.1rem" href="' +
@@ -104,45 +103,46 @@ Boot.start('index', function () {
   const ctaButtons = document.getElementById('ctaButtons');
   if (ctaButtons && signedIn) ctaButtons.remove();
 
-  /* ------------------------------------------------------------ week map
-     The ribbon and the cards below it are both built from SITE.schedule, so
-     rewriting the week in data.js rewrites this whole section. Nothing here
-     names a day or a market directly. */
+  /* ---------------------------------------------------------------- week
+     One card per country, in the order the week meets them. The cards stack
+     as the page scrolls: each is sticky at a slightly lower offset than the
+     one before, so the card above stays visible as a stub behind it.
+
+     Everything is read from SITE.schedule and REGIONS, so rewriting the week
+     in data.js rewrites this section. Nothing here names a day or a country.
+
+     This is the one place on the site where the shape of a market's week is
+     spelled out. Everywhere else a report is simply Indian, American or
+     British, which leaves any given day free to be whatever it needs to be. */
   const todayIdx = new Date().getDay();
-
-  /* The seven day ribbon. One column per day, carrying nothing but the day and
-     a colour: the cards underneath say which colour is which country, so
-     repeating it seven times only added noise. */
-  const ribbon = document.getElementById('weekRibbon');
-  if (ribbon) {
-    ribbon.innerHTML = LS.DAYS_S.map(function (label, i) {
-      const m = LS.market(SITE.schedule[i]);
-      const today = i === todayIdx;
-      return '<div class="weekribbon__day weekribbon__day--' + m.slug + (today ? ' weekribbon__day--today' : '') + '"' +
-        ' title="' + LS.esc(LS.DAYS[i] + ' · ' + m.regionName) + '">' +
-        '<span class="weekribbon__d">' + label + '</span>' +
-      '</div>';
-    }).join('');
-  }
-
-  /* One card per country, in the order the week meets them, not one per slot.
-     Three cards rather than four is the honest shape: there are three markets,
-     and India happening twice at the weekend is a detail of the calendar. Each
-     card is a country, its days, and one line. Nothing else. */
   const cards = document.getElementById('weekCards');
-  if (cards) {
-    const order = Object.keys(REGIONS).sort(function (a, b) {
-      return REGIONS[a].startDay - REGIONS[b].startDay;
-    });
-    const todayRegion = LS.market(SITE.schedule[todayIdx]).region;
 
-    cards.innerHTML = order.map(function (code) {
+  if (cards) {
+    const todayMarket = LS.market(SITE.schedule[todayIdx]).code;
+
+    cards.innerHTML = REGION_ORDER.map(function (code, i) {
       const r = REGIONS[code];
-      return '<article class="cadence__card cadence__card--' + r.slug +
-        (code === todayRegion ? ' cadence__card--today' : '') + '">' +
-        '<p class="cadence__when">' + LS.esc(r.dayLabel) + '</p>' +
-        '<h3 class="cadence__where">' + LS.esc(r.name) + '</h3>' +
-        '<p class="cadence__meta">' + LS.esc(r.detail) + '</p>' +
+
+      /* A market with one entry has already said its days in the eyebrow, so
+         the row would only repeat them. A market with several, which is India
+         and its two different weekend jobs, needs them called out. */
+      const rows = r.days.length > 1
+        ? '<dl class="weekcard__days">' + r.days.map(function (d) {
+            return '<div><dt>' + LS.esc(d[0]) + '</dt><dd>' + LS.esc(d[1]) + '</dd></div>';
+          }).join('') + '</dl>'
+        : '<p class="weekcard__body">' + LS.esc(r.days[0][1]) + '</p>';
+
+      return '<article class="weekcard weekcard--' + r.slug + '" style="--i:' + i + '">' +
+        '<div class="weekcard__top">' +
+          '<span class="weekcard__n">' + String(i + 1).padStart(2, '0') + '</span>' +
+          (code === todayMarket ? '<span class="weekcard__today">Today</span>' : '') +
+        '</div>' +
+        '<p class="weekcard__when">' + LS.esc(r.dayLabel) + '</p>' +
+        '<h3 class="weekcard__where">' + LS.esc(r.name) + '</h3>' +
+        rows +
+        '<p class="weekcard__foot"><strong>' + r.count +
+          (r.count === 1 ? ' report' : ' reports') + ' a week</strong>' +
+          '<span>' + LS.esc(r.venues) + '</span></p>' +
       '</article>';
     }).join('');
   }

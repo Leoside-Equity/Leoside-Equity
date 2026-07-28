@@ -54,7 +54,10 @@ Boot.start('reports', function () {
     const unlocked = !report.locked;
 
     const m = LS.market(report.market);
-    const region = LS.regionOf(report.market);
+    /* A note on a whole market or a sector is an argument about direction, not
+       a number against a share price, so the valuation block is left out
+       rather than printed as a row of dashes. */
+    const priced = LS.hasValuation(report.market);
 
     document.title = report.ticker + ': ' + report.title + ' · ' + SITE.name;
     const metaTag = document.querySelector('meta[name="description"]');
@@ -65,12 +68,12 @@ Boot.start('reports', function () {
       '<nav class="crumbs" aria-label="Breadcrumb">' +
         '<a href="index.html">Home</a><span>/</span>' +
         '<a href="reports.html">Reports</a><span>/</span>' +
-        '<a href="reports.html?region=' + region.code + '">' + LS.esc(region.name) + '</a><span>/</span>' +
+        '<a href="reports.html?region=' + m.code + '">' + LS.esc(m.name) + '</a><span>/</span>' +
         LS.esc(report.ticker) +
       '</nav>' +
       '<div class="row" style="gap:.5rem;margin-bottom:1.2rem">' +
         LS.marketTag(report.market) +
-        LS.ratingTag(report.rating) +
+        (priced ? LS.ratingTag(report.rating) : '') +
         '<span class="tag tag--line">' + LS.esc(report.sector || 'Uncategorised') + '</span>' +
       '</div>' +
       '<h1>' + LS.esc(report.title) + '</h1>' +
@@ -86,16 +89,15 @@ Boot.start('reports', function () {
           ? '<button class="btn btn--ghost btn--sm" id="saveBtn" type="button" style="margin-left:auto"></button>'
           : '') +
       '</div>' +
-      /* Neutral labels. "Fair value" and "Last price" read correctly whether
-         the subject is a company, an index or a sector, which keeps the page
-         from announcing the format of every report it shows. */
-      '<div class="keystats">' +
-        stat('Valuation stance', report.rating) +
-        stat('Fair value', report.target) +
-        stat('Last price', report.last) +
-        stat('Projected horizon', report.horizon) +
-        stat('Market', m.regionName) +
-      '</div>';
+      (priced
+        ? '<div class="keystats">' +
+            stat('Valuation stance', report.rating) +
+            stat('Fair value', report.target) +
+            stat('Last price', report.last) +
+            stat('Projected horizon', report.horizon) +
+            stat('Market', m.name) +
+          '</div>'
+        : '');
 
     /* -------------------------------------------------------------- body */
     const disclosure =
@@ -103,10 +105,14 @@ Boot.start('reports', function () {
         '<b>Disclosure and disclaimer</b>' +
         'This report is general commentary produced for education and discussion. It is not personalised investment advice, ' +
         'not an offer or solicitation to buy or sell any security, and not a recommendation suited to your particular ' +
-        'circumstances. A valuation stance describes how the current market price compares with our estimate of ' +
-        'intrinsic value on the date of writing. It is an observation about price, not an instruction to transact: ' +
-        'Undervalued does not mean buy, Overvalued does not mean sell, and neither says anything about whether a ' +
-        'security is suitable for you. A fair value band is an estimate produced by a model, not a price forecast. ' +
+        'circumstances. ' +
+        (priced
+          ? 'A valuation stance describes how the current market price compares with our estimate of ' +
+            'intrinsic value on the date of writing. It is an observation about price, not an instruction to transact: ' +
+            'Undervalued does not mean buy, Overvalued does not mean sell, and neither says anything about whether a ' +
+            'security is suitable for you. A fair value band is an estimate produced by a model, not a price forecast. '
+          : 'Views about where a market or a sector may go are opinions about a great many businesses at once, ' +
+            'which makes them broader rather than safer. Nothing here is a prediction or a signal to act. ') +
         SITE.name + ' is not a registered investment adviser or research analyst. Figures are drawn from ' +
         'public filings and other sources believed to be reliable but are not guaranteed to be accurate or complete. ' +
         'A position may be held in any security mentioned, whether or not a disclosure appears here. ' +
@@ -149,11 +155,9 @@ Boot.start('reports', function () {
         '</div>' + disclosure;
     }
 
-    /* ------------------------------------------------------------- aside
-       Related coverage is by region, not by slot, so a Sunday Indian market
-       note can point at a Saturday Indian sector study. */
+    /* ------------------------------------------------------------- aside */
     const sameMarket = REPORTS.filter(function (r) {
-      return LS.market(r.market).region === m.region && r.id !== report.id;
+      return LS.market(r.market).code === m.code && r.id !== report.id;
     }).slice(0, 4);
     const alsoRead = REPORTS.filter(function (r) { return r.id !== report.id; }).slice(0, 4);
 
@@ -166,20 +170,24 @@ Boot.start('reports', function () {
           '<p class="small muted" style="margin-bottom:1rem">Sign in to read the full report, keep a saved list, and get a dashboard organised by month and week.</p>' +
           '<a class="btn btn--sm btn--block" href="signup.html">Create an account</a></div>') +
       (sameMarket.length
-        ? '<div class="aside-card"><h4>More ' + LS.esc(region.name) + ' coverage</h4><ul>' +
+        ? '<div class="aside-card"><h4>More ' + LS.esc(m.name) + ' coverage</h4><ul>' +
             sameMarket.map(Cards.mini).join('') + '</ul></div>' : '') +
       (alsoRead.length
         ? '<div class="aside-card"><h4>Recently published</h4><ul>' +
             alsoRead.map(Cards.mini).join('') + '</ul></div>' : '') +
       /* Built from the schedule so it cannot describe a week the site no
-         longer publishes. */
+         longer publishes. Tag above, days below: side by side, the tags landed
+         wherever the day text happened to end and nothing lined up. */
       '<div class="aside-card"><h4>Publishing calendar</h4><ul class="cal-list">' +
-        weekRegions().map(function (r) {
-          return '<li><span class="cal-list__when">' + LS.esc(r.dayLabel) + '</span>' +
+        REGION_ORDER.map(function (code) {
+          const r = REGIONS[code];
+          return '<li>' +
             '<span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
-            LS.esc(r.name) + '</span></li>';
+            LS.esc(r.name) + '</span>' +
+            '<span class="cal-list__when">' + LS.esc(r.dayLabel) + '</span>' +
+          '</li>';
         }).join('') +
-      '</ul><p class="small muted" style="margin:.9rem 0 0">One report a day, seven days a week.</p></div>';
+      '</ul><p class="small muted" style="margin:1rem 0 0">One report a day, seven days a week.</p></div>';
 
     /* ------------------------------------------------------ save button
        Absent for signed out visitors, so everything below is skipped. */
@@ -277,10 +285,4 @@ Boot.start('reports', function () {
       LS.esc(value || '—') + '</span></div>';
   }
 
-  /* The three markets, in the order the week meets them. */
-  function weekRegions() {
-    return Object.keys(REGIONS)
-      .sort(function (a, b) { return REGIONS[a].startDay - REGIONS[b].startDay; })
-      .map(function (code) { return REGIONS[code]; });
-  }
 });

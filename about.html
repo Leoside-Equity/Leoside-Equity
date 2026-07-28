@@ -100,14 +100,13 @@
        a rota the rest of the site no longer runs. */
     var host = document.getElementById('aboutWeek');
     if (host) {
-      var order = Object.keys(REGIONS).sort(function (a, b) {
-        return REGIONS[a].startDay - REGIONS[b].startDay;
-      });
-      host.innerHTML = '<ul class="cal-list cal-list--doc">' + order.map(function (code) {
+      host.innerHTML = '<ul class="cal-list cal-list--doc">' + REGION_ORDER.map(function (code) {
         var r = REGIONS[code];
-        return '<li><span class="cal-list__when"><strong>' + LS.esc(r.dayLabel) + '</strong></span>' +
-          '<span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
-          LS.esc(r.name) + '</span></li>';
+        /* Tag first so the min-width on it lines every day range up in a
+           column, rather than each tag starting wherever its text ended. */
+        return '<li><span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
+          LS.esc(r.name) + '</span>' +
+          '<span class="cal-list__when">' + LS.esc(r.dayLabel) + '</span></li>';
       }).join('') + '</ul>';
     }
 

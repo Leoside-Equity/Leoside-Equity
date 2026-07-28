@@ -26,14 +26,10 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
   if (perks) {
     /* The coverage line is read off the schedule rather than written out, so
        the sign up page cannot promise a week the site no longer publishes. */
-    const order = Object.keys(REGIONS).sort(function (a, b) {
-      return REGIONS[a].startDay - REGIONS[b].startDay;
-    });
-
     const items = [
       ['Every report, in full', 'Reports open end to end rather than stopping at the summary.'],
-      [order.length + ' markets, seven days',
-        order.map(function (code) {
+      [REGION_ORDER.length + ' markets, seven days',
+        REGION_ORDER.map(function (code) {
           return REGIONS[code].name + ' ' + REGIONS[code].dayLabel;
         }).join(', ') + '.'],
       ['Your own dashboard', 'Reports organised by month, week and day, plus what you have saved.'],

@@ -104,54 +104,47 @@ Boot.start('admin', function () {
   const marketEl = document.getElementById('f-market');
   const marketHint = document.getElementById('marketHint');
 
-  /* The options come from the schedule, in the order the week runs, so adding
-     or moving a slot in data.js is the only edit that change ever needs. */
-  (function buildMarketOptions() {
-    const seen = [];
-    for (let i = 0; i < 7; i++) {
-      const code = SITE.schedule[i];
-      if (seen.indexOf(code) === -1) seen.push(code);
-    }
-    marketEl.innerHTML = seen.map(function (code) {
-      const m = MARKETS[code];
-      return '<option value="' + code + '">' + LS.esc(m.name) + ' · ' + LS.esc(m.dayLabel) + '</option>';
-    }).join('');
-  })();
+  /* Three markets, in the order the week meets them. Nothing about the shape
+     of the report is chosen here: that is visible from reading it. */
+  marketEl.innerHTML = REGION_ORDER.map(function (code) {
+    return '<option value="' + code + '">' + LS.esc(REGIONS[code].name) + '</option>';
+  }).join('');
 
-  /* One record covers three shapes of report, so the labels move instead of
-     the fields. Writing an index outlook under a box labelled "Ticker" is how
-     you end up with a database full of tickers that are not tickers. */
-  const FIELD_HINTS = {
-    stock:  { ticker: 'AAPL',     company: 'Apple Inc.',                 target: '$150 to $168', last: '$121' },
-    macro:  { ticker: 'NIFTY 50', company: 'The Indian equity market',   target: '24,800 to 26,100', last: '25,400' },
-    sector: { ticker: 'IT',       company: 'Indian information technology', target: '38,000 to 41,500', last: '36,900' }
+  /* The valuation block only applies where there is a share price to compare
+     against. On a market or a sector note those boxes are hidden rather than
+     left blank, so nothing can be half filled in and saved. */
+  const valuationBlock = document.getElementById('valuationBlock');
+  const PLACEHOLDERS = {
+    US: { ticker: 'AAPL',     company: 'Apple Inc.',              exchange: 'Nasdaq', sector: 'Technology' },
+    UK: { ticker: 'SHEL',     company: 'Shell plc',               exchange: 'LSE',    sector: 'Energy' },
+    IN: { ticker: 'NIFTY 50', company: 'The Indian equity market', exchange: 'NSE',    sector: 'Index' }
   };
 
-  function paintFieldLabels() {
-    const c = LS.coverage(marketEl.value);
-    const hint = FIELD_HINTS[c.kind] || FIELD_HINTS.stock;
+  function paintMarket() {
+    const code = marketEl.value;
+    const priced = LS.hasValuation(code);
+    const hint = PLACEHOLDERS[code] || PLACEHOLDERS.US;
 
-    document.getElementById('l-ticker').textContent = c.subject;
-    document.getElementById('l-company').textContent = c.holder;
-    document.getElementById('l-target').textContent = c.target;
-    document.getElementById('l-last').textContent = c.last;
+    valuationBlock.hidden = !priced;
+    /* A hidden required field blocks submission with a message nobody can see,
+       so requiredness follows visibility. */
+    Array.prototype.forEach.call(valuationBlock.querySelectorAll('input, select'), function (el) {
+      el.disabled = !priced;
+    });
 
     document.getElementById('f-ticker').placeholder = hint.ticker;
     document.getElementById('f-company').placeholder = hint.company;
-    document.getElementById('f-target').placeholder = hint.target;
-    document.getElementById('f-last').placeholder = hint.last;
-  }
+    document.getElementById('f-exchange').placeholder = hint.exchange;
+    document.getElementById('f-sector').placeholder = hint.sector;
 
-  function paintMarket() {
-    paintFieldLabels();
     if (!dateEl.value) { marketHint.textContent = ''; return; }
     const usual = LS.marketForDate(dateEl.value);
-    if (marketEl.value === usual) {
+    if (code === usual) {
       marketHint.textContent = LS.fmtDate(dateEl.value, 'short') + ' is normally ' + LS.market(usual).name + '.';
       marketHint.style.color = '';
     } else {
       marketHint.textContent = 'Note: ' + LS.fmtDate(dateEl.value, 'short') + ' is normally a ' +
-        LS.market(usual).name + ' day. Publishing as ' + LS.market(marketEl.value).name + ' anyway.';
+        LS.market(usual).name + ' day. Publishing as ' + LS.market(code).name + ' anyway.';
       marketHint.style.color = 'var(--brass)';
     }
   }
@@ -404,7 +397,7 @@ Boot.start('admin', function () {
         '<span style="min-width:0;flex:1 1 220px">' +
           '<span class="t">' + LS.esc(r.title) + '</span>' +
           '<span class="m">' + LS.esc(r.ticker) + ' · ' + LS.fmtDate(r.published_on, 'short') +
-            ' · ' + LS.esc(LS.market(r.market).short) + '</span>' +
+            ' · ' + LS.esc(LS.market(r.market).name) + '</span>' +
         '</span>' +
         '<span class="r" style="display:inline-flex;gap:.35rem;align-items:center">' +
           '<a class="btn btn--ghost btn--sm" href="admin.html?edit=' + encodeURIComponent(r.id) + '">Edit</a>' +
@@ -564,6 +557,12 @@ Boot.start('admin', function () {
     const ticker = document.getElementById('f-ticker').value.trim().toUpperCase();
     const words = body.map(function (s) { return s.p.join(' '); }).join(' ').split(/\s+/).filter(Boolean).length;
 
+    /* On a market with no single share price behind it the valuation boxes are
+       hidden, so they are sent empty rather than carrying whatever was typed
+       before the market was switched. Otherwise a stance chosen for a US note
+       could survive a change to India and be stored against it. */
+    const priced = LS.hasValuation(marketEl.value);
+
     const payload = {
       id: editingId || (ticker.toLowerCase() + '-' + date),
       published_on: date,
@@ -573,10 +572,10 @@ Boot.start('admin', function () {
       company: document.getElementById('f-company').value.trim(),
       exchange: document.getElementById('f-exchange').value.trim(),
       sector: document.getElementById('f-sector').value.trim(),
-      rating: document.getElementById('f-rating').value,
-      target: document.getElementById('f-target').value.trim(),
-      last_price: document.getElementById('f-last').value.trim(),
-      horizon: document.getElementById('f-horizon').value.trim(),
+      rating: priced ? document.getElementById('f-rating').value : null,
+      target: priced ? document.getElementById('f-target').value.trim() : '',
+      last_price: priced ? document.getElementById('f-last').value.trim() : '',
+      horizon: priced ? document.getElementById('f-horizon').value.trim() : '',
       read_mins: String(Math.max(1, Math.round(words / 200))),
       title: document.getElementById('f-title').value.trim(),
       standfirst: document.getElementById('f-standfirst').value.trim(),

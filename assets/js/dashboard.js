@@ -207,7 +207,7 @@ Boot.start('dashboard', function () {
     return '<div class="dash-hero">' +
         '<div><h1>' + greeting + ', ' + LS.esc((user.name || '').split(' ')[0]) + '</h1>' +
         '<p>' + LS.fmtDate(todayISO) + '. Today is a <strong>' +
-        LS.esc(LS.market(todayCode).regionName) + '</strong> day.</p></div>' +
+        LS.esc(LS.market(todayCode).name) + '</strong> day.</p></div>' +
       '</div>' +
 
       '<div class="stat-row">' +
@@ -224,7 +224,7 @@ Boot.start('dashboard', function () {
         ? '<div class="panel">' +
             '<div class="panel__head"><h3>Nothing published yet</h3>' +
               '<span class="tag tag--' + LS.market(todayCode).slug + '"><span class="dot"></span>' +
-              LS.esc(LS.market(todayCode).short) + ' today</span></div>' +
+              LS.esc(LS.market(todayCode).name) + ' today</span></div>' +
             '<div class="panel__body">' +
               '<p class="muted" style="margin-bottom:1.1rem">Your account is ready. The moment reports start going out they will ' +
               'appear here, on the reports page, and in the month by month list on the left.</p>' +
@@ -438,7 +438,7 @@ Boot.start('dashboard', function () {
               const dropped = (ever || 0) - (now || 0);
               return '<tr>' +
                 '<td><span class="t">' + LS.esc(r.title) + '</span>' +
-                  '<span class="m">' + LS.esc(r.ticker) + ' · ' + LS.esc(LS.market(r.market).short) + ' · ' +
+                  '<span class="m">' + LS.esc(r.ticker) + ' · ' + LS.esc(LS.market(r.market).name) + ' · ' +
                   LS.fmtDate(r.published_on, 'short') +
                   (r.is_published ? '' : ' · <strong>draft</strong>') + '</span></td>' +
                 '<td class="n tnum">' + num(r.reads) + '</td>' +
@@ -523,7 +523,7 @@ Boot.start('dashboard', function () {
   function viewDay(date) {
     const items = (byDate[date] || []);
     const m = LS.market(LS.marketForDate(date));
-    const scheduled = 'Scheduled coverage: ' + m.regionName + '.';
+    const scheduled = 'Scheduled coverage: ' + m.name + '.';
     if (!items.length) {
       return head(LS.fmtDate(date), scheduled) +
         '<div class="empty"><h3>Nothing published on this date</h3><p>Pick another day from the list on the left.</p></div>';
@@ -773,8 +773,11 @@ Boot.start('dashboard', function () {
         saveBtn.disabled = false;
         const note = document.getElementById('savedNote');
         if (res && res.ok) {
-          note.className = 'notice notice--ok';
-          note.innerHTML = LS.icon('check') + '<span>Saved.</span>';
+          /* A partial save is a success with a caveat, not a failure: the name
+             and markets went in and only the photo did not. */
+          note.className = res.partial ? 'notice notice--info' : 'notice notice--ok';
+          note.innerHTML = LS.icon(res.partial ? 'info' : 'check') +
+            '<span>' + LS.esc(res.partial ? res.error : 'Saved.') + '</span>';
           /* The header carries the name and the picture, so it has to be
              redrawn or it keeps showing what things used to be. */
           pendingAvatar = undefined;
