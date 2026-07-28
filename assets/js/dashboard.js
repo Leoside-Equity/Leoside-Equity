@@ -107,7 +107,7 @@ Boot.start('dashboard', function () {
 
         const daysHtml = items.map(function (r) {
           return '<a class="tree__day' + (r.date === activeDate ? ' is-active' : '') + '" href="#day=' + r.date + '">' +
-            '<span class="sq sq--' + r.market.toLowerCase() + '"></span>' +
+            '<span class="sq sq--' + LS.market(r.market).slug + '"></span>' +
             LS.fmtDate(r.date, 'day') +
             '<span class="tk">' + LS.esc(r.ticker) + '</span></a>';
         }).join('');
@@ -206,11 +206,12 @@ Boot.start('dashboard', function () {
        with it, and repeating it just adds a second front door. */
     return '<div class="dash-hero">' +
         '<div><h1>' + greeting + ', ' + LS.esc((user.name || '').split(' ')[0]) + '</h1>' +
-        '<p>' + LS.fmtDate(todayISO) + '. Today is a <strong>' + MARKETS[todayCode].name + '</strong> day.</p></div>' +
+        '<p>' + LS.fmtDate(todayISO) + '. Today is a <strong>' + LS.esc(LS.market(todayCode).name) +
+        '</strong> day · ' + LS.esc(LS.coverage(todayCode).label) + '.</p></div>' +
       '</div>' +
 
       '<div class="stat-row">' +
-        statCard('Reports available', REPORTS.length, 'across both markets') +
+        statCard('Reports available', REPORTS.length, 'across every market') +
         statCard('Published this week', thisWeek.length, 'last seven days') +
         statCard('Saved', saved.length, 'in your list') +
         statCard('Not yet read', unread.length, 'waiting for you') +
@@ -222,8 +223,8 @@ Boot.start('dashboard', function () {
       (!REPORTS.length
         ? '<div class="panel">' +
             '<div class="panel__head"><h3>Nothing published yet</h3>' +
-              '<span class="tag tag--' + todayCode.toLowerCase() + '"><span class="dot"></span>' +
-              MARKETS[todayCode].short + ' today</span></div>' +
+              '<span class="tag tag--' + LS.market(todayCode).slug + '"><span class="dot"></span>' +
+              LS.esc(LS.market(todayCode).short) + ' today</span></div>' +
             '<div class="panel__body">' +
               '<p class="muted" style="margin-bottom:1.1rem">Your account is ready. The moment reports start going out they will ' +
               'appear here, on the reports page, and in the month by month list on the left.</p>' +
@@ -437,7 +438,7 @@ Boot.start('dashboard', function () {
               const dropped = (ever || 0) - (now || 0);
               return '<tr>' +
                 '<td><span class="t">' + LS.esc(r.title) + '</span>' +
-                  '<span class="m">' + LS.esc(r.ticker) + ' · ' + MARKETS[r.market].short + ' · ' +
+                  '<span class="m">' + LS.esc(r.ticker) + ' · ' + LS.esc(LS.market(r.market).short) + ' · ' +
                   LS.fmtDate(r.published_on, 'short') +
                   (r.is_published ? '' : ' · <strong>draft</strong>') + '</span></td>' +
                 '<td class="n tnum">' + num(r.reads) + '</td>' +
@@ -480,10 +481,9 @@ Boot.start('dashboard', function () {
         const peak = daily.reduce(function (m, d) { return Math.max(m, d.n || 0); }, 1);
 
         el.innerHTML =
-          /* No digest figure. The daily email was removed from signup and from
-             account settings, so digest_opt_in is now a column nobody can set
-             and everybody defaults to true on. Reporting it would be a number
-             that looks like a result and means nothing. */
+          /* No digest figure. There is no email digest and no mailing list;
+             migration 0011 dropped the column that used to record an opt in
+             nobody was ever asked for. */
           '<div class="stat-row">' +
             statBlock('Total accounts', s.readers_total, 'all time') +
             statBlock('New this week', s.readers_week, 'last seven days') +
@@ -505,9 +505,10 @@ Boot.start('dashboard', function () {
 
           '<div class="panel"><div class="panel__head"><h3>Which market readers pick</h3></div>' +
             '<div class="panel__body"><div class="stat-row" style="margin:0">' +
-              statBlock('Both markets', s.market_both, 'want everything') +
-              statBlock('India', s.market_in, 'Sunday to Wednesday') +
-              statBlock('United States', s.market_us, 'Thursday to Saturday') +
+              statBlock('Every market', s.market_both, 'want everything') +
+              statBlock(REGIONS.IN.name, s.market_in, marketDays('IN')) +
+              statBlock(REGIONS.US.name, s.market_us, marketDays('US')) +
+              statBlock(REGIONS.UK.name, s.market_uk, marketDays('UK')) +
             '</div>' +
             '<p class="muted small" style="margin:1rem 0 0">This is what people chose at signup. ' +
             'A heavy lean one way is worth knowing before you plan the week.</p>' +
@@ -518,14 +519,24 @@ Boot.start('dashboard', function () {
     return host;
   }
 
+  /* "Sunday" or "Monday to Wednesday" for a region, read back off the schedule
+     so the audience panel cannot describe a week that no longer runs. */
+  function marketDays(regionCode) {
+    const labels = Object.keys(MARKETS)
+      .filter(function (code) { return MARKETS[code].region === regionCode && MARKETS[code].count; })
+      .map(function (code) { return MARKETS[code].dayLabel; });
+    return labels.join(' · ') || 'not currently scheduled';
+  }
+
   function viewDay(date) {
     const items = (byDate[date] || []);
-    const code = LS.marketForDate(date);
+    const m = LS.market(LS.marketForDate(date));
+    const scheduled = 'Scheduled coverage: ' + m.name + ' · ' + LS.coverage(m.code).label + '.';
     if (!items.length) {
-      return head(LS.fmtDate(date), 'Scheduled coverage: ' + MARKETS[code].name + '.') +
+      return head(LS.fmtDate(date), scheduled) +
         '<div class="empty"><h3>Nothing published on this date</h3><p>Pick another day from the list on the left.</p></div>';
     }
-    return head(LS.fmtDate(date), 'Scheduled coverage: ' + MARKETS[code].name + '. ' +
+    return head(LS.fmtDate(date), scheduled + ' ' +
         items.length + (items.length === 1 ? ' report' : ' reports') + ' published.') +
       '<div class="card-grid">' + items.map(Cards.card).join('') + '</div>';
   }
@@ -545,10 +556,13 @@ Boot.start('dashboard', function () {
             '<div class="hint">Changing the address on an account is not supported yet. Write in if you need it moved.</div></div>' +
           '<div class="form-group"><label for="acMarket">Market you follow most</label>' +
             '<select class="select" id="acMarket">' +
-              '<option value="both"' + (user.market === 'both' ? ' selected' : '') + '>Both markets</option>' +
-              '<option value="IN"' + (user.market === 'IN' ? ' selected' : '') + '>Mostly India</option>' +
-              '<option value="US"' + (user.market === 'US' ? ' selected' : '') + '>Mostly United States</option>' +
-            '</select></div>' +
+              '<option value="both"' + (user.market === 'both' ? ' selected' : '') + '>Every market</option>' +
+              Object.keys(REGIONS).map(function (code) {
+                return '<option value="' + code + '"' + (user.market === code ? ' selected' : '') +
+                  '>Mostly ' + LS.esc(REGIONS[code].name) + '</option>';
+              }).join('') +
+            '</select>' +
+            '<div class="hint">This only shapes what we highlight for you. Everything stays readable either way.</div></div>' +
           '<button class="btn" id="acSave">Save changes</button>' +
         '</div>' +
       '</div>' +

@@ -34,6 +34,16 @@
     <div class="doc-body">
       <p class="lede">We believe sustainable market outperformance stems from rigorous, independent bottom up analysis coupled with a clear understanding of macroeconomic catalysts. Our daily research reports are built on a four pillar framework designed to separate market hype from fundamental value.</p>
 
+      <h2 id="formats">Three formats, one framework</h2>
+      <p>The week runs three kinds of report, and the four pillars below apply to all of them. What changes is the altitude, not the method.</p>
+      <div id="methodWeek"></div>
+      <ul>
+        <li><strong>A single company</strong>, Monday through Friday. The four pillars applied to one business: its numbers, its moat, its valuation and what could force the market to reprice it.</li>
+        <li><strong>An index and the macro picture</strong>, on Sunday. The same four questions asked of the Indian market as a whole. Aggregate earnings quality instead of one income statement, the structural position of the index instead of one company's moat, index level valuation against history instead of a single discounted cash flow, and the rate, inflation and flow data that could move all of it at once.</li>
+        <li><strong>A sector</strong>, on Saturday. The middle ground. A sector has economics of its own, shared pressures and a valuation range, and it can be taken apart the same way a company can.</li>
+      </ul>
+      <p>Working across all three is the point rather than a compromise. A company read without the macro conditions it operates in is half a picture, and a view on a market that never touches an individual balance sheet is the other half.</p>
+
       <h2 id="quantitative">1. Quantitative foundation, the numbers</h2>
       <p>We start by stripping away market sentiment to analyse the raw financial health of a business.</p>
       <ul>
@@ -42,7 +52,7 @@
       </ul>
 
       <h2 id="moat">2. Qualitative moat assessment, the business</h2>
-      <p>A great spreadsheet does not make a great business. We look deep into a company's competitive advantage to determine its long term viability.</p>
+      <p>A great spreadsheet does not make a great business. We look deep into a company's competitive advantage to determine its long term viability, and at sector or index level we ask the same question of the whole group: what protects these earnings, and from whom.</p>
       <ul>
         <li><strong>Pricing power.</strong> Can the company raise prices in an inflationary environment without losing market share?</li>
         <li><strong>Structural moats.</strong> We analyse network effects, switching costs, regulatory barriers and intellectual property that protect the firm from disruption.</li>
@@ -87,7 +97,24 @@
 <script src="assets/js/store.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-  Boot.start('method');
+  Boot.start('method', function () {
+    /* The week, built from SITE.schedule so this page cannot drift out of
+       step with the rota the rest of the site runs. */
+    var host = document.getElementById('methodWeek');
+    if (!host) return;
+    var seen = [];
+    for (var i = 0; i < 7; i++) {
+      if (seen.indexOf(SITE.schedule[i]) === -1) seen.push(SITE.schedule[i]);
+    }
+    host.innerHTML = '<ul class="cal-list cal-list--doc">' + seen.map(function (code) {
+      var slot = LS.market(code);
+      return '<li><span class="cal-list__when"><strong>' + LS.esc(slot.dayLabel) + '</strong> · ' +
+        LS.esc(LS.coverage(code).label) + '</span>' +
+        '<span class="cal-list__what tag tag--' + slot.slug + '"><span class="dot"></span>' +
+        LS.esc(slot.short) + '</span></li>';
+    }).join('') + '</ul>';
+  });
+
   document.getElementById('backBtn').addEventListener('click', function () {
     // Go back if the visitor arrived from somewhere on the site, otherwise home.
     if (document.referrer && document.referrer.indexOf(location.origin) === 0 && history.length > 1) {

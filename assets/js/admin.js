@@ -104,15 +104,54 @@ Boot.start('admin', function () {
   const marketEl = document.getElementById('f-market');
   const marketHint = document.getElementById('marketHint');
 
+  /* The options come from the schedule, in the order the week runs, so adding
+     or moving a slot in data.js is the only edit that change ever needs. */
+  (function buildMarketOptions() {
+    const seen = [];
+    for (let i = 0; i < 7; i++) {
+      const code = SITE.schedule[i];
+      if (seen.indexOf(code) === -1) seen.push(code);
+    }
+    marketEl.innerHTML = seen.map(function (code) {
+      const m = MARKETS[code];
+      return '<option value="' + code + '">' + LS.esc(m.name) + ' · ' + LS.esc(m.dayLabel) + '</option>';
+    }).join('');
+  })();
+
+  /* One record covers three shapes of report, so the labels move instead of
+     the fields. Writing an index outlook under a box labelled "Ticker" is how
+     you end up with a database full of tickers that are not tickers. */
+  const FIELD_HINTS = {
+    stock:  { ticker: 'AAPL',     company: 'Apple Inc.',                 target: '$150 to $168', last: '$121' },
+    macro:  { ticker: 'NIFTY 50', company: 'The Indian equity market',   target: '24,800 to 26,100', last: '25,400' },
+    sector: { ticker: 'IT',       company: 'Indian information technology', target: '38,000 to 41,500', last: '36,900' }
+  };
+
+  function paintFieldLabels() {
+    const c = LS.coverage(marketEl.value);
+    const hint = FIELD_HINTS[c.kind] || FIELD_HINTS.stock;
+
+    document.getElementById('l-ticker').textContent = c.subject;
+    document.getElementById('l-company').textContent = c.holder;
+    document.getElementById('l-target').textContent = c.target;
+    document.getElementById('l-last').textContent = c.last;
+
+    document.getElementById('f-ticker').placeholder = hint.ticker;
+    document.getElementById('f-company').placeholder = hint.company;
+    document.getElementById('f-target').placeholder = hint.target;
+    document.getElementById('f-last').placeholder = hint.last;
+  }
+
   function paintMarket() {
+    paintFieldLabels();
     if (!dateEl.value) { marketHint.textContent = ''; return; }
     const usual = LS.marketForDate(dateEl.value);
     if (marketEl.value === usual) {
-      marketHint.textContent = LS.fmtDate(dateEl.value, 'short') + ' is normally ' + MARKETS[usual].name + '.';
+      marketHint.textContent = LS.fmtDate(dateEl.value, 'short') + ' is normally ' + LS.market(usual).name + '.';
       marketHint.style.color = '';
     } else {
       marketHint.textContent = 'Note: ' + LS.fmtDate(dateEl.value, 'short') + ' is normally a ' +
-        MARKETS[usual].name + ' day. Publishing as ' + MARKETS[marketEl.value].name + ' anyway.';
+        LS.market(usual).name + ' day. Publishing as ' + LS.market(marketEl.value).name + ' anyway.';
       marketHint.style.color = 'var(--brass)';
     }
   }
@@ -171,7 +210,11 @@ Boot.start('admin', function () {
     if (!row) { resetForm(); return; }
     editingId = row.id;
     dateEl.value = row.published_on;
-    marketEl.value = row.market || LS.marketForDate(row.published_on);
+    /* A report written under the old week carries a code the dropdown no
+       longer offers. market() maps it onto the closest current slot; without
+       that the select would silently fall to blank and the next save would
+       write an empty market. */
+    marketEl.value = LS.market(row.market || LS.marketForDate(row.published_on)).code;
     document.getElementById('f-ticker').value = row.ticker || '';
     document.getElementById('f-exchange').value = row.exchange || '';
     document.getElementById('f-sector').value = row.sector || '';
@@ -361,7 +404,7 @@ Boot.start('admin', function () {
         '<span style="min-width:0;flex:1 1 220px">' +
           '<span class="t">' + LS.esc(r.title) + '</span>' +
           '<span class="m">' + LS.esc(r.ticker) + ' · ' + LS.fmtDate(r.published_on, 'short') +
-            ' · ' + MARKETS[r.market].short + '</span>' +
+            ' · ' + LS.esc(LS.market(r.market).short) + '</span>' +
         '</span>' +
         '<span class="r" style="display:inline-flex;gap:.35rem;align-items:center">' +
           '<a class="btn btn--ghost btn--sm" href="admin.html?edit=' + encodeURIComponent(r.id) + '">Edit</a>' +

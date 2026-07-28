@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Leoside Equity · Daily equity research on Indian and US markets</title>
-<meta name="description" content="A written equity research report every day. Indian markets Sunday to Wednesday, US markets Thursday to Saturday. Free to read with an account.">
+<title>Leoside Equity · Daily equity research on the Indian, US and UK markets</title>
+<meta name="description" content="A written equity research report every day. The Indian market on Sunday, US companies midweek, London on Thursday and Friday, and an Indian sector on Saturday. Free to read with an account.">
 <link rel="icon" href="assets/img/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,7 +26,7 @@
       <div>
         <p class="eyebrow">Equity research, seven days a week</p>
         <h1>Markets explained,<br><em>every single day.</em></h1>
-        <p class="lede">Leoside Equity publishes a written research report every day. Indian markets from Sunday to Wednesday, United States markets from Thursday to Saturday. Free to read from start to finish.</p>
+        <p class="lede">Leoside Equity publishes a written research report every day. The Indian market on Sunday, an American company Monday through Wednesday, a London listing on Thursday and Friday, and an Indian sector on Saturday. Free to read from start to finish.</p>
         <div class="hero__cta" id="heroCta"></div>
         <p class="hero__note" id="heroNote"></p>
 
@@ -44,7 +44,7 @@
         <div>
           <p class="eyebrow eyebrow--plain">The desk</p>
           <h2>Recent research</h2>
-          <p id="latestSub">The most recent coverage across both markets.</p>
+          <p id="latestSub">The most recent coverage across every market.</p>
         </div>
         <a class="btn btn--ghost" href="reports.html">Browse all reports</a>
       </div>
@@ -52,34 +52,20 @@
     </div>
   </section>
 
-  <!-- --------------------------------------------------- market cadence -->
+  <!-- ------------------------------------------------------- the week map -->
   <section class="section section--sunken" id="cadence">
     <div class="wrap">
       <div class="section-head">
         <div>
-          <p class="eyebrow eyebrow--plain">How the week is split</p>
-          <h2>Two markets, one predictable rhythm</h2>
-          <p>Every day of the week has a fixed market. You always know what is coming and when.</p>
+          <p class="eyebrow eyebrow--plain">How the week is built</p>
+          <h2>Three markets, one predictable rhythm</h2>
+          <p>Every day of the week has a fixed job. You always know what is coming and when.</p>
         </div>
       </div>
 
-      <div class="cadence">
-        <article class="cadence__card cadence__card--in">
-          <span class="tag tag--in"><span class="dot"></span>India</span>
-          <h3 style="margin-top:1rem">Sunday to Wednesday</h3>
-          <p class="cadence__meta">Companies listed on the NSE and the BSE.</p>
-          <div class="cadence__days" id="daysIN" role="img" aria-label="Indian market coverage runs Sunday through Wednesday"></div>
-          <p class="cadence__meta"><strong>Four reports a week</strong>, published on Sunday, Monday, Tuesday and Wednesday.</p>
-        </article>
-
-        <article class="cadence__card cadence__card--us">
-          <span class="tag tag--us"><span class="dot"></span>United States</span>
-          <h3 style="margin-top:1rem">Thursday to Saturday</h3>
-          <p class="cadence__meta">Companies listed on the NYSE and the Nasdaq.</p>
-          <div class="cadence__days" id="daysUS" role="img" aria-label="US market coverage runs Thursday through Saturday"></div>
-          <p class="cadence__meta"><strong>Three reports a week</strong>, published on Thursday, Friday and Saturday.</p>
-        </article>
-      </div>
+      <!-- Both of these are generated from SITE.schedule by home.js -->
+      <div class="weekribbon" id="weekRibbon" role="img" aria-label="The publishing week, day by day"></div>
+      <div class="cadence" id="weekCards"></div>
     </div>
   </section>
 

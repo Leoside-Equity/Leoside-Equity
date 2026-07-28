@@ -35,22 +35,24 @@
         <div class="stat-row" style="margin-bottom:1.4rem">
           <div class="form-group"><label for="f-date">Publishing date</label>
             <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-date" type="date" required></div>
-          <div class="form-group"><label for="f-market">Market</label>
-            <select class="select" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-market">
-              <option value="IN">Indian markets</option>
-              <option value="US">US markets</option>
-            </select>
+          <!-- Options are built by admin.js from SITE.schedule, so this list
+               cannot fall out of step with the week the site publishes. -->
+          <div class="form-group"><label for="f-market">Coverage slot</label>
+            <select class="select" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-market"></select>
             <div class="hint" id="marketHint"></div></div>
-          <div class="form-group"><label for="f-ticker">Ticker</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-ticker" type="text" placeholder="RELIANCE" required></div>
+          <!-- The next four labels and placeholders are rewritten by admin.js
+               to match the chosen slot: a ticker for a company note, an index
+               for a market outlook, a sector for a sector study. -->
+          <div class="form-group"><label for="f-ticker" id="l-ticker">Ticker</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-ticker" type="text" placeholder="AAPL" required></div>
           <div class="form-group"><label for="f-exchange">Exchange</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-exchange" type="text" placeholder="NSE"></div>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-exchange" type="text" placeholder="Nasdaq"></div>
           <div class="form-group"><label for="f-sector">Sector</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-sector" type="text" placeholder="Financials"></div>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-sector" type="text" placeholder="Technology"></div>
         </div>
 
-        <div class="form-group"><label for="f-company">Company name</label>
-          <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-company" type="text" placeholder="Reliance Industries" required></div>
+        <div class="form-group"><label for="f-company" id="l-company">Company name</label>
+          <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-company" type="text" placeholder="Apple Inc." required></div>
 
         <div class="form-group"><label for="f-title">Headline</label>
           <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-title" type="text" placeholder="The argument in one line" required></div>
@@ -64,10 +66,10 @@
               <option>Undervalued</option><option selected>Fairly valued</option><option>Overvalued</option>
             </select>
             <div class="hint">How the market price compares with your estimate of intrinsic value.</div></div>
-          <div class="form-group"><label for="f-target">Fair value band</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-target" type="text" placeholder="₹1,650 to ₹1,790"></div>
-          <div class="form-group"><label for="f-last">Last close</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-last" type="text" placeholder="₹1,395"></div>
+          <div class="form-group"><label for="f-target" id="l-target">Fair value band</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-target" type="text" placeholder="$150 to $168"></div>
+          <div class="form-group"><label for="f-last" id="l-last">Last close</label>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-last" type="text" placeholder="$121"></div>
           <div class="form-group"><label for="f-horizon">Projected horizon</label>
             <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-horizon" type="text" value="12 months"></div>
         </div>

@@ -17,6 +17,14 @@ Supabase dashboard → **SQL Editor** → New query. Paste the whole of `supabas
 
 That creates the profiles, reports, saved and history tables, and the three functions that do the real work.
 
+Then run every remaining file in `supabase/migrations/` **in numerical order**, `0002` through `0011`.
+
+`0011` is not optional. It is the one that lets the new publishing week exist: until it runs, `reports.market` still carries a check constraint allowing only `IN` and `US`, and saving anything from `admin.html` under `IN_MACRO`, `UK` or `IN_SECTOR` will be rejected by the database with a constraint violation. It also drops `profiles.digest_opt_in`, since there is no mailing list.
+
+> **Do not re-run `0004` through `0008` once `0011` has been applied.** Those files rebuild `admin_stats()` with a `digest_opt_in` count in it, and `0006` ends with a verification `select` over the same column. `0011` drops that column, so re-running an earlier file afterwards either fails outright or quietly reinstates a broken `admin_stats()` and takes the dashboard's Audience panel down with it. If you need to re-apply an earlier migration for some other reason, run `0011` again straight after it to put things back.
+
+Each migration up to `0010` is individually safe to re-run in order; it is only the backwards jump across `0011` that bites.
+
 **Check it worked.** In the same editor run:
 
 ```sql
@@ -34,6 +42,8 @@ Empty table, no error. If instead you see "permission denied", the RLS setup is 
 ## 2. Turn on email confirmation
 
 Authentication → **Sign In / Providers** → Email. Leave "Confirm email" **on**. It costs one extra click for the reader and stops fake signups inflating your numbers.
+
+This is the only email the site sends, alongside password resets and account notices. There is no digest and no mailing list, and the privacy policy and terms both state that plainly, so do not wire one up without changing them first.
 
 Authentication → **URL Configuration**:
 

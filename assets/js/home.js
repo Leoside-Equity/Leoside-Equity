@@ -32,9 +32,14 @@ Boot.start('index', function () {
   /* ------------------------------------------------------------ hero stats */
   const stats = document.getElementById('heroStats');
   if (stats) {
+    /* Counted from the schedule rather than typed in, so the numbers cannot
+       drift out of step with the week the site actually publishes. */
+    const regions = {};
+    for (let i = 0; i < 7; i++) regions[LS.market(SITE.schedule[i]).region] = true;
+
     const items = [];
     if (REPORTS.length) items.push([REPORTS.length, 'Reports published', true]);
-    items.push([2, 'Markets covered', true]);
+    items.push([Object.keys(regions).length, 'Markets covered', true]);
     items.push([7, 'Reports a week', true]);
     items.push(['Free', 'Now and always', false]);
     stats.innerHTML = items.map(function (i) {
@@ -62,12 +67,13 @@ Boot.start('index', function () {
         '<a class="btn btn--block" style="margin-top:1.1rem" href="' + LS.reportUrl(latest.id) + '">' +
           'Open the report ' + LS.icon('arrow') + '</a>';
     } else {
-      const code = LS.marketForToday();
+      const m = LS.market(LS.marketForToday());
       feature.innerHTML =
         '<span class="kicker">Coming soon</span>' +
         '<h3>The first report is on its way</h3>' +
         '<p>Nothing has been published yet. Create a free account now and every report will be open to you from day one.</p>' +
-        '<div class="ticker-line"><span>Today covers</span><b>' + MARKETS[code].name + '</b></div>' +
+        '<div class="ticker-line"><span>Today covers</span><b>' + LS.esc(m.name) + '</b></div>' +
+        '<div class="ticker-line"><span>Today\'s format</span><b>' + LS.esc(LS.coverage(m.code).label) + '</b></div>' +
         '<div class="ticker-line"><span>Publishing</span><b>Seven days a week</b></div>' +
         '<div class="ticker-line"><span>Cost</span><b>Free</b></div>' +
         '<a class="btn btn--block" style="margin-top:1.1rem" href="' +
@@ -98,19 +104,59 @@ Boot.start('index', function () {
   const ctaButtons = document.getElementById('ctaButtons');
   if (ctaButtons && signedIn) ctaButtons.remove();
 
-  /* ------------------------------------------------------- cadence chips */
+  /* ------------------------------------------------------------ week map
+     The ribbon and the cards below it are both built from SITE.schedule, so
+     rewriting the week in data.js rewrites this whole section. Nothing here
+     names a day or a market directly. */
   const todayIdx = new Date().getDay();
-  function dayChips(code) {
-    return LS.DAYS_S.map(function (d, i) {
-      const on = SITE.schedule[i] === code;
-      const cls = ['cadence__day'];
-      if (on) cls.push('cadence__day--on-' + code.toLowerCase());
-      if (i === todayIdx && on) cls.push('cadence__day--today');
-      return '<span class="' + cls.join(' ') + '" title="' + LS.DAYS[i] + '">' + d[0] + '</span>';
+
+  /* The seven day ribbon. One column per day, coloured by region, with the
+     reader's own today marked. */
+  const ribbon = document.getElementById('weekRibbon');
+  if (ribbon) {
+    ribbon.innerHTML = LS.DAYS_S.map(function (label, i) {
+      const m = LS.market(SITE.schedule[i]);
+      const today = i === todayIdx;
+      return '<div class="weekribbon__day weekribbon__day--' + m.slug + (today ? ' weekribbon__day--today' : '') + '"' +
+        ' title="' + LS.esc(LS.DAYS[i] + ' · ' + m.name) + '">' +
+        '<span class="weekribbon__d">' + label + '</span>' +
+        '<span class="weekribbon__what">' + LS.esc(m.short) + '</span>' +
+        (today ? '<span class="weekribbon__today">Today</span>' : '') +
+      '</div>';
     }).join('');
   }
-  const dIN = document.getElementById('daysIN');
-  const dUS = document.getElementById('daysUS');
-  if (dIN) dIN.innerHTML = dayChips('IN');
-  if (dUS) dUS.innerHTML = dayChips('US');
+
+  /* One card per slot, in the order the week actually runs. Reading the
+     schedule rather than Object.keys(MARKETS) means the cards cannot end up
+     in a different order from the ribbon above them. */
+  const cards = document.getElementById('weekCards');
+  if (cards) {
+    const seen = [];
+    for (let i = 0; i < 7; i++) {
+      const code = SITE.schedule[i];
+      if (seen.indexOf(code) === -1) seen.push(code);
+    }
+
+    cards.innerHTML = seen.map(function (code) {
+      const m = LS.market(code);
+      const c = LS.coverage(code);
+      const isToday = SITE.schedule[todayIdx] === code;
+
+      return '<article class="cadence__card cadence__card--' + m.slug + '">' +
+        '<div class="cadence__head">' +
+          LS.marketTag(code) +
+          '<span class="tag tag--line">' + LS.esc(c.label) + '</span>' +
+          (isToday ? '<span class="tag tag--brass">Today</span>' : '') +
+        '</div>' +
+        '<p class="cadence__when">' + LS.esc(m.dayLabel) + '</p>' +
+        '<p class="cadence__what">' + LS.esc(m.headline) + '</p>' +
+        '<p class="cadence__meta">' + LS.esc(m.blurb) + '</p>' +
+        '<ul class="cadence__list">' +
+          m.examples.map(function (e) { return '<li>' + LS.esc(e) + '</li>'; }).join('') +
+        '</ul>' +
+        '<p class="cadence__foot"><strong>' + m.count +
+          (m.count === 1 ? ' report' : ' reports') + ' a week</strong> · ' + LS.esc(m.covers) + '</p>' +
+      '</article>';
+    }).join('');
+  }
 });

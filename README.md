@@ -32,7 +32,9 @@ Then open <http://localhost:5173>.
 | `assets/js/app.js` | Header, footer, lion mark, date helpers, theme |
 | `assets/js/cards.js` | Shared report card and row markup |
 | `assets/css/styles.css` | Everything visual. Design tokens live at the top |
-| `supabase/` | The migration and the setup guide |
+| `supabase/` | The migrations and the setup guide |
+
+There is no mailing list. The site sends only what an account cannot work without: address confirmation, password resets, and account, security or legal notices. `privacy.html` section 7 and `terms.html` section 11 both say so, and migration `0011` drops the `digest_opt_in` column that used to record an opt in nobody was asked for. If you ever add a digest, those two sections have to change back first.
 
 ## Publishing a new report
 
@@ -41,15 +43,15 @@ Everything is driven by `assets/js/data.js`. Add an object to the top of the `RE
 ```js
 {
   id: 'ticker-2026-08-03',        // unique, used in the URL
-  date: '2026-08-03',             // YYYY-MM-DD, decides the market automatically
-  market: 'IN',                   // 'IN' or 'US'
-  ticker: 'TICKER',
-  company: 'Company Name Limited',
-  exchange: 'NSE',
-  sector: 'Financials',
-  rating: 'Buy',                  // Buy | Accumulate | Hold | Reduce
-  target: '₹1,200',
-  last: '₹980',
+  date: '2026-08-03',             // YYYY-MM-DD, suggests the slot for that day
+  market: 'US',                   // 'IN_MACRO' | 'US' | 'UK' | 'IN_SECTOR'
+  ticker: 'TICKER',               // a symbol, an index, or a sector code
+  company: 'Company Name Inc.',   // the company, the market, or the industry
+  exchange: 'Nasdaq',
+  sector: 'Technology',
+  rating: 'Undervalued',          // Undervalued | Fairly valued | Overvalued
+  target: '$150 to $168',         // an estimate of worth, not a forecast
+  last: '$121',
   horizon: '12 months',
   readMins: 6,
   title: 'The headline argument in one line',
@@ -72,10 +74,21 @@ The archive currently ships empty on purpose. Every page has a proper empty stat
 Set in `SITE.schedule` in `data.js`, keyed by JavaScript weekday where Sunday is 0:
 
 ```js
-schedule: { 0:'IN', 1:'IN', 2:'IN', 3:'IN', 4:'US', 5:'US', 6:'US' }
+schedule: { 0:'IN_MACRO', 1:'US', 2:'US', 3:'US', 4:'UK', 5:'UK', 6:'IN_SECTOR' }
 ```
 
-Sunday through Wednesday is India, Thursday through Saturday is the United States.
+| Day | Slot | What goes out |
+| --- | --- | --- |
+| Sunday | `IN_MACRO` | The Indian market as a whole. Indices, rates, inflation, flows |
+| Monday to Wednesday | `US` | One NYSE or Nasdaq listed company a day |
+| Thursday and Friday | `UK` | One London listed company a day |
+| Saturday | `IN_SECTOR` | One Indian sector taken apart |
+
+Three things come off this one object and nothing restates them by hand: the day strip under the header, the week map on the home page, and the coverage list on the about, method and report pages. `MARKETS[code].days`, `.count` and `.dayLabel` are all derived at the bottom of `data.js`, so "Monday to Wednesday" and "3 reports a week" are computed, never typed.
+
+**Colour comes from the region, shape comes from the kind.** `REGIONS` holds the three countries and their colours; `COVERAGE` holds the three report formats and the labels each one puts on the key statistics. Both Indian slots are amber because they are both India; what tells them apart is `Index & macro` against `Sector study`. Adding a fourth colour would have implied a fourth country.
+
+One report record covers all three formats. A market outlook and a sector study reuse `ticker`, `company`, `target` and `last`, and `COVERAGE` relabels them: `Ticker` becomes `Index` or `Sector`, `Last close` becomes `Last index level`, and the admin form's labels and placeholders follow the slot you pick. No extra columns, no second table.
 
 **It never needs manual updating.** The strip under the header always runs Sunday to Saturday. Which chip is marked as today, and the date printed beside it, come from `new Date()`, which is the reader's own device clock and timezone. Someone in Bengaluru and someone in New York can see different days highlighted at the same moment, each correct for them. Nothing animates or flashes; today simply carries a brass outline.
 
@@ -112,7 +125,7 @@ The palette and type scale are CSS custom properties at the top of `styles.css`.
 
 - Ink navy `#0E141C` for dark surfaces, warm paper `#FBF9F5` for light
 - Antique brass `#9C7430` and `#C6A15A` as the accent
-- India is coded amber, the United States is coded slate blue, consistently everywhere
+- India is coded amber, the United States slate blue, the United Kingdom violet, consistently everywhere
 - Playfair Display for headings, Inter for interface, Lora for the body of a note
 - Light and dark themes both supported. It follows the system setting and the toggle in the header overrides it.
 

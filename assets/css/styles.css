@@ -32,11 +32,16 @@
   --brass-3:       #E8D6AE;
   --brass-wash:    #F7F0E0;
 
-  /* Market coding */
+  /* Region coding. Three countries, three hues, used identically everywhere.
+     Both Indian slots share the Indian colour: what separates Sunday's market
+     outlook from Saturday's sector study is the kind of report, not the
+     country, and inventing a fourth hue would imply a fourth place. */
   --india:         #A75F1E;
   --india-wash:    #FAEFE2;
   --us:            #37587F;
   --us-wash:       #EAF0F7;
+  --uk:            #5B4B8A;
+  --uk-wash:       #EFEDF7;
 
   /* Signals */
   --pos:           #2F7A5C;
@@ -88,6 +93,8 @@
   --india-wash:    #211812;
   --us:            #8FB2DA;
   --us-wash:       #131C27;
+  --uk:            #B3A0DC;
+  --uk-wash:       #191627;
 
   --pos:           #62B893;
   --neg:           #DB8078;
@@ -314,6 +321,7 @@ p  { margin: 0 0 1.1em; }
 }
 .tag--in  { background: var(--india-wash); color: var(--india); border-color: color-mix(in srgb, var(--india) 22%, transparent); }
 .tag--us  { background: var(--us-wash);    color: var(--us);    border-color: color-mix(in srgb, var(--us) 22%, transparent); }
+.tag--uk  { background: var(--uk-wash);    color: var(--uk);    border-color: color-mix(in srgb, var(--uk) 22%, transparent); }
 .tag--line{ background: transparent; color: var(--text-dim); border-color: var(--line); }
 .tag--brass { background: var(--brass-wash); color: var(--brass); border-color: color-mix(in srgb, var(--brass) 25%, transparent); }
 .tag--sample { background: transparent; color: var(--text-dim); border-color: var(--line); letter-spacing: .08em; }
@@ -503,6 +511,7 @@ p  { margin: 0 0 1.1em; }
 .daydot .sq { width: 7px; height: 7px; border-radius: 2px; }
 .daydot--in .sq { background: var(--india); }
 .daydot--us .sq { background: var(--us); }
+.daydot--uk .sq { background: var(--uk); }
 .daydot--today {
   border-color: var(--brass-2);
   color: var(--text-on-ink);
@@ -515,7 +524,64 @@ p  { margin: 0 0 1.1em; }
 }
 .schedule-strip__today b { color: var(--brass-2); font-weight: 600; }
 
-/* Calendar explainer block */
+/* --------------------------------------------------------------------------
+   THE WEEK MAP
+   The publishing week on the home page: a seven day ribbon across the top,
+   then one card per coverage slot. Both are generated from SITE.schedule, so
+   changing the schedule changes this block and nothing has to be redrawn.
+   -------------------------------------------------------------------------- */
+
+/* The ribbon. Seven columns, one per day, coloured by region. */
+.weekribbon {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: .4rem;
+  margin-bottom: 1.6rem;
+}
+.weekribbon__day {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-elev);
+  padding: .7rem .5rem .8rem;
+  text-align: center;
+  overflow: hidden;
+}
+/* The colour bar along the top edge is the only thing that says which region. */
+.weekribbon__day::before {
+  content: "";
+  position: absolute; inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--line);
+}
+.weekribbon__day--in::before { background: var(--india); }
+.weekribbon__day--us::before { background: var(--us); }
+.weekribbon__day--uk::before { background: var(--uk); }
+
+.weekribbon__d {
+  display: block;
+  font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: .35rem;
+}
+.weekribbon__what {
+  display: block;
+  font-size: .72rem; line-height: 1.3;
+  color: var(--text);
+  font-weight: 500;
+}
+.weekribbon__day--today {
+  border-color: var(--brass-2);
+  box-shadow: inset 0 0 0 1px var(--brass-2);
+}
+.weekribbon__today {
+  display: block;
+  margin-top: .45rem;
+  font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--brass);
+}
+
+/* The cards. One per slot, in the order the week runs. */
 .cadence {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -528,6 +594,7 @@ p  { margin: 0 0 1.1em; }
   background: var(--bg-elev);
   position: relative;
   overflow: hidden;
+  display: flex; flex-direction: column;
 }
 .cadence__card::before {
   content: "";
@@ -536,21 +603,44 @@ p  { margin: 0 0 1.1em; }
 }
 .cadence__card--in::before { background: var(--india); }
 .cadence__card--us::before { background: var(--us); }
-.cadence__days {
-  display: flex; gap: .3rem; margin: 1rem 0 .9rem; flex-wrap: wrap;
+.cadence__card--uk::before { background: var(--uk); }
+
+.cadence__head {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  margin-bottom: .9rem;
 }
-.cadence__day {
-  width: 38px; height: 38px;
-  display: grid; place-items: center;
-  border-radius: var(--r);
-  border: 1px solid var(--line);
-  font-size: .78rem; font-weight: 600;
-  color: var(--text-dim);
+/* Which days, stated plainly. This is the fact most readers came for. */
+.cadence__when {
+  font-family: var(--font-display);
+  font-size: 1.15rem; font-weight: 600;
+  margin: 0 0 .2rem;
 }
-.cadence__day--on-in { background: var(--india-wash); border-color: color-mix(in srgb, var(--india) 28%, transparent); color: var(--india); }
-.cadence__day--on-us { background: var(--us-wash);    border-color: color-mix(in srgb, var(--us) 28%, transparent);    color: var(--us); }
-.cadence__day--today { box-shadow: inset 0 0 0 1.5px var(--brass); }
-.cadence__meta { font-size: .88rem; color: var(--text-dim); margin: 0; }
+.cadence__what {
+  font-size: .95rem; font-weight: 600;
+  color: var(--text);
+  margin: 0 0 .5rem;
+}
+.cadence__meta { font-size: .88rem; color: var(--text-dim); margin: 0; line-height: 1.6; }
+.cadence__list {
+  list-style: none; padding: 0;
+  margin: .9rem 0 0;
+  display: flex; flex-direction: column; gap: .35rem;
+}
+.cadence__list li {
+  font-size: .82rem; color: var(--text-dim);
+  padding-left: 1rem; position: relative;
+}
+.cadence__list li::before {
+  content: ""; position: absolute; left: 0; top: .5rem;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; opacity: .55;
+}
+/* Pushed to the bottom so the counts line up across cards of unequal text. */
+.cadence__foot {
+  margin-top: auto; padding-top: 1.1rem;
+  font-size: .8rem; color: var(--text-dim);
+}
+.cadence__foot strong { color: var(--text); font-weight: 600; }
 
 /* --------------------------------------------------------------------------
    10. Hero
@@ -954,6 +1044,31 @@ p  { margin: 0 0 1.1em; }
 .aside-card a:hover { color: var(--brass); }
 .aside-card .when { font-size: .76rem; color: var(--text-dim); display: block; margin-top: .25rem; }
 
+/* The publishing week inside an aside card: days on the left, slot on the
+   right. Overrides the block layout aside-card gives its list items. */
+.cal-list li {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .6rem; flex-wrap: wrap;
+}
+.cal-list__when { font-size: .82rem; color: var(--text-dim); }
+.cal-list__what { flex: 0 0 auto; }
+
+/* The same list standing on its own in a prose page rather than in an aside. */
+.cal-list--doc {
+  list-style: none; padding: 0;
+  margin: 1.4rem 0 1.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.cal-list--doc li {
+  margin: 0; padding: .85rem 1.1rem;
+  border-top: 1px solid var(--line-soft);
+}
+.cal-list--doc li:first-child { border-top: 0; }
+.cal-list--doc .cal-list__when { font-size: .9rem; }
+.cal-list--doc .cal-list__when strong { color: var(--text); }
+
 .toc a { display: block; font-size: .88rem; color: var(--text-dim); padding: .3rem 0 .3rem .8rem; border-left: 2px solid var(--line); }
 .toc a:hover { color: var(--brass); border-color: var(--brass); }
 
@@ -1169,6 +1284,7 @@ p  { margin: 0 0 1.1em; }
 .tree__day .sq { width: 6px; height: 6px; border-radius: 2px; flex: none; }
 .tree__day .sq--in { background: var(--india); }
 .tree__day .sq--us { background: var(--us); }
+.tree__day .sq--uk { background: var(--uk); }
 .tree__day .tk { margin-left: auto; font-size: .72rem; font-weight: 600; letter-spacing: .03em; opacity: .8; }
 
 /* Dashboard content */
@@ -1219,70 +1335,58 @@ p  { margin: 0 0 1.1em; }
 .dlist .r { margin-left: auto; text-align: right; flex: none; }
 
 /* ==========================================================================
-   COOKIE BANNER
-   Fixed to the bottom, slides up once, never blocks the page.
-   ========================================================================== */
-/* The consent gate. No entry animation on purpose: anything that starts off
-   screen and relies on animation to arrive can be stranded there if animation
-   is throttled or disabled, and a gate that fails to appear silently lets
-   people past it. It simply is where it belongs. */
-.cookie-gate {
-  position: fixed; inset: 0; z-index: 300;
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(5px);
-}
-.cookie-gate__card {
-  max-width: 32rem; width: 100%;
-  max-height: calc(100vh - 48px);
-  overflow-y: auto;
-  background: var(--bg-elev);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 2.2rem;
-  box-shadow: var(--shadow-lg);
-}
-.cookie-gate__card h2 { font-size: 1.45rem; margin: 0 0 1rem; }
-.cookie-gate__card p {
-  color: var(--text-dim);
-  font-size: .93rem; line-height: 1.65;
-  margin: 0 0 .9rem;
-}
-.cookie-gate__strong { color: var(--text) !important; font-weight: 500; }
-.cookie-gate__card .small { font-size: .84rem; }
-.cookie-gate__actions {
-  display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.6rem;
-}
-.cookie-gate__actions .btn { flex: 1 1 auto; }
+   STORAGE NOTICE
+   A floating bar in the bottom corner. No backdrop, no inset: 0, nothing
+   covering the page. Everything the site stores is strictly necessary, so
+   this informs rather than gates and the reader can ignore it entirely.
 
-/* Shown when storage is declined. There is no working site without it. */
-.cookie-stop {
-  position: fixed; inset: 0; z-index: 300;
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(6px);
+   No entry animation on purpose: anything that starts off screen and relies
+   on animation to arrive can be stranded there if animation is throttled or
+   disabled. It simply is where it belongs.
+   ========================================================================== */
+.cookie-notice {
+  position: fixed;
+  bottom: 1rem; right: 1rem;
+  z-index: 300;
+  max-width: min(30rem, calc(100vw - 2rem));
 }
-.cookie-stop__card {
-  max-width: 34rem; width: 100%;
+.cookie-notice__card {
+  position: relative;
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
   background: var(--bg-elev);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 2.2rem;
+  border-radius: 12px;
+  padding: 1rem 2.4rem 1rem 1.1rem;   /* right gutter clears the close button */
   box-shadow: var(--shadow-lg);
 }
-.cookie-stop__card h2 { font-size: 1.5rem; margin: 0 0 1rem; }
-.cookie-stop__card p { color: var(--text-dim); font-size: .93rem; line-height: 1.65; margin: 0 0 1rem; }
-.cookie-stop__actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.6rem; }
+.cookie-notice__text {
+  flex: 1 1 15rem;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: .84rem; line-height: 1.55;
+}
+.cookie-notice__ok { flex: 0 0 auto; }
+
+/* Sits in the padding gutter, so it never overlaps the copy. */
+.cookie-notice__close {
+  position: absolute; top: .4rem; right: .4rem;
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  padding: 0;
+  background: none; border: 0; border-radius: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.cookie-notice__close:hover { color: var(--text); background: var(--bg-sunken, transparent); }
+.cookie-notice__close svg { width: 14px; height: 14px; }
 
 /* Armed state for a two step button, so the second press is a real decision. */
 .btn--armed { --btn-bg: var(--brass); --btn-fg: #fff; --btn-bd: var(--brass); }
 
 @media (max-width: 560px) {
-  .cookie-gate, .cookie-stop { padding: 16px; align-items: flex-end; }
-  .cookie-gate__card, .cookie-stop__card { padding: 1.5rem; }
-  .cookie-gate__actions .btn, .cookie-stop__actions .btn { flex: 1 1 100%; }
+  /* Full width along the bottom, where a thumb can reach it. */
+  .cookie-notice { left: .75rem; right: .75rem; bottom: .75rem; max-width: none; }
+  .cookie-notice__ok { width: 100%; }
 }
 
 /* ==========================================================================
@@ -1463,6 +1567,10 @@ html, body { overflow-x: hidden; }
   .auth { grid-template-columns: 1fr; }
   .auth__panel { order: 2; padding: 2.5rem 24px; }
   .cadence { grid-template-columns: 1fr; }
+  /* Seven columns stop being readable long before the cards do. Drop the
+     descriptions and keep the ribbon as a pure colour reference. */
+  .weekribbon__what { display: none; }
+  .weekribbon__day { padding: .6rem .3rem; }
   .rrow { grid-template-columns: 1fr; gap: .6rem; }
   .rrow__right { flex-direction: row; align-items: center; }
   .rrow__when { order: -1; }
@@ -1557,7 +1665,7 @@ html, body { overflow-x: hidden; }
 
   /* Anything that lays buttons or tags out in a line. */
   .row, .section-head, .toolbar, .gate__actions, .gate__perks,
-  .hero__cta, .cta-band .row, .article-meta, .cadence__days { flex-wrap: wrap; }
+  .hero__cta, .cta-band .row, .article-meta, .cadence__head { flex-wrap: wrap; }
   .section-head { align-items: flex-start; gap: .9rem; }
   .section-head .btn { flex: 0 0 auto; }
 
@@ -1574,7 +1682,7 @@ html, body { overflow-x: hidden; }
 @media (max-width: 560px) {
   /* Tighter gutters. 24px each side eats a lot of a 360px screen. */
   :root { --gutter: 16px; }
-  .wrap, .cookie-bar__inner, .site-nav { padding-left: 16px; padding-right: 16px; }
+  .wrap, .site-nav { padding-left: 16px; padding-right: 16px; }
   .section { padding-top: 2.6rem; padding-bottom: 2.6rem; }
   .hero { padding-top: 2.4rem; padding-bottom: 2.4rem; }
   .doc { padding-top: 2rem; padding-bottom: 3rem; }
@@ -1589,9 +1697,6 @@ html, body { overflow-x: hidden; }
 
   .dlist li > div { flex-wrap: wrap; gap: .6rem !important; }
   .dlist .r { margin-left: 0; }
-
-  .cookie-bar__inner { gap: .8rem; }
-  .cookie-bar .btn { width: 100%; }
 
   .doc-toc ol { padding-left: 1.1rem; }
   .breadcrumbs, .crumbs { flex-wrap: wrap; row-gap: .3rem; }

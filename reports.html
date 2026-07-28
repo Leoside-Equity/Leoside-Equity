@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reports · Leoside Equity</title>
-<meta name="description" content="Every report Leoside Equity has published, searchable by company, market, sector and valuation stance.">
+<meta name="description" content="Every report Leoside Equity has published, searchable by company, market, format, sector and valuation stance.">
 <link rel="icon" href="assets/img/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
     <div class="wrap">
       <p class="eyebrow eyebrow--plain">Reports</p>
       <h1 style="margin-bottom:.6rem">Everything we have published</h1>
-      <p class="lede" style="max-width:62ch">Every report since day one, in one place. Filter by market, sector or valuation stance, or search for a company by name or ticker.</p>
+      <p class="lede" style="max-width:62ch">Every report since day one, in one place. Filter by market, format, sector or valuation stance, or search for a company by name or ticker.</p>
     </div>
   </section>
 
@@ -36,10 +36,18 @@
         </div>
 
         <div class="seg" role="group" aria-label="Filter by market">
-          <button type="button" data-market="all" aria-pressed="true">All markets</button>
-          <button type="button" data-market="IN" aria-pressed="false">India</button>
-          <button type="button" data-market="US" aria-pressed="false">United States</button>
+          <button type="button" data-region="all" aria-pressed="true">All markets</button>
+          <button type="button" data-region="IN" aria-pressed="false">India</button>
+          <button type="button" data-region="US" aria-pressed="false">United States</button>
+          <button type="button" data-region="UK" aria-pressed="false">United Kingdom</button>
         </div>
+
+        <select class="select" id="format" aria-label="Filter by report format">
+          <option value="all">All formats</option>
+          <option value="stock">Single company</option>
+          <option value="macro">Index &amp; macro</option>
+          <option value="sector">Sector study</option>
+        </select>
 
         <select class="select" id="sector" aria-label="Filter by sector"><option value="all">All sectors</option></select>
         <select class="select" id="rating" aria-label="Filter by valuation stance">

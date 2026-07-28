@@ -24,9 +24,25 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
   /* ------------------------------------------------------------ side panel */
   const perks = document.getElementById('perks');
   if (perks) {
+    /* The coverage line is read off the schedule rather than written out, so
+       the sign up page cannot promise a week the site no longer publishes. */
+    const slots = [];
+    for (let i = 0; i < 7; i++) {
+      const code = SITE.schedule[i];
+      if (slots.indexOf(code) === -1) slots.push(code);
+    }
+    const regionNames = [];
+    slots.forEach(function (code) {
+      const name = REGIONS[MARKETS[code].region].name;
+      if (regionNames.indexOf(name) === -1) regionNames.push(name);
+    });
+
     const items = [
       ['Every report, in full', 'Reports open end to end rather than stopping at the summary.'],
-      ['Two markets, seven days', 'India Sunday to Wednesday, United States Thursday to Saturday.'],
+      [regionNames.length + ' markets, seven days',
+        slots.map(function (code) {
+          return MARKETS[code].dayLabel + ': ' + MARKETS[code].short;
+        }).join('. ') + '.'],
       ['Your own dashboard', 'Reports organised by month, week and day, plus what you have saved.'],
       ['Keep what matters', 'Save any report to your own list and pick it back up whenever you like.'],
       ['No cost, no card', 'There is no paid tier. We do not ask for payment details at any point.']

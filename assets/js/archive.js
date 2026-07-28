@@ -11,15 +11,29 @@ Boot.start('reports', function () {
   const sortEl  = document.getElementById('sort');
   const countEl = document.getElementById('count');
   const outEl   = document.getElementById('results');
-  const segBtns = Array.prototype.slice.call(document.querySelectorAll('.seg [data-market]'));
+  const segBtns = Array.prototype.slice.call(document.querySelectorAll('.seg [data-region]'));
+  const formatEl = document.getElementById('format');
 
+  /* Filtering is by region rather than by slot, so "India" returns both the
+     Sunday market outlook and the Saturday sector study. Which of the two a
+     report is comes from the separate format filter, so the two questions a
+     reader actually has, where and what shape, stay separate.
+
+     ?market= is still honoured so older links and bookmarks keep working. */
   const state = {
     q: params.get('q') || '',
-    market: params.get('market') || 'all',
+    region: params.get('region') || legacyRegion(params.get('market')) || 'all',
+    format: params.get('format') || 'all',
     sector: params.get('sector') || 'all',
     rating: 'all',
     sort: 'new'
   };
+
+  function legacyRegion(code) {
+    if (!code) return '';
+    const m = MARKETS[code];
+    return m ? m.region : (REGIONS[code] ? code : '');
+  }
 
   /* Sector list is derived from the data so new reports need no config. */
   const sectors = Array.from(new Set(REPORTS.map(function (r) { return r.sector; }))).sort();
@@ -28,16 +42,18 @@ Boot.start('reports', function () {
 
   qEl.value = state.q;
   sectorEl.value = state.sector;
+  if (formatEl) formatEl.value = state.format;
   syncSeg();
 
   function syncSeg() {
     segBtns.forEach(function (b) {
-      b.setAttribute('aria-pressed', String(b.dataset.market === state.market));
+      b.setAttribute('aria-pressed', String(b.dataset.region === state.region));
     });
   }
 
   function matches(r) {
-    if (state.market !== 'all' && r.market !== state.market) return false;
+    if (state.region !== 'all' && LS.market(r.market).region !== state.region) return false;
+    if (state.format !== 'all' && LS.market(r.market).kind !== state.format) return false;
     if (state.sector !== 'all' && r.sector !== state.sector) return false;
     if (state.rating !== 'all' && r.rating !== state.rating) return false;
     if (state.q) {
@@ -70,7 +86,7 @@ Boot.start('reports', function () {
     if (!REPORTS.length) {
       outEl.innerHTML = '<div class="empty"><h3>No reports yet</h3>' +
         '<p>Nothing has been published yet. Every report that goes out will be listed here, ' +
-        'searchable by company, market, sector and valuation stance.</p>' +
+        'searchable by company, market, format, sector and valuation stance.</p>' +
         '<a class="btn btn--ghost btn--sm" href="index.html">Back to the home page</a></div>';
       return;
     }
@@ -80,8 +96,10 @@ Boot.start('reports', function () {
         '<p>Try a different company, or clear the filters to see everything.</p>' +
         '<button class="btn btn--ghost btn--sm" id="clearAll">Clear all filters</button></div>';
       document.getElementById('clearAll').addEventListener('click', function () {
-        state.q = ''; state.market = 'all'; state.sector = 'all'; state.rating = 'all';
+        state.q = ''; state.region = 'all'; state.format = 'all';
+        state.sector = 'all'; state.rating = 'all';
         qEl.value = ''; sectorEl.value = 'all'; ratingEl.value = 'all';
+        if (formatEl) formatEl.value = 'all';
         syncSeg(); render();
       });
       return;
@@ -101,13 +119,24 @@ Boot.start('reports', function () {
       groups[groups.length - 1].items.push(r);
     });
 
+    /* The month heading counts whichever regions actually appear that month,
+       rather than naming a fixed pair, so a month with no London coverage
+       does not advertise "0 United Kingdom". */
     outEl.innerHTML = groups.map(function (g) {
-      const inCount = g.items.filter(function (r) { return r.market === 'IN'; }).length;
-      const usCount = g.items.length - inCount;
+      const tally = {};
+      g.items.forEach(function (r) {
+        const code = LS.market(r.market).region;
+        tally[code] = (tally[code] || 0) + 1;
+      });
+      const breakdown = Object.keys(REGIONS)
+        .filter(function (code) { return tally[code]; })
+        .map(function (code) { return tally[code] + ' ' + REGIONS[code].name; })
+        .join(' · ');
+
       return '<section style="margin-bottom:2.8rem">' +
         '<div class="section-head" style="margin-bottom:.4rem;align-items:center">' +
           '<h2 style="font-size:1.4rem">' + LS.fmtDate(g.date, 'monthYear') + '</h2>' +
-          '<p class="small muted">' + inCount + ' India · ' + usCount + ' United States</p>' +
+          '<p class="small muted">' + LS.esc(breakdown) + '</p>' +
         '</div>' +
         '<div class="rlist">' + g.items.map(Cards.row).join('') + '</div>' +
       '</section>';
@@ -121,8 +150,9 @@ Boot.start('reports', function () {
     timer = setTimeout(function () { state.q = qEl.value; render(); }, 140);
   });
   segBtns.forEach(function (b) {
-    b.addEventListener('click', function () { state.market = b.dataset.market; syncSeg(); render(); });
+    b.addEventListener('click', function () { state.region = b.dataset.region; syncSeg(); render(); });
   });
+  if (formatEl) formatEl.addEventListener('change', function () { state.format = formatEl.value; render(); });
   sectorEl.addEventListener('change', function () { state.sector = sectorEl.value; render(); });
   ratingEl.addEventListener('change', function () { state.rating = ratingEl.value; render(); });
   sortEl.addEventListener('change', function () { state.sort = sortEl.value; render(); });

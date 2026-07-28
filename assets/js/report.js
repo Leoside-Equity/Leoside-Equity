@@ -53,6 +53,12 @@ Boot.start('reports', function () {
   function render(report) {
     const unlocked = !report.locked;
 
+    /* A company note, a market outlook and a sector study share one record,
+       so the labels beside the numbers change rather than the fields. */
+    const m = LS.market(report.market);
+    const c = LS.coverage(report.market);
+    const region = LS.regionOf(report.market);
+
     document.title = report.ticker + ': ' + report.title + ' · ' + SITE.name;
     const metaTag = document.querySelector('meta[name="description"]');
     if (metaTag) metaTag.setAttribute('content', report.standfirst || '');
@@ -62,17 +68,19 @@ Boot.start('reports', function () {
       '<nav class="crumbs" aria-label="Breadcrumb">' +
         '<a href="index.html">Home</a><span>/</span>' +
         '<a href="reports.html">Reports</a><span>/</span>' +
-        '<a href="reports.html?market=' + report.market + '">' + MARKETS[report.market].short + '</a><span>/</span>' +
+        '<a href="reports.html?region=' + region.code + '">' + LS.esc(region.name) + '</a><span>/</span>' +
         LS.esc(report.ticker) +
       '</nav>' +
       '<div class="row" style="gap:.5rem;margin-bottom:1.2rem">' +
-        LS.marketTag(report.market) + LS.ratingTag(report.rating) +
+        LS.marketTag(report.market) +
+        '<span class="tag tag--line">' + LS.esc(c.label) + '</span>' +
+        LS.ratingTag(report.rating) +
         '<span class="tag tag--line">' + LS.esc(report.sector || 'Uncategorised') + '</span>' +
       '</div>' +
       '<h1>' + LS.esc(report.title) + '</h1>' +
       '<p class="lede">' + LS.esc(report.standfirst || '') + '</p>' +
       '<div class="article-meta">' +
-        '<span>' + LS.esc(report.company) + ' · ' + LS.esc(report.exchange || '') +
+        '<span>' + LS.esc(report.company) + (report.exchange ? ' · ' + LS.esc(report.exchange) : '') +
           ': <strong>' + LS.esc(report.ticker) + '</strong></span>' +
         '<span class="sep">|</span><span>' + LS.fmtDate(report.date) + '</span>' +
         '<span class="sep">|</span><span>' + (report.readMins || 1) + ' min read</span>' +
@@ -84,10 +92,10 @@ Boot.start('reports', function () {
       '</div>' +
       '<div class="keystats">' +
         stat('Valuation stance', report.rating) +
-        stat('Fair value band', report.target) +
-        stat('Last close', report.last) +
+        stat(c.target, report.target) +
+        stat(c.last, report.last) +
         stat('Projected horizon', report.horizon) +
-        stat('Market', MARKETS[report.market].short) +
+        stat('Coverage', m.short) +
       '</div>';
 
     /* -------------------------------------------------------------- body */
@@ -142,9 +150,11 @@ Boot.start('reports', function () {
         '</div>' + disclosure;
     }
 
-    /* ------------------------------------------------------------- aside */
+    /* ------------------------------------------------------------- aside
+       Related coverage is by region, not by slot, so a Sunday Indian market
+       note can point at a Saturday Indian sector study. */
     const sameMarket = REPORTS.filter(function (r) {
-      return r.market === report.market && r.id !== report.id;
+      return LS.market(r.market).region === m.region && r.id !== report.id;
     }).slice(0, 4);
     const alsoRead = REPORTS.filter(function (r) { return r.id !== report.id; }).slice(0, 4);
 
@@ -157,14 +167,20 @@ Boot.start('reports', function () {
           '<p class="small muted" style="margin-bottom:1rem">Sign in to read the full report, keep a saved list, and get a dashboard organised by month and week.</p>' +
           '<a class="btn btn--sm btn--block" href="signup.html">Create an account</a></div>') +
       (sameMarket.length
-        ? '<div class="aside-card"><h4>More ' + MARKETS[report.market].short + ' coverage</h4><ul>' +
+        ? '<div class="aside-card"><h4>More ' + LS.esc(region.name) + ' coverage</h4><ul>' +
             sameMarket.map(Cards.mini).join('') + '</ul></div>' : '') +
       (alsoRead.length
         ? '<div class="aside-card"><h4>Recently published</h4><ul>' +
             alsoRead.map(Cards.mini).join('') + '</ul></div>' : '') +
-      '<div class="aside-card"><h4>Publishing calendar</h4>' +
-        '<p class="small muted" style="margin:0">Indian market reports are written Sunday to Wednesday. ' +
-        'United States market reports are written Thursday to Saturday. One report a day, seven days a week.</p></div>';
+      /* Built from the schedule so it cannot describe a week the site no
+         longer publishes. */
+      '<div class="aside-card"><h4>Publishing calendar</h4><ul class="cal-list">' +
+        weekSlots().map(function (slot) {
+          return '<li><span class="cal-list__when">' + LS.esc(slot.dayLabel) + '</span>' +
+            '<span class="cal-list__what tag tag--' + slot.slug + '"><span class="dot"></span>' +
+            LS.esc(slot.short) + '</span></li>';
+        }).join('') +
+      '</ul><p class="small muted" style="margin:.9rem 0 0">One report a day, seven days a week.</p></div>';
 
     /* ------------------------------------------------------ save button
        Absent for signed out visitors, so everything below is skipped. */
@@ -258,7 +274,17 @@ Boot.start('reports', function () {
   }
 
   function stat(label, value) {
-    return '<div class="keystat"><span class="l">' + label + '</span><span class="v">' +
+    return '<div class="keystat"><span class="l">' + LS.esc(label) + '</span><span class="v">' +
       LS.esc(value || '—') + '</span></div>';
+  }
+
+  /* Every distinct slot in the week, in the order the week runs. */
+  function weekSlots() {
+    const seen = [];
+    for (let i = 0; i < 7; i++) {
+      const code = SITE.schedule[i];
+      if (seen.indexOf(code) === -1) seen.push(code);
+    }
+    return seen.map(function (code) { return LS.market(code); });
   }
 });

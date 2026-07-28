@@ -92,7 +92,6 @@ const Auth = (function () {
         email: record.email,
         name: record.name,
         market: record.market,
-        digestOptIn: record.digestOptIn,
         joined: record.joined,
         isAdmin: isDeveloperEmail(record.email)
       };
@@ -114,7 +113,7 @@ const Auth = (function () {
       }
       all[email] = {
         email: email, name: String(d.name).trim(), pw: digest(String(d.password)),
-        market: d.market || 'both', digestOptIn: d.digestOptIn !== false,
+        market: d.market || 'both',
         joined: new Date().toISOString()
       };
       write(K_USERS, all);
@@ -174,7 +173,6 @@ const Auth = (function () {
         email: user.email,
         name: (profile && profile.name) || meta.name || meta.full_name || (user.email || '').split('@')[0],
         market: (profile && profile.market) || meta.market || 'both',
-        digestOptIn: profile ? profile.digest_opt_in : meta.digest_opt_in !== false,
         joined: user.created_at,
         isAdmin: !!(profile && profile.is_admin)
       };
@@ -255,7 +253,7 @@ const Auth = (function () {
         password: String(d.password),
         options: {
           emailRedirectTo: CONFIG.redirectTo(),
-          data: { name: String(d.name).trim(), market: d.market || 'both', digest_opt_in: d.digestOptIn !== false }
+          data: { name: String(d.name).trim(), market: d.market || 'both' }
         }
       }).then(function (res) {
         if (res.error) {
@@ -295,7 +293,6 @@ const Auth = (function () {
       const row = {};
       if (changes.name !== undefined) row.name = changes.name;
       if (changes.market !== undefined) row.market = changes.market;
-      if (changes.digestOptIn !== undefined) row.digest_opt_in = changes.digestOptIn;
       return SB.from('profiles').update(row).eq('id', cachedUser.id)
         .then(function (res) {
           if (res.error) return { ok: false, error: res.error.message };

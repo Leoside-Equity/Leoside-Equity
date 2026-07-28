@@ -88,6 +88,33 @@ const LS = (function () {
   function marketForToday() { return SITE.schedule[new Date().getDay()]; }
   function weekOfMonth(iso) { return Math.floor((parseDate(iso).getDate() - 1) / 7) + 1; }
 
+  /* ------------------------------------------------------ coverage lookups
+     Reports written under the old two slot week still carry `IN` or `US`.
+     Those codes no longer exist in MARKETS, and a report is not worth losing
+     over a label, so they are mapped onto the closest current slot instead of
+     being allowed to throw. Anything else unrecognised falls back to Sunday's
+     slot, which keeps a page rendering while the console says what happened.
+
+     Every part of the site goes through market() rather than reading MARKETS
+     directly, so there is exactly one place where an unknown code is handled. */
+  const LEGACY_MARKETS = { IN: 'IN_SECTOR', US: 'US' };
+  const warned = {};
+
+  function market(code) {
+    if (MARKETS[code]) return MARKETS[code];
+    const mapped = LEGACY_MARKETS[code];
+    if (mapped && MARKETS[mapped]) return MARKETS[mapped];
+    if (!warned[code]) {
+      warned[code] = true;
+      console.warn('[Leoside] unknown market code "' + code + '". Falling back to ' + SITE.schedule[0] + '.');
+    }
+    return MARKETS[SITE.schedule[0]];
+  }
+  /* The labels for a report's key statistics, which depend on whether it is a
+     company note, a market outlook or a sector study. */
+  function coverage(code) { return COVERAGE[market(code).kind]; }
+  function regionOf(code) { return REGIONS[market(code).region]; }
+
   function reportUrl(id) { return 'report.html?id=' + encodeURIComponent(id); }
   function byId(id) { return REPORTS.find(function (r) { return r.id === id; }); }
 
@@ -118,9 +145,12 @@ const LS = (function () {
     return all.slice(0, words || 28).join(' ') + (all.length > (words || 28) ? '…' : '');
   }
 
+  /* The colour comes from the region and the words from the slot, so both
+     Indian slots read as India at a glance and still say which one they are. */
   function marketTag(code) {
-    const m = MARKETS[code];
-    return '<span class="tag tag--' + code.toLowerCase() + '"><span class="dot"></span>' + m.short + '</span>';
+    const m = market(code);
+    return '<span class="tag tag--' + m.slug + '" title="' + esc(m.name) + ' · ' +
+      esc(COVERAGE[m.kind].label) + '"><span class="dot"></span>' + esc(m.short) + '</span>';
   }
   /* "Fairly valued" has a space in it, so the modifier is slugified rather
      than lowercased, otherwise it would split into two class names. */
@@ -282,19 +312,19 @@ const LS = (function () {
 
     let dots = '';
     for (let i = 0; i < 7; i++) {
-      const code = SITE.schedule[i];
-      dots += '<span class="daydot daydot--' + code.toLowerCase() + (i === todayIdx ? ' daydot--today' : '') + '"' +
-        ' title="' + DAYS[i] + ' · ' + MARKETS[code].name + '">' +
+      const m = market(SITE.schedule[i]);
+      dots += '<span class="daydot daydot--' + m.slug + (i === todayIdx ? ' daydot--today' : '') + '"' +
+        ' title="' + DAYS[i] + ' · ' + esc(m.name) + ' · ' + esc(COVERAGE[m.kind].label) + '">' +
         '<span class="sq"></span>' + DAYS_S[i] + '</span>';
     }
 
-    const m = MARKETS[SITE.schedule[todayIdx]];
+    const m = market(SITE.schedule[todayIdx]);
     const today = DAYS[todayIdx] + ' ' + now.getDate() + ' ' + MONTHS_S[now.getMonth()] + ' ' + now.getFullYear();
 
     return '<div class="schedule-strip"><div class="wrap schedule-strip__inner">' +
       '<span class="schedule-strip__label">Publishing calendar</span>' +
       '<div class="daydots">' + dots + '</div>' +
-      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; Today covers <b>' + m.name + '</b></span>' +
+      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; Today covers <b>' + esc(m.name) + '</b></span>' +
     '</div></div>';
   }
   function mountSchedule() {
@@ -313,12 +343,14 @@ const LS = (function () {
         '<div class="footer-grid">' +
           '<div class="footer-about">' +
             brand('index.html') +
-            '<p>A written research report every day. Indian markets Sunday through Wednesday, United States markets Thursday through Saturday.</p>' +
+            '<p>' + esc(SITE.tagline) + ' The Indian market on Sunday, American companies through midweek, ' +
+            'London on Thursday and Friday, and an Indian sector on Saturday.</p>' +
           '</div>' +
           '<div><h5>Research</h5><ul>' +
             '<li><a href="reports.html">All reports</a></li>' +
-            '<li><a href="reports.html?market=IN">Indian coverage</a></li>' +
-            '<li><a href="reports.html?market=US">US coverage</a></li>' +
+            '<li><a href="reports.html?region=IN">Indian coverage</a></li>' +
+            '<li><a href="reports.html?region=US">US coverage</a></li>' +
+            '<li><a href="reports.html?region=UK">UK coverage</a></li>' +
             '<li><a href="method.html">Our research method</a></li>' +
           '</ul></div>' +
           '<div><h5>Account</h5><ul>' +
@@ -345,146 +377,83 @@ const LS = (function () {
   }
 
   /* ------------------------------------------------------------ page setup */
-  /* ------------------------------------------------------- cookie banner
-     Everything this site stores is strictly necessary: the sign in session,
-     the light or dark choice, and the saved reports list. There is no
-     advertising, no analytics and no third party tracker, so there is nothing
-     here that could be switched off and still leave a working site. That is
-     why declining ends in a stop screen rather than a reduced experience:
-     without somewhere to keep a session there is no signing in, and without
-     signing in there are no reports to read.
+  /* ------------------------------------------------------- storage notice
+     Everything this site keeps in the browser is strictly necessary: the sign
+     in session, the light or dark choice, and the saved reports list. There is
+     no advertising, no analytics and no third party tracker.
 
-     Where the answer is kept, and why the two differ:
+     That is why this is a notice and not a consent gate. Both the GDPR (via
+     the ePrivacy carve out for storage "strictly necessary" to provide a
+     service the user asked for) and the DPDP Act exempt exactly this case, so
+     there is nothing here a reader could refuse and still be left with a
+     working site. Asking permission for something that cannot be declined is
+     theatre, and blocking the page until they answer costs them the site.
 
-       Accepted while signed in  -> localStorage. Permanent. Never asked again
-                                    on this browser, which is what an account
-                                    holder should expect.
-       Accepted while signed out -> sessionStorage. Asked again next visit,
-                                    since there is no account to attach a
-                                    lasting preference to.
-       Declined                  -> sessionStorage only. Never written to
-                                    long term storage, because writing a
-                                    permanent record for somebody who just
-                                    refused permanent records is not on. */
-  const COOKIE_KEY = 'leoside.cookies';
+     So: essential storage runs on its own, the notice informs, it links to the
+     policy and the terms, and it never stands between a reader and the page.
+     Dismissing it writes one flag and it is not shown on this browser again.
 
-  function cookieChoice() {
+     The flag is namespaced like every other key the site writes
+     (leoside.theme, leoside.saved) so a shared origin cannot collide. */
+  const NOTICE_KEY = 'leoside.has_dismissed_notice';
+  const LEGACY_KEY = 'leoside.cookies';
+
+  function noticeDismissed() {
     try {
-      if (localStorage.getItem(COOKIE_KEY) === 'accepted') return 'accepted';
-      return sessionStorage.getItem(COOKIE_KEY);
+      if (localStorage.getItem(NOTICE_KEY) === 'true') return true;
+      /* Anyone who cleared the old blocking gate has already read all this,
+         so they are not shown a second version of the same sentence. */
+      if (localStorage.getItem(LEGACY_KEY) === 'accepted') return true;
+      if (sessionStorage.getItem(LEGACY_KEY) === 'accepted') return true;
+      return false;
     } catch (e) {
-      /* Storage blocked entirely. Nothing to ask about and nothing to store. */
-      return 'unavailable';
+      /* Storage blocked outright. Nothing is being stored, so there is nothing
+         to give notice about, and nowhere to record a dismissal either. */
+      return true;
     }
   }
 
-  function rememberChoice(choice, signedIn) {
-    try {
-      if (choice === 'accepted' && signedIn) localStorage.setItem(COOKIE_KEY, 'accepted');
-      sessionStorage.setItem(COOKIE_KEY, choice);
-    } catch (e) {}
-  }
+  /* A floating bar, not a dialog: role="region" rather than role="dialog", no
+     aria-modal, no backdrop, no scroll lock and no focus trap. The page behind
+     it stays fully readable and fully operable, which is the whole point. */
+  function mountCookieNotice() {
+    if (noticeDismissed()) return;
 
-  function showCookieStop() {
-    const stop = document.createElement('div');
-    stop.className = 'cookie-stop';
-    stop.setAttribute('role', 'dialog');
-    stop.setAttribute('aria-modal', 'true');
-    stop.setAttribute('aria-label', 'Storage required');
-    stop.innerHTML =
-      '<div class="cookie-stop__card">' +
-        '<h2>Leoside Equity needs browser storage</h2>' +
-        '<p>We only store what the site cannot run without: your sign in session, ' +
-        'your light or dark preference, and the reports you save. There is no advertising, ' +
-        'no analytics and no third party tracking, and nothing is ever sold or shared.</p>' +
-        '<p>Because a sign in has to be remembered somewhere, there is no version of the ' +
-        'site that works without it. You can read what we store, and why, in the ' +
-        '<a class="link" href="privacy.html">privacy policy</a>.</p>' +
-        '<div class="cookie-stop__actions">' +
-          '<button class="btn btn--lg" type="button" id="cookieReconsider">Accept and continue</button>' +
-          '<a class="btn btn--quiet btn--lg" href="https://www.google.com">Leave the site</a>' +
-        '</div>' +
+    const notice = document.createElement('div');
+    notice.className = 'cookie-notice';
+    notice.setAttribute('role', 'region');
+    notice.setAttribute('aria-label', 'Storage and privacy notice');
+    notice.innerHTML =
+      '<div class="cookie-notice__card">' +
+        '<button class="cookie-notice__close" type="button" id="noticeClose" ' +
+          'aria-label="Dismiss this notice">' + icon('close') + '</button>' +
+        '<p class="cookie-notice__text">We use essential local storage for sign ins and site ' +
+        'preferences (no analytics or tracking). By continuing to browse, you agree to our ' +
+        '<a class="link" href="privacy.html">privacy policy</a> and ' +
+        '<a class="link" href="terms.html">terms of service</a>.</p>' +
+        '<button class="btn btn--sm cookie-notice__ok" type="button" id="noticeAccept">Got it</button>' +
       '</div>';
 
-    document.body.appendChild(stop);
-    lockScroll(true);
-    setTimeout(function () { stop.querySelector('#cookieReconsider').focus(); }, 0);
+    document.body.appendChild(notice);
 
-    stop.querySelector('#cookieReconsider').addEventListener('click', function () {
-      rememberChoice('accepted', !!(typeof Auth !== 'undefined' && Auth.current && Auth.current()));
-      lockScroll(false);
-      stop.remove();
-    });
-  }
+    function dismiss() {
+      try { localStorage.setItem(NOTICE_KEY, 'true'); } catch (e) {}
+      document.removeEventListener('keydown', onKey);
+      notice.remove();
+    }
 
-  function mountCookieBanner() {
-    const choice = cookieChoice();
-    if (choice === 'accepted' || choice === 'unavailable') return;
-    if (choice === 'declined') { showCookieStop(); return; }
+    function onKey(e) { if (e.key === 'Escape') dismiss(); }
 
-    const signedIn = !!(typeof Auth !== 'undefined' && Auth.current && Auth.current());
-
-    /* A gate rather than a bar. The page behind stays readable so nobody has
-       to agree to something they cannot see, but nothing on it can be used
-       until a choice is made, and the choice is only ever asked once. */
-    const gate = document.createElement('div');
-    gate.className = 'cookie-gate';
-    gate.setAttribute('role', 'dialog');
-    gate.setAttribute('aria-modal', 'true');
-    gate.setAttribute('aria-labelledby', 'cookieGateTitle');
-    gate.innerHTML =
-      '<div class="cookie-gate__card">' +
-        '<h2 id="cookieGateTitle">Before you start reading</h2>' +
-        '<p>Leoside Equity keeps a small amount of information in your browser: your sign in ' +
-        'session, whether you prefer light or dark, and the reports you save. That is the ' +
-        'whole list.</p>' +
-        '<p class="cookie-gate__strong">There is no advertising, no analytics, no third party ' +
-        'tracking, and nothing is ever sold or shared.</p>' +
-        '<p class="small">Full detail is in the <a class="link" href="privacy.html">privacy policy</a> ' +
-        'and the <a class="link" href="terms.html">terms of service</a>.</p>' +
-        '<div class="cookie-gate__actions">' +
-          '<button class="btn btn--lg" type="button" id="cookieAccept">Accept and continue</button>' +
-          '<button class="btn btn--quiet btn--lg" type="button" id="cookieDecline">Decline</button>' +
-        '</div>' +
-      '</div>';
-
-    document.body.appendChild(gate);
-    lockScroll(true);
-
-    /* Keep the keyboard inside the dialog while it is up. */
-    const focusables = gate.querySelectorAll('button, a[href]');
-    const first = focusables[0];
-    const last  = focusables[focusables.length - 1];
-    setTimeout(function () { gate.querySelector('#cookieAccept').focus(); }, 0);
-
-    gate.addEventListener('keydown', function (e) {
-      if (e.key !== 'Tab') return;
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    });
-
-    gate.querySelector('#cookieAccept').addEventListener('click', function () {
-      rememberChoice('accepted', signedIn);
-      lockScroll(false);
-      gate.remove();
-    });
-
-    gate.querySelector('#cookieDecline').addEventListener('click', function () {
-      rememberChoice('declined', signedIn);
-      gate.remove();
-      showCookieStop();
-    });
-  }
-
-  function lockScroll(on) {
-    document.documentElement.style.overflow = on ? 'hidden' : '';
+    notice.querySelector('#noticeAccept').addEventListener('click', dismiss);
+    notice.querySelector('#noticeClose').addEventListener('click', dismiss);
+    document.addEventListener('keydown', onKey);
   }
 
   function init(page) {
     mountHeader(page);
     mountSchedule();
     mountFooter();
-    mountCookieBanner();
+    mountCookieNotice();
   }
 
   return {
@@ -492,6 +461,7 @@ const LS = (function () {
     MONTHS: MONTHS, MONTHS_S: MONTHS_S, DAYS: DAYS, DAYS_S: DAYS_S,
     parseDate: parseDate, toISO: toISO, fmtDate: fmtDate,
     marketForDate: marketForDate, marketForToday: marketForToday, weekOfMonth: weekOfMonth,
+    market: market, coverage: coverage, regionOf: regionOf,
     reportUrl: reportUrl, byId: byId,
     paragraphs: paragraphs, wordCount: wordCount, preview: preview, excerpt: excerpt,
     marketTag: marketTag, ratingTag: ratingTag, esc: esc, paragraphs: paragraphs,
