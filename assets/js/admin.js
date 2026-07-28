@@ -468,7 +468,7 @@ Boot.start('admin', function () {
     btn.disabled = true;
     btn.textContent = 'Publishing…';
 
-    SB.rpc('upsert_report', { p: {
+    const p = {
       id: row.id,
       published_on: row.published_on,
       market: row.market,
@@ -476,16 +476,23 @@ Boot.start('admin', function () {
       company: row.company,
       exchange: row.exchange,
       sector: row.sector,
-      rating: row.rating,
-      target: row.target,
-      last_price: row.last_price,
-      horizon: row.horizon,
       read_mins: String(row.read_mins || 1),
       title: row.title,
       standfirst: row.standfirst,
       body: row.body,
       is_published: true
-    } }).then(function (res) {
+    };
+    /* Same rule as the form. A draft saved before the market was changed can
+       still be carrying a stance, and replaying it here would put it back into
+       a market that has no valuation. */
+    if (LS.hasValuation(row.market)) {
+      p.rating = row.rating;
+      p.target = row.target;
+      p.last_price = row.last_price;
+      p.horizon = row.horizon;
+    }
+
+    SB.rpc('upsert_report', { p: p }).then(function (res) {
       btn.disabled = false;
       btn.textContent = 'Publish';
       if (res.error) { fail(res.error); return; }
@@ -557,12 +564,6 @@ Boot.start('admin', function () {
     const ticker = document.getElementById('f-ticker').value.trim().toUpperCase();
     const words = body.map(function (s) { return s.p.join(' '); }).join(' ').split(/\s+/).filter(Boolean).length;
 
-    /* On a market with no single share price behind it the valuation boxes are
-       hidden, so they are sent empty rather than carrying whatever was typed
-       before the market was switched. Otherwise a stance chosen for a US note
-       could survive a change to India and be stored against it. */
-    const priced = LS.hasValuation(marketEl.value);
-
     const payload = {
       id: editingId || (ticker.toLowerCase() + '-' + date),
       published_on: date,
@@ -572,16 +573,27 @@ Boot.start('admin', function () {
       company: document.getElementById('f-company').value.trim(),
       exchange: document.getElementById('f-exchange').value.trim(),
       sector: document.getElementById('f-sector').value.trim(),
-      rating: priced ? document.getElementById('f-rating').value : null,
-      target: priced ? document.getElementById('f-target').value.trim() : '',
-      last_price: priced ? document.getElementById('f-last').value.trim() : '',
-      horizon: priced ? document.getElementById('f-horizon').value.trim() : '',
       read_mins: String(Math.max(1, Math.round(words / 200))),
       title: document.getElementById('f-title').value.trim(),
       standfirst: document.getElementById('f-standfirst').value.trim(),
       body: body,
       is_published: isPublished
     };
+
+    /* The valuation fields are added only where there is a share price to
+       compare against. On a market without one the keys are left out of the
+       payload entirely rather than sent as null or as an empty string: the
+       database reads them with p->>'key', a missing key is SQL NULL, and that
+       is the one value no CHECK constraint can reject.
+
+       Sending them at all was also how a stance typed for a US note could
+       survive a switch to India and be stored against it. */
+    if (LS.hasValuation(marketEl.value)) {
+      payload.rating = document.getElementById('f-rating').value;
+      payload.target = document.getElementById('f-target').value.trim();
+      payload.last_price = document.getElementById('f-last').value.trim();
+      payload.horizon = document.getElementById('f-horizon').value.trim();
+    }
 
     const pressed = intent === 'publish' ? publishBtn : draftBtn;
     const restoreLabel = pressed.textContent;
@@ -647,10 +659,34 @@ Boot.start('admin', function () {
 
   /* Nothing fails quietly. Surface it in the page and in the console, and put
      it in front of the user so a failed save cannot look like a successful one. */
+  /* A check constraint rejection means the database is on an older shape than
+     the form expects. The raw message names the constraint but not the fix, so
+     the ones we know about are translated into the migration that resolves
+     them. Anything else is passed through untouched. */
+  const CONSTRAINT_HELP = {
+    reports_rating_check:
+      'The database still restricts the valuation stance to an older list. ' +
+      'Run supabase/apply_now.sql in the Supabase SQL editor.',
+    reports_market_check:
+      'The database still expects the old market codes (IN_MACRO, IN_SECTOR). ' +
+      'Run supabase/apply_now.sql in the Supabase SQL editor.',
+    profiles_market_check:
+      'The database still expects a single market per reader. ' +
+      'Run supabase/apply_now.sql in the Supabase SQL editor.'
+  };
+
+  function explain(message) {
+    const hit = Object.keys(CONSTRAINT_HELP).find(function (name) {
+      return String(message).indexOf(name) !== -1;
+    });
+    return hit ? CONSTRAINT_HELP[hit] + '\n\n(' + message + ')' : message;
+  }
+
   function fail(err) {
-    const message = typeof err === 'string'
+    const raw = typeof err === 'string'
       ? err
       : (err && (err.message || err.details || err.hint)) || 'Unknown error';
+    const message = explain(raw);
     console.error('[Leoside] save failed', err);
     say('Could not save. ' + LS.esc(message), false);
     window.alert('Could not save the report.\n\n' + message);

@@ -119,6 +119,23 @@
    One rule here rather than a per component patch each time it bites. */
 [hidden] { display: none !important; }
 
+/* Scroll reveal. Everything is visible by default; the hidden state only
+   applies once app.js has confirmed it can bring things back, so a browser
+   that never runs the script shows the whole page as normal. */
+.reveal-ready .section-head,
+.reveal-ready .section .card-grid > *,
+.reveal-ready .cta-band .wrap,
+.reveal-ready .doc-body > h2 {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal-ready .is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -183,11 +200,18 @@ h2 { letter-spacing: -.016em; }
   align-items: center;
   gap: .7rem;
 }
+/* A short fixed rule, not a stretched one.
+
+   This used to be flex: 1, so it ran the full width of whatever contained it.
+   In the hero that meant a hairline crossing the ruled grid behind it and
+   stopping in the middle of nowhere, which read as a stray line rather than a
+   piece of punctuation. A fixed length looks deliberate wherever it lands. */
 .eyebrow::after {
   content: "";
-  flex: 1;
+  flex: none;
+  width: 2.5rem;
   height: 1px;
-  background: var(--line);
+  background: linear-gradient(90deg, var(--brass), transparent);
 }
 .eyebrow--plain::after { display: none; }
 
@@ -269,6 +293,29 @@ h2 { letter-spacing: -.016em; }
   width: 34px; height: 34px; flex: none;
   object-fit: contain;
   display: block;
+}
+
+/* The artwork is pale gold on transparent. That reads well on the ink header
+   and the ink footer, and almost disappears on the cream light theme, where
+   gold on off white is barely a contrast at all.
+
+   Rather than ship a second export to keep in sync, the light theme gives the
+   mark its own small ink panel to sit on, which is the background it was drawn
+   for. The dark theme leaves it alone. */
+:root[data-theme="light"] .brand__mark,
+:root:not([data-theme="dark"]) .brand__mark {
+  background: var(--bg-ink);
+  border-radius: 9px;
+  padding: 3px;
+  box-shadow: 0 1px 2px rgba(18, 24, 31, .18);
+}
+/* On surfaces that are already ink, the panel would be invisible anyway and
+   the padding only shrinks the mark, so it is dropped there. */
+:root[data-theme="light"] .on-ink .brand__mark,
+:root:not([data-theme="dark"]) .on-ink .brand__mark {
+  background: none;
+  padding: 0;
+  box-shadow: none;
 }
 .brand__name {
   font-family: var(--f-display);
@@ -621,11 +668,14 @@ h2 { letter-spacing: -.016em; }
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  /* Room below the last card so it can reach its sticky offset and hold there,
-     rather than the section ending and releasing the whole stack at once. A
-     sticky element stops sticking when its containing block runs out, so this
-     padding is what buys the last card its travel. */
-  padding-bottom: 38vh;
+  /* No trailing padding.
+
+     There used to be 38vh here to buy the last card extra travel, but the
+     heading beside it is sticky too, so that padding became a screenful of
+     blank space next to a heading that would not leave. The cards themselves
+     are tall enough to give the stack its travel; the section now ends where
+     the last card ends and both columns release together. */
+  padding-bottom: 0;
 }
 
 .weekcard {
@@ -651,43 +701,67 @@ h2 { letter-spacing: -.016em; }
 .weekcard--uk::before { background: var(--uk); }
 
 .weekcard__top {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1.4rem;
+  display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+  margin-bottom: 1.1rem;
 }
 .weekcard__n {
   font-family: var(--f-ui);
   font-size: .72rem; font-weight: 700; letter-spacing: .14em;
   color: var(--text-dim);
+  padding-right: .8rem;
+  border-right: 1px solid var(--line);
+}
+.weekcard__when {
+  font-family: var(--f-ui);
+  font-size: .72rem; font-weight: 600; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--text-2);
 }
 .weekcard__today {
+  margin-left: auto;
   font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
   color: var(--brass);
   border: 1px solid color-mix(in srgb, var(--brass) 35%, transparent);
   border-radius: 100px;
   padding: .2rem .55rem;
 }
-.weekcard__when {
-  font-family: var(--f-ui);
-  font-size: .72rem; font-weight: 600; letter-spacing: .13em; text-transform: uppercase;
-  color: var(--text-dim);
-  margin: 0 0 .35rem;
+
+.weekcard__where { font-size: 1.75rem; margin: 0 0 .6rem; }
+/* The one line that says why this market is worth reading at all. */
+.weekcard__lede {
+  font-size: 1rem; line-height: 1.6;
+  color: var(--text-2);
+  margin: 0 0 1.1rem;
 }
-.weekcard__where { font-size: 1.65rem; margin: 0 0 1rem; }
-.weekcard__body { font-size: .92rem; line-height: 1.7; color: var(--text-dim); margin: 0; }
+.weekcard__body { font-size: .92rem; line-height: 1.75; color: var(--text-dim); margin: 0; }
 
 /* Only drawn for a market whose week has more than one job in it. */
-.weekcard__days { margin: 0; display: flex; flex-direction: column; gap: .9rem; }
+.weekcard__days { margin: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+.weekcard__days > div { padding-left: .9rem; border-left: 2px solid var(--line); }
 .weekcard__days dt {
   font-family: var(--f-ui);
   font-size: .68rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
   color: var(--text-2);
-  margin-bottom: .25rem;
+  margin-bottom: .3rem;
 }
-.weekcard__days dd { margin: 0; font-size: .9rem; line-height: 1.65; color: var(--text-dim); }
+.weekcard__days dd { margin: 0; font-size: .9rem; line-height: 1.7; color: var(--text-dim); }
+
+/* Three short phrases, so the card can be skimmed as well as read. */
+.weekcard__focus {
+  list-style: none; padding: 0;
+  margin: 1.3rem 0 0;
+  display: flex; flex-wrap: wrap; gap: .4rem;
+}
+.weekcard__focus li {
+  font-size: .74rem; font-weight: 500;
+  color: var(--text-dim);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: .28rem .7rem;
+}
 
 .weekcard__foot {
   display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
-  margin: 1.6rem 0 0; padding-top: 1.1rem;
+  margin: 1.5rem 0 0; padding-top: 1.1rem;
   border-top: 1px solid var(--line-soft, var(--line));
   font-size: .8rem; color: var(--text-dim);
 }
@@ -832,35 +906,45 @@ h2 { letter-spacing: -.016em; }
 .marquee {
   position: relative;
   overflow: hidden;
+  /* Vertical room for the card hover: cards lift and cast a large shadow, and
+     with a tight box the top edge of every hovered card was sliced off by this
+     element's own clipping. */
+  padding-block: 2rem;
+  margin-block: -1rem;
   /* Feathered edges, so cards arrive and leave instead of being chopped off
-     against a hard boundary. */
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5rem, #000 calc(100% - 5rem), transparent);
-          mask-image: linear-gradient(90deg, transparent, #000 5rem, #000 calc(100% - 5rem), transparent);
+     against a hard boundary. Horizontal only, so it never touches the vertical
+     room above. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6rem, #000 calc(100% - 6rem), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 6rem, #000 calc(100% - 6rem), transparent);
 }
 .marquee__track {
   display: flex;
   gap: 1.3rem;
   width: max-content;
-  padding: .5rem var(--gutter);
+  padding-inline: var(--gutter);
+  /* Promoted up front rather than at the moment the animation starts, which
+     avoids a flicker on the first frame. */
+  will-change: transform;
 }
 .marquee__set { display: flex; gap: 1.3rem; }
 
-/* Only added once home.js has confirmed there is more than a screenful. */
 .marquee--running .marquee__track {
   animation: marquee-drift var(--marquee-duration, 40s) linear infinite;
 }
+/* Stops for anyone actually reading it, by pointer or by keyboard. */
 .marquee--running:hover .marquee__track,
 .marquee--running:focus-within .marquee__track { animation-play-state: paused; }
 
-/* A short list keeps the same look and simply does not move. */
+/* Fallback for a browser that never ran the script. */
 .marquee--static .marquee__track { width: auto; flex-wrap: wrap; justify-content: center; }
 
 .marquee .rcard { width: 340px; flex: none; }
 
 @keyframes marquee-drift {
-  /* Half the track is one full set, so this ends where it began. */
+  /* One lap is a single set plus the gap after it, so this ends showing
+     exactly what it started with. */
   from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(calc(var(--marquee-lap, 50%) * -1), 0, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -103,43 +103,46 @@ Boot.start('index', function () {
         '<a class="btn btn--ghost btn--sm" href="reports.html">See all reports</a></div></div>';
     } else {
       const cards = REPORTS.slice(0, 8).map(Cards.card).join('');
-      track.innerHTML = cards;
 
-      /* Measured synchronously. Reading scrollWidth forces layout, so the
-         number is real as soon as the markup is in.
+      const makeSet = function (hidden) {
+        const set = document.createElement('div');
+        set.className = 'marquee__set';
+        set.innerHTML = cards;
+        /* A screen reader should hear each report once, not once per copy. */
+        if (hidden) set.setAttribute('aria-hidden', 'true');
+        return set;
+      };
 
-         Deliberately not inside requestAnimationFrame: rAF does not fire while
-         a tab is in the background, so opening the site in a background tab
-         would leave the belt unbuilt until the tab was looked at. */
-      const overflows = track.scrollWidth > marquee.clientWidth;
-      const wantsMotion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      /* One set first, purely to measure it.
 
-      if (!overflows || !wantsMotion) {
-        /* A duplicate set in a list short enough to fit would read as the same
-           report printed twice, so a short list keeps the look and holds still. */
-        marquee.classList.add('marquee--static');
-      } else {
-        const original = document.createElement('div');
-        original.className = 'marquee__set';
-        original.innerHTML = cards;
+         Measured synchronously: reading getBoundingClientRect forces layout,
+         so the number is real as soon as the markup is in. Deliberately not
+         inside requestAnimationFrame, which does not fire while a tab is in
+         the background and would leave the belt unbuilt until it was looked at. */
+      track.innerHTML = '';
+      const first = makeSet(false);
+      track.appendChild(first);
 
-        /* aria-hidden on the copy: a screen reader should hear each report
-           once, not twice. */
-        const copy = document.createElement('div');
-        copy.className = 'marquee__set';
-        copy.setAttribute('aria-hidden', 'true');
-        copy.innerHTML = cards;
+      const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+      /* One full lap: the width of a set plus the gap that follows it. */
+      const lap = first.getBoundingClientRect().width + gap;
 
-        track.innerHTML = '';
-        track.appendChild(original);
-        track.appendChild(copy);
+      /* Enough copies to cover twice the viewport, so there is never a bare
+         stretch of track waiting for the loop to come round. Four reports on a
+         wide screen need three or four copies, not the single duplicate that
+         used to leave a gap and stop the belt from moving at all. */
+      const copies = Math.max(2, Math.ceil((marquee.clientWidth * 2) / lap) + 1);
+      for (let n = 1; n < copies; n++) track.appendChild(makeSet(true));
 
-        /* Paced by distance rather than a fixed duration, so a longer belt
-           does not race past faster than a short one. */
-        const seconds = Math.max(18, Math.round(track.scrollWidth / 2 / 55));
-        track.style.setProperty('--marquee-duration', seconds + 's');
-        marquee.classList.add('marquee--running');
-      }
+      /* The animation shifts by exactly one lap, so it ends showing what it
+         started with and the loop point is invisible. Pixels rather than a
+         percentage, because the percentage depends on how many copies there
+         are and that number now varies with the screen. */
+      track.style.setProperty('--marquee-lap', lap + 'px');
+
+      /* Paced by distance so a longer belt does not race past a short one. */
+      track.style.setProperty('--marquee-duration', Math.max(16, Math.round(lap / 55)) + 's');
+      marquee.classList.add('marquee--running');
     }
   }
 
@@ -172,6 +175,9 @@ Boot.start('index', function () {
       /* A market with one entry has already said its days in the eyebrow, so
          the row would only repeat them. A market with several, which is India
          and its two different weekend jobs, needs them called out. */
+      /* A market with one entry has already said its days in the eyebrow, so a
+         labelled row would only repeat them. India has two different weekend
+         jobs and needs both called out. */
       const rows = r.days.length > 1
         ? '<dl class="weekcard__days">' + r.days.map(function (d) {
             return '<div><dt>' + LS.esc(d[0]) + '</dt><dd>' + LS.esc(d[1]) + '</dd></div>';
@@ -181,11 +187,15 @@ Boot.start('index', function () {
       return '<article class="weekcard weekcard--' + r.slug + '" style="--i:' + i + '">' +
         '<div class="weekcard__top">' +
           '<span class="weekcard__n">' + String(i + 1).padStart(2, '0') + '</span>' +
+          '<span class="weekcard__when">' + LS.esc(r.dayLabel) + '</span>' +
           (code === todayMarket ? '<span class="weekcard__today">Today</span>' : '') +
         '</div>' +
-        '<p class="weekcard__when">' + LS.esc(r.dayLabel) + '</p>' +
         '<h3 class="weekcard__where">' + LS.esc(r.name) + '</h3>' +
+        '<p class="weekcard__lede">' + LS.esc(r.lede) + '</p>' +
         rows +
+        '<ul class="weekcard__focus">' +
+          r.focus.map(function (f) { return '<li>' + LS.esc(f) + '</li>'; }).join('') +
+        '</ul>' +
         '<p class="weekcard__foot"><strong>' + r.count +
           (r.count === 1 ? ' report' : ' reports') + ' a week</strong>' +
           '<span>' + LS.esc(r.venues) + '</span></p>' +

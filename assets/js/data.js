@@ -56,30 +56,40 @@ const REGIONS = {
   US: {
     code: 'US', slug: 'us', name: 'United States', currency: '$',
     venues: 'NYSE and Nasdaq',
-    lede: 'One American business a day, taken apart properly.',
+    lede: 'The deepest, most heavily covered market in the world, which is exactly why it rewards reading closely.',
     valuation: true,
+    /* Each entry is [when, what]. This is the only place on the site where a
+       market's week is described in any detail. */
     days: [
-      ['Monday to Wednesday', 'A single listed company: what it sells, what moves the numbers, and what the share price is asking you to believe.']
-    ]
+      ['Monday to Wednesday',
+       'Three American companies, one a day. Each report starts with the business itself, what it actually sells and to whom, then works through the numbers that move it: revenue quality, margin direction, what the balance sheet can absorb. Only then does it turn to price, and to what the current valuation is quietly assuming about the years ahead.']
+    ],
+    /* Short phrases used where there is only room for a list. */
+    focus: ['The business before the numbers', 'Earnings quality and balance sheet', 'What the price already assumes']
   },
   UK: {
     code: 'UK', slug: 'uk', name: 'United Kingdom', currency: '£',
     venues: 'London Stock Exchange',
-    lede: 'One London listing a day, given the same treatment.',
+    lede: 'Older, narrower and more cyclical than New York, and persistently overlooked because of it.',
     valuation: true,
     days: [
-      ['Thursday and Friday', 'A single company listed in London, read the same way as the American names: the business first, the numbers second, the price last.']
-    ]
+      ['Thursday and Friday',
+       'Two London listings, one a day, given exactly the same treatment as the American names. London skews towards banks, miners, energy and consumer staples, so the questions lean harder on cycles, capital discipline and what a business earns at the bottom of one rather than the top.']
+    ],
+    focus: ['Cyclicality and capital discipline', 'Dividend cover and cash generation', 'Where the cycle actually sits']
   },
   IN: {
     code: 'IN', slug: 'in', name: 'India', currency: '₹',
     venues: 'NSE and BSE',
-    lede: 'The Indian market read from the top down, across the weekend.',
+    lede: 'Read from the top down across the weekend, because the direction of the whole market is the story worth telling.',
     valuation: false,
     days: [
-      ['Sunday', 'Where the market as a whole is heading. The indices, and the rates, inflation, currency and flow data underneath them.'],
-      ['Saturday', 'One sector at a time. What is driving it, where the risk sits, and the case for where it goes next.']
-    ]
+      ['Sunday',
+       'Where the market as a whole is heading. The indices are the surface; underneath sit rates, inflation, the currency and the flow of money in and out of the country. The report follows what those are doing to each other and what it sets up for the week ahead.'],
+      ['Saturday',
+       'One sector at a time, taken apart properly. What is driving it right now, which parts of the story are already in the price, where the risk is concentrated, and the honest case both for and against it from here.']
+    ],
+    focus: ['Index direction and what drives it', 'Rates, inflation, currency and flows', 'One sector, argued both ways']
   }
 };
 

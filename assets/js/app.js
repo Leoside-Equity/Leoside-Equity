@@ -478,11 +478,75 @@ const LS = (function () {
     document.addEventListener('keydown', onKey);
   }
 
+  /* ----------------------------------------------------------- scroll reveal
+     Section headings and cards rise a little as they come into view.
+
+     Two rules keep this from ever costing anyone content. The hiding is done
+     by a class this function puts on <html>, so a browser that never runs the
+     script, or one that has no IntersectionObserver, simply shows everything
+     from the start. And each element is unobserved once it has arrived, so
+     nothing re-hides on the way back up.
+
+     Sticky elements are left out on purpose: a transform on a sticky ancestor
+     creates a containing block and breaks the sticking, which is what the
+     week section depends on. */
+  function mountReveal() {
+    if (!('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const targets = document.querySelectorAll(
+      '.section-head, .section .card-grid > *, .cta-band .wrap, .doc-body > h2'
+    );
+    if (!targets.length) return;
+
+    document.documentElement.classList.add('reveal-ready');
+
+    let arrived = 0;
+
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-revealed');
+        arrived++;
+        io.unobserve(entry.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: .08 });
+
+    /* A short stagger inside each group, so a row of cards arrives in sequence
+       rather than snapping in all at once. */
+    let previousParent = null;
+    let step = 0;
+    Array.prototype.forEach.call(targets, function (el) {
+      if (el.parentElement !== previousParent) { previousParent = el.parentElement; step = 0; }
+      el.style.setProperty('--reveal-delay', (step * 70) + 'ms');
+      step++;
+      io.observe(el);
+    });
+
+    /* Safety net.
+
+       An observer that never fires would leave the whole page at opacity zero,
+       which is a far worse outcome than losing an animation. There are real
+       conditions where callbacks are starved: a tab that is never painted, a
+       throttled background tab, some embedded webviews.
+
+       So: if nothing at all has arrived shortly after load, assume the
+       observer is not going to deliver and show everything. Checking that
+       nothing arrived, rather than blanket revealing on a timer, means a
+       working page keeps the effect for content further down. */
+    setTimeout(function () {
+      if (arrived > 0) return;
+      io.disconnect();
+      Array.prototype.forEach.call(targets, function (el) { el.classList.add('is-revealed'); });
+    }, 2500);
+  }
+
   function init(page) {
     mountHeader(page);
     mountSchedule();
     mountFooter();
     mountCookieNotice();
+    mountReveal();
   }
 
   return {
