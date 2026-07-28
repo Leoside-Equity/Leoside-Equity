@@ -47,6 +47,35 @@ const Auth = (function () {
 
   function normalise(email) { return String(email || '').trim().toLowerCase(); }
 
+  /* ------------------------------------------------------ market interest
+     Readers pick any combination of the three markets, so this is a set
+     rather than a single choice. It is stored as a sorted comma separated
+     string ('IN,UK,US') because one text column is enough for three flags and
+     it keeps the profiles table from sprouting a boolean per country.
+
+     Sorting on the way in matters: it makes the stored value canonical, so
+     'UK,IN' and 'IN,UK' cannot both exist and split the counts in two.
+
+     'both' was the old value for "everything" and is still in the database on
+     older rows, so it maps to the full set rather than to nothing. An empty
+     or unrecognised value does the same: somebody who has expressed no
+     preference wants everything, not silence. */
+  const MARKET_CODES = ['IN', 'UK', 'US'];
+
+  function normaliseMarkets(value) {
+    if (Array.isArray(value)) value = value.join(',');
+    const raw = String(value || '').trim();
+    if (!raw || raw === 'both' || raw === 'all') return MARKET_CODES.join(',');
+
+    const picked = MARKET_CODES.filter(function (code) {
+      return raw.split(',').some(function (part) { return part.trim().toUpperCase() === code; });
+    });
+    return picked.length ? picked.join(',') : MARKET_CODES.join(',');
+  }
+
+  /* The stored string back as an array, for anything drawing checkboxes. */
+  function marketList(value) { return normaliseMarkets(value).split(','); }
+
   function validEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalise(email));
   }
@@ -91,7 +120,8 @@ const Auth = (function () {
         id: record.email,
         email: record.email,
         name: record.name,
-        market: record.market,
+        market: normaliseMarkets(record.market),
+        avatar: record.avatar || null,
         joined: record.joined,
         isAdmin: isDeveloperEmail(record.email)
       };
@@ -113,7 +143,7 @@ const Auth = (function () {
       }
       all[email] = {
         email: email, name: String(d.name).trim(), pw: digest(String(d.password)),
-        market: d.market || 'both',
+        market: normaliseMarkets(d.market),
         joined: new Date().toISOString()
       };
       write(K_USERS, all);
@@ -145,7 +175,11 @@ const Auth = (function () {
     update: function (changes) {
       if (!cachedUser) return Promise.resolve({ ok: false });
       const all = Local.users();
-      Object.assign(all[cachedUser.email], changes);
+      const patch = Object.assign({}, changes);
+      /* Same canonical form the live backend stores, so switching modes does
+         not change what a preference means. */
+      if (patch.market !== undefined) patch.market = normaliseMarkets(patch.market);
+      Object.assign(all[cachedUser.email], patch);
       write(K_USERS, all);
       cachedUser = Local.shape(all[cachedUser.email]);
       return Promise.resolve({ ok: true, user: cachedUser });
@@ -172,7 +206,8 @@ const Auth = (function () {
         id: user.id,
         email: user.email,
         name: (profile && profile.name) || meta.name || meta.full_name || (user.email || '').split('@')[0],
-        market: (profile && profile.market) || meta.market || 'both',
+        market: normaliseMarkets((profile && profile.market) || meta.market),
+        avatar: (profile && profile.avatar) || null,
         joined: user.created_at,
         isAdmin: !!(profile && profile.is_admin)
       };
@@ -253,7 +288,7 @@ const Auth = (function () {
         password: String(d.password),
         options: {
           emailRedirectTo: CONFIG.redirectTo(),
-          data: { name: String(d.name).trim(), market: d.market || 'both' }
+          data: { name: String(d.name).trim(), market: normaliseMarkets(d.market) }
         }
       }).then(function (res) {
         if (res.error) {
@@ -292,7 +327,8 @@ const Auth = (function () {
       if (!cachedUser) return Promise.resolve({ ok: false });
       const row = {};
       if (changes.name !== undefined) row.name = changes.name;
-      if (changes.market !== undefined) row.market = changes.market;
+      if (changes.market !== undefined) row.market = normaliseMarkets(changes.market);
+      if (changes.avatar !== undefined) row.avatar = changes.avatar;
       return SB.from('profiles').update(row).eq('id', cachedUser.id)
         .then(function (res) {
           if (res.error) return { ok: false, error: res.error.message };
@@ -578,6 +614,7 @@ const Auth = (function () {
     signUp: signUp, signIn: signIn, signInWithGoogle: signInWithGoogle,
     signOut: signOut, current: current, update: update,
     initials: initials, validEmail: validEmail, passwordScore: passwordScore,
+    MARKET_CODES: MARKET_CODES, normaliseMarkets: normaliseMarkets, marketList: marketList,
     saved: saved, isSaved: isSaved, toggleSave: toggleSave, verifySession: verifySession,
     sendPasswordReset: sendPasswordReset, deleteAccount: deleteAccount,
     history: history, recordRead: recordRead, requireAuth: requireAuth

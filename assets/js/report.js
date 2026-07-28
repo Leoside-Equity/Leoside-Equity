@@ -53,10 +53,7 @@ Boot.start('reports', function () {
   function render(report) {
     const unlocked = !report.locked;
 
-    /* A company note, a market outlook and a sector study share one record,
-       so the labels beside the numbers change rather than the fields. */
     const m = LS.market(report.market);
-    const c = LS.coverage(report.market);
     const region = LS.regionOf(report.market);
 
     document.title = report.ticker + ': ' + report.title + ' · ' + SITE.name;
@@ -73,7 +70,6 @@ Boot.start('reports', function () {
       '</nav>' +
       '<div class="row" style="gap:.5rem;margin-bottom:1.2rem">' +
         LS.marketTag(report.market) +
-        '<span class="tag tag--line">' + LS.esc(c.label) + '</span>' +
         LS.ratingTag(report.rating) +
         '<span class="tag tag--line">' + LS.esc(report.sector || 'Uncategorised') + '</span>' +
       '</div>' +
@@ -90,12 +86,15 @@ Boot.start('reports', function () {
           ? '<button class="btn btn--ghost btn--sm" id="saveBtn" type="button" style="margin-left:auto"></button>'
           : '') +
       '</div>' +
+      /* Neutral labels. "Fair value" and "Last price" read correctly whether
+         the subject is a company, an index or a sector, which keeps the page
+         from announcing the format of every report it shows. */
       '<div class="keystats">' +
         stat('Valuation stance', report.rating) +
-        stat(c.target, report.target) +
-        stat(c.last, report.last) +
+        stat('Fair value', report.target) +
+        stat('Last price', report.last) +
         stat('Projected horizon', report.horizon) +
-        stat('Coverage', m.short) +
+        stat('Market', m.regionName) +
       '</div>';
 
     /* -------------------------------------------------------------- body */
@@ -175,10 +174,10 @@ Boot.start('reports', function () {
       /* Built from the schedule so it cannot describe a week the site no
          longer publishes. */
       '<div class="aside-card"><h4>Publishing calendar</h4><ul class="cal-list">' +
-        weekSlots().map(function (slot) {
-          return '<li><span class="cal-list__when">' + LS.esc(slot.dayLabel) + '</span>' +
-            '<span class="cal-list__what tag tag--' + slot.slug + '"><span class="dot"></span>' +
-            LS.esc(slot.short) + '</span></li>';
+        weekRegions().map(function (r) {
+          return '<li><span class="cal-list__when">' + LS.esc(r.dayLabel) + '</span>' +
+            '<span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
+            LS.esc(r.name) + '</span></li>';
         }).join('') +
       '</ul><p class="small muted" style="margin:.9rem 0 0">One report a day, seven days a week.</p></div>';
 
@@ -278,13 +277,10 @@ Boot.start('reports', function () {
       LS.esc(value || '—') + '</span></div>';
   }
 
-  /* Every distinct slot in the week, in the order the week runs. */
-  function weekSlots() {
-    const seen = [];
-    for (let i = 0; i < 7; i++) {
-      const code = SITE.schedule[i];
-      if (seen.indexOf(code) === -1) seen.push(code);
-    }
-    return seen.map(function (code) { return LS.market(code); });
+  /* The three markets, in the order the week meets them. */
+  function weekRegions() {
+    return Object.keys(REGIONS)
+      .sort(function (a, b) { return REGIONS[a].startDay - REGIONS[b].startDay; })
+      .map(function (code) { return REGIONS[code]; });
   }
 });

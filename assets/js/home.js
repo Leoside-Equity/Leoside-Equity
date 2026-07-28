@@ -110,52 +110,39 @@ Boot.start('index', function () {
      names a day or a market directly. */
   const todayIdx = new Date().getDay();
 
-  /* The seven day ribbon. One column per day, coloured by region, with the
-     reader's own today marked. */
+  /* The seven day ribbon. One column per day, carrying nothing but the day and
+     a colour: the cards underneath say which colour is which country, so
+     repeating it seven times only added noise. */
   const ribbon = document.getElementById('weekRibbon');
   if (ribbon) {
     ribbon.innerHTML = LS.DAYS_S.map(function (label, i) {
       const m = LS.market(SITE.schedule[i]);
       const today = i === todayIdx;
       return '<div class="weekribbon__day weekribbon__day--' + m.slug + (today ? ' weekribbon__day--today' : '') + '"' +
-        ' title="' + LS.esc(LS.DAYS[i] + ' · ' + m.name) + '">' +
+        ' title="' + LS.esc(LS.DAYS[i] + ' · ' + m.regionName) + '">' +
         '<span class="weekribbon__d">' + label + '</span>' +
-        '<span class="weekribbon__what">' + LS.esc(m.short) + '</span>' +
-        (today ? '<span class="weekribbon__today">Today</span>' : '') +
       '</div>';
     }).join('');
   }
 
-  /* One card per slot, in the order the week actually runs. Reading the
-     schedule rather than Object.keys(MARKETS) means the cards cannot end up
-     in a different order from the ribbon above them. */
+  /* One card per country, in the order the week meets them, not one per slot.
+     Three cards rather than four is the honest shape: there are three markets,
+     and India happening twice at the weekend is a detail of the calendar. Each
+     card is a country, its days, and one line. Nothing else. */
   const cards = document.getElementById('weekCards');
   if (cards) {
-    const seen = [];
-    for (let i = 0; i < 7; i++) {
-      const code = SITE.schedule[i];
-      if (seen.indexOf(code) === -1) seen.push(code);
-    }
+    const order = Object.keys(REGIONS).sort(function (a, b) {
+      return REGIONS[a].startDay - REGIONS[b].startDay;
+    });
+    const todayRegion = LS.market(SITE.schedule[todayIdx]).region;
 
-    cards.innerHTML = seen.map(function (code) {
-      const m = LS.market(code);
-      const c = LS.coverage(code);
-      const isToday = SITE.schedule[todayIdx] === code;
-
-      return '<article class="cadence__card cadence__card--' + m.slug + '">' +
-        '<div class="cadence__head">' +
-          LS.marketTag(code) +
-          '<span class="tag tag--line">' + LS.esc(c.label) + '</span>' +
-          (isToday ? '<span class="tag tag--brass">Today</span>' : '') +
-        '</div>' +
-        '<p class="cadence__when">' + LS.esc(m.dayLabel) + '</p>' +
-        '<p class="cadence__what">' + LS.esc(m.headline) + '</p>' +
-        '<p class="cadence__meta">' + LS.esc(m.blurb) + '</p>' +
-        '<ul class="cadence__list">' +
-          m.examples.map(function (e) { return '<li>' + LS.esc(e) + '</li>'; }).join('') +
-        '</ul>' +
-        '<p class="cadence__foot"><strong>' + m.count +
-          (m.count === 1 ? ' report' : ' reports') + ' a week</strong> · ' + LS.esc(m.covers) + '</p>' +
+    cards.innerHTML = order.map(function (code) {
+      const r = REGIONS[code];
+      return '<article class="cadence__card cadence__card--' + r.slug +
+        (code === todayRegion ? ' cadence__card--today' : '') + '">' +
+        '<p class="cadence__when">' + LS.esc(r.dayLabel) + '</p>' +
+        '<h3 class="cadence__where">' + LS.esc(r.name) + '</h3>' +
+        '<p class="cadence__meta">' + LS.esc(r.detail) + '</p>' +
       '</article>';
     }).join('');
   }

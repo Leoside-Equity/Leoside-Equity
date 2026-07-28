@@ -36,9 +36,9 @@
       <p>The point is not to tell you what to buy. It is to show you how a business, an index or a sector gets taken apart and put back together, so that eventually you can do it yourself.</p>
 
       <h2 id="week">The week</h2>
-      <p>Each day of the week has a fixed job, so you always know what is coming.</p>
+      <p>Each day has a fixed market, so you always know what is coming.</p>
       <div id="aboutWeek"></div>
-      <p>The three markets are deliberately different in shape. Five days of the week go deep on one company at a time, which is where the detail lives. The other two pull back: Sunday looks at the Indian market as a whole rather than any single name in it, and Saturday takes one Indian sector and works through the case for and against it. Reading both kinds is what makes either useful.</p>
+      <p>The shape of a report follows its subject. Most days that means one listed business examined closely. On the Indian days it usually means pulling back to look at the market or a sector as a whole, which is a different kind of question and a useful counterweight to reading one company at a time.</p>
 
       <h2 id="faq">Common questions</h2>
 
@@ -57,11 +57,8 @@
       <h3>Can I share or republish a report?</h3>
       <p>Link to it freely. Quoting a paragraph with attribution is fine. Republishing a report in full, or feeding the reports into a commercial product, is not. See the <a class="link" href="terms.html">terms of service</a>.</p>
 
-      <h3>Do you cover individual Indian stocks?</h3>
-      <p>No. Indian coverage is the market as a whole on Sunday and one sector on Saturday. Single company work is on American and British listings, Monday through Friday.</p>
-
       <h3>Where do I read the reports?</h3>
-      <p>Here on the site. Sign in and the newest report is on the home page, with everything else in <a class="link" href="reports.html">the archive</a> and organised by month, week and day on <a class="link" href="dashboard.html">your dashboard</a>. You can save any report to come back to.</p>
+      <p>Here on the site. Sign in and the newest report is on the home page, with everything else under <a class="link" href="reports.html">Reports</a> and organised by month, week and day on <a class="link" href="dashboard.html">your dashboard</a>. You can save any report to come back to.</p>
 
       <h3>Something in a report is wrong. What now?</h3>
       <p>Write in. Corrections get made at the top of the report with the date and what changed, not silently in the text.</p>
@@ -103,16 +100,14 @@
        a rota the rest of the site no longer runs. */
     var host = document.getElementById('aboutWeek');
     if (host) {
-      var seen = [];
-      for (var i = 0; i < 7; i++) {
-        if (seen.indexOf(SITE.schedule[i]) === -1) seen.push(SITE.schedule[i]);
-      }
-      host.innerHTML = '<ul class="cal-list cal-list--doc">' + seen.map(function (code) {
-        var slot = LS.market(code);
-        return '<li><span class="cal-list__when"><strong>' + LS.esc(slot.dayLabel) + '</strong> · ' +
-          LS.esc(LS.coverage(code).label) + '</span>' +
-          '<span class="cal-list__what tag tag--' + slot.slug + '"><span class="dot"></span>' +
-          LS.esc(slot.short) + '</span></li>';
+      var order = Object.keys(REGIONS).sort(function (a, b) {
+        return REGIONS[a].startDay - REGIONS[b].startDay;
+      });
+      host.innerHTML = '<ul class="cal-list cal-list--doc">' + order.map(function (code) {
+        var r = REGIONS[code];
+        return '<li><span class="cal-list__when"><strong>' + LS.esc(r.dayLabel) + '</strong></span>' +
+          '<span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
+          LS.esc(r.name) + '</span></li>';
       }).join('') + '</ul>';
     }
 

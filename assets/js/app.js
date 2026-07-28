@@ -145,12 +145,12 @@ const LS = (function () {
     return all.slice(0, words || 28).join(' ') + (all.length > (words || 28) ? '…' : '');
   }
 
-  /* The colour comes from the region and the words from the slot, so both
-     Indian slots read as India at a glance and still say which one they are. */
+  /* Country only. What shape a given report takes is visible from reading it,
+     and stamping "single company" on every card was noise that also boxed in
+     what a day is allowed to contain. */
   function marketTag(code) {
     const m = market(code);
-    return '<span class="tag tag--' + m.slug + '" title="' + esc(m.name) + ' · ' +
-      esc(COVERAGE[m.kind].label) + '"><span class="dot"></span>' + esc(m.short) + '</span>';
+    return '<span class="tag tag--' + m.slug + '"><span class="dot"></span>' + esc(m.short) + '</span>';
   }
   /* "Fairly valued" has a space in it, so the modifier is slugified rather
      than lowercased, otherwise it would split into two class names. */
@@ -217,10 +217,14 @@ const LS = (function () {
     const host = document.getElementById('siteHeader');
     if (!host) return;
     const user = Auth.current();
+    /* The name they chose, not the address they signed up with. An email in a
+       header is both longer than the space allows and nobody's idea of how
+       they want to be addressed. */
     const right = user
-      ? '<button class="user-pill" id="userPill" aria-haspopup="true" aria-expanded="false">' +
-          '<span class="avatar">' + esc(Auth.initials(user)) + '</span>' +
-          '<span class="user-pill__mail">' + esc(user.email) + '</span>' +
+      ? '<button class="user-pill" id="userPill" aria-haspopup="true" aria-expanded="false" ' +
+          'aria-label="Account menu for ' + esc(displayName(user)) + '">' +
+          avatar(user) +
+          '<span class="user-pill__name">' + esc(displayName(user)) + '</span>' +
         '</button>'
       : '<a class="btn btn--ghost btn--sm" href="signin.html">Sign in</a>' +
         '<a class="btn btn--sm" href="signup.html">Create free account</a>';
@@ -240,6 +244,24 @@ const LS = (function () {
 
     setTheme(currentTheme());
     wireHeader(!!user);
+  }
+
+  /* What to call somebody: the name they gave, falling back to the part of
+     the address before the @ so the pill is never empty. */
+  function displayName(user) {
+    const name = String((user && user.name) || '').trim();
+    if (name) return name.split(/\s+/)[0];
+    const local = String((user && user.email) || '').split('@')[0];
+    return local || 'Member';
+  }
+
+  /* Their picture if they set one, their initials if not. */
+  function avatar(user, cls) {
+    const src = user && user.avatar;
+    if (src) {
+      return '<img class="avatar avatar--img ' + (cls || '') + '" src="' + esc(src) + '" alt="">';
+    }
+    return '<span class="avatar ' + (cls || '') + '">' + esc(Auth.initials(user)) + '</span>';
   }
 
   function userMenu(user) {
@@ -314,7 +336,7 @@ const LS = (function () {
     for (let i = 0; i < 7; i++) {
       const m = market(SITE.schedule[i]);
       dots += '<span class="daydot daydot--' + m.slug + (i === todayIdx ? ' daydot--today' : '') + '"' +
-        ' title="' + DAYS[i] + ' · ' + esc(m.name) + ' · ' + esc(COVERAGE[m.kind].label) + '">' +
+        ' title="' + DAYS[i] + ' · ' + esc(m.regionName) + '">' +
         '<span class="sq"></span>' + DAYS_S[i] + '</span>';
     }
 
@@ -324,7 +346,7 @@ const LS = (function () {
     return '<div class="schedule-strip"><div class="wrap schedule-strip__inner">' +
       '<span class="schedule-strip__label">Publishing calendar</span>' +
       '<div class="daydots">' + dots + '</div>' +
-      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; Today covers <b>' + esc(m.name) + '</b></span>' +
+      '<span class="schedule-strip__today">' + today + ' &nbsp;·&nbsp; Today covers <b>' + esc(m.regionName) + '</b></span>' +
     '</div></div>';
   }
   function mountSchedule() {
@@ -367,7 +389,7 @@ const LS = (function () {
           '</ul></div>' +
         '</div>' +
         '<div class="footer-legal">' +
-          '<b>Important.</b> Leoside Equity publishes general market commentary and educational analysis. Nothing on this site is personalised investment advice, an offer to buy or sell any security, or a recommendation tailored to your circumstances. We are not a registered investment adviser or research analyst in any jurisdiction. Markets carry risk, including the risk of losing the full amount invested. Do your own research and speak to a licensed professional before acting on anything you read here.' +
+          '<b>Important.</b> Leoside Equity publishes general market commentary and educational analysis. Nothing on this site is personalised investment advice, an offer to buy or sell any security, or a recommendation tailored to your circumstances. We are not a registered investment adviser or research analyst in any jurisdiction. Markets carry risk, including the risk of losing the full amount invested. Our work is a starting point for your own thinking; weigh it against your own circumstances and, where it matters, take advice from a licensed professional.' +
         '</div>' +
         '<div class="footer-bottom">' +
           '<span>&copy; ' + year + ' ' + SITE.name + '. All rights reserved.</span>' +
@@ -462,6 +484,7 @@ const LS = (function () {
     parseDate: parseDate, toISO: toISO, fmtDate: fmtDate,
     marketForDate: marketForDate, marketForToday: marketForToday, weekOfMonth: weekOfMonth,
     market: market, coverage: coverage, regionOf: regionOf,
+    displayName: displayName, avatar: avatar,
     reportUrl: reportUrl, byId: byId,
     paragraphs: paragraphs, wordCount: wordCount, preview: preview, excerpt: excerpt,
     marketTag: marketTag, ratingTag: ratingTag, esc: esc, paragraphs: paragraphs,

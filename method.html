@@ -34,15 +34,10 @@
     <div class="doc-body">
       <p class="lede">We believe sustainable market outperformance stems from rigorous, independent bottom up analysis coupled with a clear understanding of macroeconomic catalysts. Our daily research reports are built on a four pillar framework designed to separate market hype from fundamental value.</p>
 
-      <h2 id="formats">Three formats, one framework</h2>
-      <p>The week runs three kinds of report, and the four pillars below apply to all of them. What changes is the altitude, not the method.</p>
+      <h2 id="scope">What gets covered</h2>
+      <p>Three markets across the week, with the four pillars below applied to every report. What changes between them is the altitude, not the method.</p>
       <div id="methodWeek"></div>
-      <ul>
-        <li><strong>A single company</strong>, Monday through Friday. The four pillars applied to one business: its numbers, its moat, its valuation and what could force the market to reprice it.</li>
-        <li><strong>An index and the macro picture</strong>, on Sunday. The same four questions asked of the Indian market as a whole. Aggregate earnings quality instead of one income statement, the structural position of the index instead of one company's moat, index level valuation against history instead of a single discounted cash flow, and the rate, inflation and flow data that could move all of it at once.</li>
-        <li><strong>A sector</strong>, on Saturday. The middle ground. A sector has economics of its own, shared pressures and a valuation range, and it can be taken apart the same way a company can.</li>
-      </ul>
-      <p>Working across all three is the point rather than a compromise. A company read without the macro conditions it operates in is half a picture, and a view on a market that never touches an individual balance sheet is the other half.</p>
+      <p>Most reports examine one listed business closely. Some pull back to a sector or to a market as a whole, where the same four questions are asked of many companies at once: aggregate earnings quality rather than one income statement, structural position rather than one firm's moat, valuation against history rather than a single discounted cash flow. A company read without the conditions it operates in is half a picture, and a view on a market that never touches a balance sheet is the other half.</p>
 
       <h2 id="quantitative">1. Quantitative foundation, the numbers</h2>
       <p>We start by stripping away market sentiment to analyse the raw financial health of a business.</p>
@@ -102,16 +97,14 @@
        step with the rota the rest of the site runs. */
     var host = document.getElementById('methodWeek');
     if (!host) return;
-    var seen = [];
-    for (var i = 0; i < 7; i++) {
-      if (seen.indexOf(SITE.schedule[i]) === -1) seen.push(SITE.schedule[i]);
-    }
-    host.innerHTML = '<ul class="cal-list cal-list--doc">' + seen.map(function (code) {
-      var slot = LS.market(code);
-      return '<li><span class="cal-list__when"><strong>' + LS.esc(slot.dayLabel) + '</strong> · ' +
-        LS.esc(LS.coverage(code).label) + '</span>' +
-        '<span class="cal-list__what tag tag--' + slot.slug + '"><span class="dot"></span>' +
-        LS.esc(slot.short) + '</span></li>';
+    var order = Object.keys(REGIONS).sort(function (a, b) {
+      return REGIONS[a].startDay - REGIONS[b].startDay;
+    });
+    host.innerHTML = '<ul class="cal-list cal-list--doc">' + order.map(function (code) {
+      var r = REGIONS[code];
+      return '<li><span class="cal-list__when"><strong>' + LS.esc(r.dayLabel) + '</strong></span>' +
+        '<span class="cal-list__what tag tag--' + r.slug + '"><span class="dot"></span>' +
+        LS.esc(r.name) + '</span></li>';
     }).join('') + '</ul>';
   });
 

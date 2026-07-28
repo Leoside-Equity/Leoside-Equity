@@ -26,23 +26,16 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
   if (perks) {
     /* The coverage line is read off the schedule rather than written out, so
        the sign up page cannot promise a week the site no longer publishes. */
-    const slots = [];
-    for (let i = 0; i < 7; i++) {
-      const code = SITE.schedule[i];
-      if (slots.indexOf(code) === -1) slots.push(code);
-    }
-    const regionNames = [];
-    slots.forEach(function (code) {
-      const name = REGIONS[MARKETS[code].region].name;
-      if (regionNames.indexOf(name) === -1) regionNames.push(name);
+    const order = Object.keys(REGIONS).sort(function (a, b) {
+      return REGIONS[a].startDay - REGIONS[b].startDay;
     });
 
     const items = [
       ['Every report, in full', 'Reports open end to end rather than stopping at the summary.'],
-      [regionNames.length + ' markets, seven days',
-        slots.map(function (code) {
-          return MARKETS[code].dayLabel + ': ' + MARKETS[code].short;
-        }).join('. ') + '.'],
+      [order.length + ' markets, seven days',
+        order.map(function (code) {
+          return REGIONS[code].name + ' ' + REGIONS[code].dayLabel;
+        }).join(', ') + '.'],
       ['Your own dashboard', 'Reports organised by month, week and day, plus what you have saved.'],
       ['Keep what matters', 'Save any report to your own list and pick it back up whenever you like.'],
       ['No cost, no card', 'There is no paid tier. We do not ask for payment details at any point.']
@@ -114,6 +107,26 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
 
   /* ---------------------------------------------------------------- sign up */
   if (signupForm) {
+    /* Market interest is a set, not a single choice: somebody can follow the
+       US and the UK without caring for India. Everything ticked by default,
+       because the honest starting position for a new reader is everything. */
+    const marketBox = document.getElementById('marketChoices');
+    if (marketBox) {
+      marketBox.innerHTML = Auth.MARKET_CODES.map(function (code) {
+        return '<label class="checkset__item">' +
+          '<input type="checkbox" name="market" value="' + code + '" checked>' +
+          '<span class="checkset__dot checkset__dot--' + REGIONS[code].slug + '"></span>' +
+          '<span>' + LS.esc(REGIONS[code].name) + '</span>' +
+        '</label>';
+      }).join('');
+    }
+
+    function chosenMarkets() {
+      return Array.prototype.filter
+        .call(document.querySelectorAll('#marketChoices input:checked'), Boolean)
+        .map(function (i) { return i.value; });
+    }
+
     const pw = document.getElementById('password');
     const meter = document.getElementById('meter');
     const hint = document.getElementById('pwHint');
@@ -136,7 +149,7 @@ Boot.start(document.getElementById('signupForm') ? 'signup' : 'signin', function
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
         password: pw.value,
-        market: document.getElementById('market').value,
+        market: chosenMarkets(),
         agreed: document.getElementById('terms').checked
       }).then(function (result) {
         busy(signupForm, false);

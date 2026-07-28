@@ -206,8 +206,8 @@ Boot.start('dashboard', function () {
        with it, and repeating it just adds a second front door. */
     return '<div class="dash-hero">' +
         '<div><h1>' + greeting + ', ' + LS.esc((user.name || '').split(' ')[0]) + '</h1>' +
-        '<p>' + LS.fmtDate(todayISO) + '. Today is a <strong>' + LS.esc(LS.market(todayCode).name) +
-        '</strong> day · ' + LS.esc(LS.coverage(todayCode).label) + '.</p></div>' +
+        '<p>' + LS.fmtDate(todayISO) + '. Today is a <strong>' +
+        LS.esc(LS.market(todayCode).regionName) + '</strong> day.</p></div>' +
       '</div>' +
 
       '<div class="stat-row">' +
@@ -503,15 +503,16 @@ Boot.start('dashboard', function () {
               : '<p class="muted small" style="margin:0">No signups in the last two weeks.</p>') +
             '</div></div>' +
 
-          '<div class="panel"><div class="panel__head"><h3>Which market readers pick</h3></div>' +
+          '<div class="panel"><div class="panel__head"><h3>Which markets readers follow</h3></div>' +
             '<div class="panel__body"><div class="stat-row" style="margin:0">' +
-              statBlock('Every market', s.market_both, 'want everything') +
-              statBlock(REGIONS.IN.name, s.market_in, marketDays('IN')) +
-              statBlock(REGIONS.US.name, s.market_us, marketDays('US')) +
-              statBlock(REGIONS.UK.name, s.market_uk, marketDays('UK')) +
+              statBlock(REGIONS.US.name, s.market_us, REGIONS.US.dayLabel) +
+              statBlock(REGIONS.UK.name, s.market_uk, REGIONS.UK.dayLabel) +
+              statBlock(REGIONS.IN.name, s.market_in, REGIONS.IN.dayLabel) +
+              statBlock('All three', s.market_all, 'follow everything') +
             '</div>' +
-            '<p class="muted small" style="margin:1rem 0 0">This is what people chose at signup. ' +
-            'A heavy lean one way is worth knowing before you plan the week.</p>' +
+            '<p class="muted small" style="margin:1rem 0 0">Readers can follow any combination, so the ' +
+            'first three overlap and will add up to more than your reader count. A heavy lean one way is ' +
+            'worth knowing before you plan the week.</p>' +
             '</div></div>';
       });
     }, 0);
@@ -519,19 +520,10 @@ Boot.start('dashboard', function () {
     return host;
   }
 
-  /* "Sunday" or "Monday to Wednesday" for a region, read back off the schedule
-     so the audience panel cannot describe a week that no longer runs. */
-  function marketDays(regionCode) {
-    const labels = Object.keys(MARKETS)
-      .filter(function (code) { return MARKETS[code].region === regionCode && MARKETS[code].count; })
-      .map(function (code) { return MARKETS[code].dayLabel; });
-    return labels.join(' · ') || 'not currently scheduled';
-  }
-
   function viewDay(date) {
     const items = (byDate[date] || []);
     const m = LS.market(LS.marketForDate(date));
-    const scheduled = 'Scheduled coverage: ' + m.name + ' · ' + LS.coverage(m.code).label + '.';
+    const scheduled = 'Scheduled coverage: ' + m.regionName + '.';
     if (!items.length) {
       return head(LS.fmtDate(date), scheduled) +
         '<div class="empty"><h3>Nothing published on this date</h3><p>Pick another day from the list on the left.</p></div>';
@@ -549,20 +541,42 @@ Boot.start('dashboard', function () {
         '<div class="panel__head"><h3>Your details</h3></div>' +
         '<div class="panel__body">' +
           '<div class="notice notice--ok" id="savedNote" hidden></div>' +
+
+          /* Picture first: it is the one setting with something to look at. */
+          '<div class="form-group">' +
+            '<span class="label">Profile photo</span>' +
+            '<div class="avatar-edit">' +
+              '<span id="acAvatarPreview">' + LS.avatar(user, 'avatar--xl') + '</span>' +
+              '<div class="avatar-edit__actions">' +
+                '<label class="btn btn--ghost btn--sm" for="acAvatarFile">Choose a photo</label>' +
+                '<input id="acAvatarFile" type="file" accept="image/*" hidden>' +
+                '<button class="btn btn--quiet btn--sm" type="button" id="acAvatarClear"' +
+                  (user.avatar ? '' : ' hidden') + '>Remove</button>' +
+                '<p class="hint" style="margin:.1rem 0 0">Square works best. Anything larger is scaled down to 256 pixels before it is saved.</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="notice notice--err" id="acAvatarErr" hidden></div>' +
+          '</div>' +
+
           '<div class="form-group"><label for="acName">Name</label>' +
-            '<input class="input" id="acName" type="text" value="' + LS.esc(user.name) + '"></div>' +
+            '<input class="input" id="acName" type="text" value="' + LS.esc(user.name) + '">' +
+            '<div class="hint">This is what we call you around the site.</div></div>' +
           '<div class="form-group"><label for="acEmail">Email address</label>' +
             '<input class="input" id="acEmail" type="email" value="' + LS.esc(user.email) + '" disabled>' +
             '<div class="hint">Changing the address on an account is not supported yet. Write in if you need it moved.</div></div>' +
-          '<div class="form-group"><label for="acMarket">Market you follow most</label>' +
-            '<select class="select" id="acMarket">' +
-              '<option value="both"' + (user.market === 'both' ? ' selected' : '') + '>Every market</option>' +
-              Object.keys(REGIONS).map(function (code) {
-                return '<option value="' + code + '"' + (user.market === code ? ' selected' : '') +
-                  '>Mostly ' + LS.esc(REGIONS[code].name) + '</option>';
+          '<div class="form-group">' +
+            '<span class="label">Markets you follow</span>' +
+            '<div class="checkset" id="acMarkets" role="group" aria-label="Markets you follow">' +
+              Auth.MARKET_CODES.map(function (code) {
+                const on = Auth.marketList(user.market).indexOf(code) !== -1;
+                return '<label class="checkset__item">' +
+                  '<input type="checkbox" value="' + code + '"' + (on ? ' checked' : '') + '>' +
+                  '<span class="checkset__dot checkset__dot--' + REGIONS[code].slug + '"></span>' +
+                  '<span>' + LS.esc(REGIONS[code].name) + '</span>' +
+                '</label>';
               }).join('') +
-            '</select>' +
-            '<div class="hint">This only shapes what we highlight for you. Everything stays readable either way.</div></div>' +
+            '</div>' +
+            '<div class="hint">Pick as many as you like. This only shapes what we highlight for you.</div></div>' +
           '<button class="btn" id="acSave">Save changes</button>' +
         '</div>' +
       '</div>' +
@@ -667,18 +681,104 @@ Boot.start('dashboard', function () {
   }
 
   function wireAccount() {
+    /* ---------------------------------------------------- profile photo
+       Scaled to 256px and stored inline on the profile row rather than in a
+       storage bucket. A bucket means a second set of access rules to get
+       right for an image that is only ever a few kilobytes once resized, and
+       one text column carries it with no extra surface to secure.
+
+       Everything happens in a canvas on the reader's own machine; the file
+       itself is never uploaded anywhere. */
+    const MAX_PX = 256;
+    const MAX_SRC_BYTES = 8 * 1024 * 1024;
+    let pendingAvatar;                 /* undefined = untouched, null = remove */
+
+    const fileInput = document.getElementById('acAvatarFile');
+    const clearBtn  = document.getElementById('acAvatarClear');
+    const preview   = document.getElementById('acAvatarPreview');
+    const avatarErr = document.getElementById('acAvatarErr');
+
+    function avatarProblem(message) {
+      avatarErr.innerHTML = LS.icon('alert') + '<span>' + LS.esc(message) + '</span>';
+      avatarErr.hidden = false;
+    }
+
+    function shrink(file) {
+      return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onerror = function () { reject(new Error('That file could not be read.')); };
+        reader.onload = function () {
+          const img = new Image();
+          img.onerror = function () { reject(new Error('That does not look like an image we can read.')); };
+          img.onload = function () {
+            /* Centre crop to a square first, so a wide photo is not squashed
+               into the circle it is about to be displayed in. */
+            const side = Math.min(img.width, img.height);
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = Math.min(side, MAX_PX);
+            canvas.getContext('2d').drawImage(
+              img,
+              (img.width - side) / 2, (img.height - side) / 2, side, side,
+              0, 0, canvas.width, canvas.height
+            );
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (fileInput) fileInput.addEventListener('change', function () {
+      const file = fileInput.files && fileInput.files[0];
+      avatarErr.hidden = true;
+      if (!file) return;
+
+      if (!/^image\//.test(file.type)) { avatarProblem('Choose an image file.'); return; }
+      if (file.size > MAX_SRC_BYTES) { avatarProblem('That image is over 8 MB. Pick a smaller one.'); return; }
+
+      shrink(file).then(function (dataUrl) {
+        pendingAvatar = dataUrl;
+        preview.innerHTML = '<img class="avatar avatar--xl avatar--img" src="' + dataUrl + '" alt="">';
+        clearBtn.hidden = false;
+      }).catch(function (err) {
+        avatarProblem(err.message || 'That image could not be processed.');
+      });
+      /* Reset so choosing the same file twice still fires a change event. */
+      fileInput.value = '';
+    });
+
+    if (clearBtn) clearBtn.addEventListener('click', function () {
+      pendingAvatar = null;
+      avatarErr.hidden = true;
+      preview.innerHTML = LS.avatar({ name: user.name, email: user.email }, 'avatar--xl');
+      clearBtn.hidden = true;
+    });
+
     const saveBtn = document.getElementById('acSave');
     saveBtn.addEventListener('click', function () {
       saveBtn.disabled = true;
-      Auth.update({
+
+      const changes = {
         name: document.getElementById('acName').value.trim() || user.name,
-        market: document.getElementById('acMarket').value
-      }).then(function (res) {
+        market: Array.prototype.map.call(
+          document.querySelectorAll('#acMarkets input:checked'),
+          function (i) { return i.value; })
+      };
+      /* Only send the picture when it actually changed, so saving a name does
+         not rewrite an image that is already there. */
+      if (pendingAvatar !== undefined) changes.avatar = pendingAvatar;
+
+      Auth.update(changes).then(function (res) {
         saveBtn.disabled = false;
         const note = document.getElementById('savedNote');
         if (res && res.ok) {
           note.className = 'notice notice--ok';
           note.innerHTML = LS.icon('check') + '<span>Saved.</span>';
+          /* The header carries the name and the picture, so it has to be
+             redrawn or it keeps showing what things used to be. */
+          pendingAvatar = undefined;
+          LS.init('dashboard');
         } else {
           note.className = 'notice notice--err';
           note.innerHTML = LS.icon('alert') + '<span>' + LS.esc((res && res.error) || 'We could not save that.') + '</span>';

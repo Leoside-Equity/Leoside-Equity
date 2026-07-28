@@ -22,7 +22,7 @@ Then open <http://localhost:5173>.
 | `dashboard.html` | Member area. Sidebar archive by month, week and day |
 | `signup.html` / `signin.html` | Account forms |
 | `about.html` | What the site is, who it is for, FAQ |
-| `method.html` | The research method, on its own page with a back button. Currently a placeholder |
+| `method.html` | The research method, on its own page with a back button |
 | `terms.html` / `privacy.html` / `disclaimer.html` | Legal pages |
 | `admin.html` | Daily publishing screen. Admin accounts only |
 | `assets/js/config.js` | Supabase keys and the `USE_SUPABASE` switch |
@@ -63,11 +63,11 @@ Everything is driven by `assets/js/data.js`. Add an object to the top of the `RE
 }
 ```
 
-Nothing else needs updating. The archive, the sector filter, the dashboard tree, the home page and the word counts all read from this array.
+Nothing else needs updating. The reports page, the sector filter, the dashboard tree, the home page and the word counts all read from this array.
 
 Sector filter options, month and week grouping, and the "N reports" counts are all derived, so they stay correct on their own.
 
-The archive currently ships empty on purpose. Every page has a proper empty state, so the site looks finished with nothing published: the home page shows a "first report is on its way" card, the archive explains it will fill up, and the dashboard tells the member their account is ready.
+With nothing published every page has a proper empty state, so the site still looks finished: the home page shows a "first report is on its way" card, the reports page explains it will fill up, and the dashboard tells the member their account is ready.
 
 ## The publishing calendar
 
@@ -86,9 +86,11 @@ schedule: { 0:'IN_MACRO', 1:'US', 2:'US', 3:'US', 4:'UK', 5:'UK', 6:'IN_SECTOR' 
 
 Three things come off this one object and nothing restates them by hand: the day strip under the header, the week map on the home page, and the coverage list on the about, method and report pages. `MARKETS[code].days`, `.count` and `.dayLabel` are all derived at the bottom of `data.js`, so "Monday to Wednesday" and "3 reports a week" are computed, never typed.
 
-**Colour comes from the region, shape comes from the kind.** `REGIONS` holds the three countries and their colours; `COVERAGE` holds the three report formats and the labels each one puts on the key statistics. Both Indian slots are amber because they are both India; what tells them apart is `Index & macro` against `Sector study`. Adding a fourth colour would have implied a fourth country.
+**Three countries, three colours.** `REGIONS` holds them: India amber, the United States slate blue, the United Kingdom violet. Both Indian slots share amber because they are both India, and a fourth colour would have implied a fourth country.
 
-One report record covers all three formats. A market outlook and a sector study reuse `ticker`, `company`, `target` and `last`, and `COVERAGE` relabels them: `Ticker` becomes `Index` or `Sector`, `Last close` becomes `Last index level`, and the admin form's labels and placeholders follow the slot you pick. No extra columns, no second table.
+**The site never announces the shape of a report.** Tags say `India`, not `India · Sector`. The split between the Sunday market view and the Saturday sector view is stated once, in `REGIONS.IN.detail`, which is what the home page's market split renders. Everywhere else a report is simply Indian. That keeps any given day free to be whatever it needs to be without a badge elsewhere on the site contradicting it.
+
+One report record covers every shape. `COVERAGE` exists only to rename four fields on the publishing form, so an index outlook is not typed into a box labelled `Ticker`. Nothing reader facing reads it. No extra columns, no second table.
 
 **It never needs manual updating.** The strip under the header always runs Sunday to Saturday. Which chip is marked as today, and the date printed beside it, come from `new Date()`, which is the reader's own device clock and timezone. Someone in Bengaluru and someone in New York can see different days highlighted at the same moment, each correct for them. Nothing animates or flashes; today simply carries a brass outline.
 
@@ -129,14 +131,15 @@ The palette and type scale are CSS custom properties at the top of `styles.css`.
 - Playfair Display for headings, Inter for interface, Lora for the body of a note
 - Light and dark themes both supported. It follows the system setting and the toggle in the header overrides it.
 
-The lion mark is inline SVG in `app.js` (`LS.mark()`) so it inherits colour from its surroundings. A standalone copy for the browser tab is in `assets/img/favicon.svg`. The mane is a twenty point star and the muzzle is an upward chevron, so at small sizes it reads as a rising line.
+The lion mark is a single image, `assets/img/logo.png`, drawn by `LS.mark()` in `app.js`. Replacing the artwork means replacing that file and nothing else. It wants a square export with a transparent background, because it sits on a cream header in light mode and an ink one in dark. `logo.svg` is the fallback `LS.mark()` swaps in if the png ever goes missing; `logo-original.png` is the untouched export kept as a source file.
+
+Readers can set a profile photo. It is cropped square, scaled to 256px in a canvas on their own machine, and stored inline on their profile row as a data URI, so no storage bucket and no second set of access rules. See migration `0012`.
 
 ## Before you launch
 
-- [ ] Write the real content for `method.html`. It currently holds a placeholder line
-- [ ] Have a lawyer review `terms.html`, `privacy.html` and `disclaimer.html` against Indian and United States rules on securities commentary. They are drafted from scratch in plain language, not copied from anywhere, and they still need professional review
+- [ ] Have a lawyer review `terms.html`, `privacy.html` and `disclaimer.html` against the securities commentary rules in every market you publish on. They are drafted from scratch in plain language, not copied from anywhere, and they still need professional review. Section 19 of the terms carries the territorial scope clause, which is the one most worth a second opinion
 - [ ] Check the contact address in `SITE.email` in `data.js`
-- [ ] Build the backend and move the gate onto it
 - [ ] Update the domain in `robots.txt` and add a sitemap
 - [ ] Add an Open Graph image and per page `og:` tags if you want link previews to look right
 - [ ] Decide on analytics, then update section 6 of the privacy policy to match what you actually run
+- [ ] `assets/img/favicon.svg` is not referenced by any page. Wire it up as an `<link rel="icon">` or delete it

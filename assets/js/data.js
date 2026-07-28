@@ -41,57 +41,54 @@ const SITE = {
    India; what separates them is the kind of report, not the country.
    -------------------------------------------------------------------------- */
 const REGIONS = {
-  IN: { code: 'IN', slug: 'in', name: 'India',          currency: '₹', venues: 'the NSE and the BSE' },
-  US: { code: 'US', slug: 'us', name: 'United States',  currency: '$', venues: 'the NYSE and the Nasdaq' },
-  UK: { code: 'UK', slug: 'uk', name: 'United Kingdom', currency: '£', venues: 'the London Stock Exchange' }
+  IN: {
+    code: 'IN', slug: 'in', name: 'India', currency: '₹',
+    venues: 'the NSE and the BSE',
+    /* The one place the Indian week is spelled out. Everywhere else simply
+       says India, so the split stays a detail of the calendar rather than
+       something the whole site keeps repeating. */
+    detail: 'The market as a whole on Sunday, and a single sector on Saturday.'
+  },
+  US: {
+    code: 'US', slug: 'us', name: 'United States', currency: '$',
+    venues: 'the NYSE and the Nasdaq',
+    detail: 'One company listed in New York, taken apart properly, each day.'
+  },
+  UK: {
+    code: 'UK', slug: 'uk', name: 'United Kingdom', currency: '£',
+    venues: 'the London Stock Exchange',
+    detail: 'One London listing, given the same treatment, each day.'
+  }
 };
 
 /* --------------------------------------------------------------------------
-   Kinds carry the shape of the report. A single company note, an index and
-   macro note, and a sector study all use the same record, so the labels on
-   the key statistics change rather than the columns underneath.
+   Kinds exist for one reason: the labels on the publishing form.
 
-   `subject` is what the ticker field is called for that kind, `holder` what
-   the company field is called, and `target` / `last` how the two price fields
-   are described. Nothing else in the site needs to know the difference.
+   A company note, a market outlook and a sector study all use the same record,
+   so writing an index into a box labelled "Ticker" is how a database ends up
+   full of tickers that are not tickers. These rename the four fields where
+   that matters and stop there.
+
+   Nothing reader facing uses this. The site does not announce the shape of a
+   report anywhere, which leaves any given day free to be whatever it needs to
+   be without the page contradicting itself.
    -------------------------------------------------------------------------- */
 const COVERAGE = {
-  stock: {
-    kind: 'stock',
-    label: 'Single company',
-    unit: 'One company',
-    subject: 'Ticker',
-    holder: 'Company',
-    target: 'Fair value band',
-    last: 'Last close',
-    crumb: 'company'
-  },
-  macro: {
-    kind: 'macro',
-    label: 'Index & macro',
-    unit: 'The whole market',
-    subject: 'Index',
-    holder: 'Market',
-    target: 'Fair value on the index',
-    last: 'Last index level',
-    crumb: 'market outlook'
-  },
-  sector: {
-    kind: 'sector',
-    label: 'Sector study',
-    unit: 'One sector',
-    subject: 'Sector',
-    holder: 'Industry',
-    target: 'Fair value on the sector',
-    last: 'Last sector level',
-    crumb: 'sector study'
-  }
+  stock:  { kind: 'stock',  subject: 'Ticker', holder: 'Company',  target: 'Fair value band',           last: 'Last close' },
+  macro:  { kind: 'macro',  subject: 'Index',  holder: 'Market',   target: 'Fair value on the index',   last: 'Last index level' },
+  sector: { kind: 'sector', subject: 'Sector', holder: 'Industry', target: 'Fair value on the sector',  last: 'Last sector level' }
 };
 
 /* --------------------------------------------------------------------------
    The four coverage slots that make up a week. `days` and `dayLabel` are
    derived from SITE.schedule at the bottom of this file, so a change to the
    schedule cannot leave a stale label behind.
+
+   `short` is deliberately just the country. A tag that reads "India" on every
+   report is calmer than one that reads "India · Macro" on some and
+   "India · Sector" on others, and the distinction only matters in one place:
+   the market split on the home page. `name` carries the longer form for the
+   few spots that genuinely need it, such as the admin dropdown.
    -------------------------------------------------------------------------- */
 const MARKETS = {
   IN_MACRO: {
@@ -99,48 +96,28 @@ const MARKETS = {
     region: 'IN',
     kind: 'macro',
     name: 'Indian market outlook',
-    short: 'India · Macro',
-    nav: 'Indian market outlook',
-    headline: 'Where the Indian market goes next',
-    blurb: 'The Indian market read as one thing rather than one company: what the indices are doing, what the macro data underneath them says, and what that sets up for the week ahead.',
-    covers: 'NIFTY, the SENSEX, rates, inflation, currency and flows',
-    examples: ['NIFTY 50 direction', 'Rate and inflation prints', 'Foreign and domestic flows']
+    short: 'India'
   },
   US: {
     code: 'US',
     region: 'US',
     kind: 'stock',
     name: 'United States equities',
-    short: 'United States',
-    nav: 'US companies',
-    headline: 'One American business a day',
-    blurb: 'A single company listed in the United States, taken apart properly: what it sells, what actually moves the numbers, where the pressure points are, and what the share price is asking you to believe.',
-    covers: 'NYSE and Nasdaq listed companies',
-    examples: ['Business model and moat', 'Earnings quality', 'Valuation and catalysts']
+    short: 'United States'
   },
   UK: {
     code: 'UK',
     region: 'UK',
     kind: 'stock',
     name: 'London Stock Exchange',
-    short: 'United Kingdom',
-    nav: 'UK companies',
-    headline: 'One London listing a day',
-    blurb: 'A single company listed in London, given the same treatment as the American names: the business first, the numbers second, and the price last.',
-    covers: 'London Stock Exchange listed companies',
-    examples: ['Business model and moat', 'Earnings quality', 'Valuation and catalysts']
+    short: 'United Kingdom'
   },
   IN_SECTOR: {
     code: 'IN_SECTOR',
     region: 'IN',
     kind: 'sector',
     name: 'Indian sector study',
-    short: 'India · Sector',
-    nav: 'Indian sectors',
-    headline: 'One Indian sector, taken apart',
-    blurb: 'A whole slice of the Indian market rather than one name in it. What is driving the sector, what could break it, and the case for where it goes from here.',
-    covers: 'A single sector of the Indian market, IT or banks or pharma',
-    examples: ['What is driving the sector', 'Where the risk sits', 'The case either way']
+    short: 'India'
   }
 };
 
@@ -187,17 +164,51 @@ REPORTS.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 (function deriveScheduleLabels() {
   const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+  /* Read a set of weekdays back as English.
+     The week is treated as a circle, which is the whole point: India runs on
+     Saturday and Sunday, and days [0, 6] sorted numerically look like the two
+     ends of the week rather than the weekend they actually are. Rotating the
+     start until the run is unbroken turns that into "Saturday and Sunday". */
+  function runOf(days) {
+    if (!days.length) return [];
+    /* Find the day that begins the run: the one whose predecessor is absent. */
+    const has = {};
+    days.forEach(function (d) { has[d] = true; });
+    let start = days[0];
+    for (let i = 0; i < days.length; i++) {
+      const prev = (days[i] + 6) % 7;
+      if (!has[prev]) { start = days[i]; break; }
+    }
+    /* Walk forward from there. A contiguous set comes back in order; a broken
+       one comes back empty and the caller falls back to plain listing. */
+    const run = [];
+    for (let d = start, n = 0; n < days.length; n++, d = (d + 1) % 7) {
+      if (!has[d]) return [];
+      run.push(d);
+    }
+    return run;
+  }
+
+  function describeDays(days) {
+    if (!days.length) return 'Not currently scheduled';
+    if (days.length === 7) return 'Every day';
+    if (days.length === 1) return DAY_NAMES[days[0]];
+
+    const run = runOf(days);
+    if (!run.length) return days.map(function (x) { return DAY_NAMES[x]; }).join(', ');
+
+    return run.length === 2
+      ? DAY_NAMES[run[0]] + ' and ' + DAY_NAMES[run[1]]
+      : DAY_NAMES[run[0]] + ' to ' + DAY_NAMES[run[run.length - 1]];
+  }
+
   Object.keys(MARKETS).forEach(function (code) {
     const days = [];
     for (let i = 0; i < 7; i++) if (SITE.schedule[i] === code) days.push(i);
 
     MARKETS[code].days = days;
     MARKETS[code].count = days.length;
-    MARKETS[code].dayLabel =
-      days.length === 0 ? 'Not currently scheduled'
-      : days.length === 1 ? DAY_NAMES[days[0]]
-      : days.length === 2 ? DAY_NAMES[days[0]] + ' and ' + DAY_NAMES[days[1]]
-      : DAY_NAMES[days[0]] + ' to ' + DAY_NAMES[days[days.length - 1]];
+    MARKETS[code].dayLabel = describeDays(days);
 
     /* Convenience copies so a caller with a market never has to look up two
        more objects just to print a colour class or a currency symbol. */
@@ -205,5 +216,24 @@ REPORTS.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     MARKETS[code].slug = region.slug;
     MARKETS[code].currency = region.currency;
     MARKETS[code].regionName = region.name;
+  });
+
+  /* Regions get the same treatment, pooling every slot they own. This is what
+     the home page splits on: three countries, not four slots, so India reads
+     as one weekend rather than two separate entries at opposite ends of the
+     week. */
+  Object.keys(REGIONS).forEach(function (code) {
+    const days = [];
+    for (let i = 0; i < 7; i++) if (MARKETS[SITE.schedule[i]].region === code) days.push(i);
+
+    REGIONS[code].days = days;
+    REGIONS[code].count = days.length;
+    REGIONS[code].dayLabel = describeDays(days);
+
+    /* Where the run begins, so the home page can list the regions in the order
+       the week meets them. Sorting on the raw days would put India first on
+       the strength of Sunday, when its run actually starts on Saturday. */
+    const run = runOf(days);
+    REGIONS[code].startDay = run.length ? run[0] : (days[0] || 0);
   });
 })();

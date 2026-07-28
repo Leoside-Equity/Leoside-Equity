@@ -12,18 +12,14 @@ Boot.start('reports', function () {
   const countEl = document.getElementById('count');
   const outEl   = document.getElementById('results');
   const segBtns = Array.prototype.slice.call(document.querySelectorAll('.seg [data-region]'));
-  const formatEl = document.getElementById('format');
 
-  /* Filtering is by region rather than by slot, so "India" returns both the
-     Sunday market outlook and the Saturday sector study. Which of the two a
-     report is comes from the separate format filter, so the two questions a
-     reader actually has, where and what shape, stay separate.
+  /* Filtering is by country rather than by slot, so "India" returns everything
+     Indian regardless of which day it went out.
 
      ?market= is still honoured so older links and bookmarks keep working. */
   const state = {
     q: params.get('q') || '',
     region: params.get('region') || legacyRegion(params.get('market')) || 'all',
-    format: params.get('format') || 'all',
     sector: params.get('sector') || 'all',
     rating: 'all',
     sort: 'new'
@@ -42,7 +38,6 @@ Boot.start('reports', function () {
 
   qEl.value = state.q;
   sectorEl.value = state.sector;
-  if (formatEl) formatEl.value = state.format;
   syncSeg();
 
   function syncSeg() {
@@ -53,7 +48,6 @@ Boot.start('reports', function () {
 
   function matches(r) {
     if (state.region !== 'all' && LS.market(r.market).region !== state.region) return false;
-    if (state.format !== 'all' && LS.market(r.market).kind !== state.format) return false;
     if (state.sector !== 'all' && r.sector !== state.sector) return false;
     if (state.rating !== 'all' && r.rating !== state.rating) return false;
     if (state.q) {
@@ -86,7 +80,7 @@ Boot.start('reports', function () {
     if (!REPORTS.length) {
       outEl.innerHTML = '<div class="empty"><h3>No reports yet</h3>' +
         '<p>Nothing has been published yet. Every report that goes out will be listed here, ' +
-        'searchable by company, market, format, sector and valuation stance.</p>' +
+        'searchable by company, market, sector and valuation stance.</p>' +
         '<a class="btn btn--ghost btn--sm" href="index.html">Back to the home page</a></div>';
       return;
     }
@@ -96,10 +90,9 @@ Boot.start('reports', function () {
         '<p>Try a different company, or clear the filters to see everything.</p>' +
         '<button class="btn btn--ghost btn--sm" id="clearAll">Clear all filters</button></div>';
       document.getElementById('clearAll').addEventListener('click', function () {
-        state.q = ''; state.region = 'all'; state.format = 'all';
+        state.q = ''; state.region = 'all';
         state.sector = 'all'; state.rating = 'all';
         qEl.value = ''; sectorEl.value = 'all'; ratingEl.value = 'all';
-        if (formatEl) formatEl.value = 'all';
         syncSeg(); render();
       });
       return;
@@ -152,7 +145,6 @@ Boot.start('reports', function () {
   segBtns.forEach(function (b) {
     b.addEventListener('click', function () { state.region = b.dataset.region; syncSeg(); render(); });
   });
-  if (formatEl) formatEl.addEventListener('change', function () { state.format = formatEl.value; render(); });
   sectorEl.addEventListener('change', function () { state.sector = sectorEl.value; render(); });
   ratingEl.addEventListener('change', function () { state.rating = ratingEl.value; render(); });
   sortEl.addEventListener('change', function () { state.sort = sortEl.value; render(); });

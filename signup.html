@@ -57,15 +57,12 @@
           <div class="err">Use at least 8 characters.</div>
         </div>
 
+        <!-- Checkboxes are built by account.js from REGIONS, so adding a
+             market never means editing this form. -->
         <div class="form-group">
-          <label for="market">Which market interests you most?</label>
-          <select class="select" id="market" name="market">
-            <option value="both">All of them</option>
-            <option value="IN">Mostly India</option>
-            <option value="US">Mostly the United States</option>
-            <option value="UK">Mostly the United Kingdom</option>
-          </select>
-          <div class="hint">This only shapes what we highlight for you. You can read everything either way.</div>
+          <span class="label">Which markets interest you?</span>
+          <div class="checkset" id="marketChoices" role="group" aria-label="Markets you follow"></div>
+          <div class="hint">Pick as many as you like. This only shapes what we highlight for you; everything stays readable either way.</div>
         </div>
 
         <div class="form-group" id="g-terms">

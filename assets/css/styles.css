@@ -438,10 +438,19 @@ p  { margin: 0 0 1.1em; }
   flex: none;
 }
 .avatar--lg { width: 46px; height: 46px; font-size: 1rem; }
-.user-pill__mail {
-  font-size: .84rem;
+.avatar--xl { width: 72px; height: 72px; font-size: 1.5rem; }
+/* Picture on the left, the two buttons and their note on the right. */
+.avatar-edit { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+.avatar-edit__actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+/* The file input is hidden, so its label is the control and must look clickable. */
+.avatar-edit__actions label { cursor: pointer; margin-bottom: 0 !important; }
+.avatar-edit__actions .hint { flex: 1 1 100%; }
+/* An uploaded picture sits in the same circle as the initials it replaces. */
+.avatar--img { object-fit: cover; }
+.user-pill__name {
+  font-size: .84rem; font-weight: 500;
   color: var(--text-2);
-  max-width: 168px;
+  max-width: 150px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -531,27 +540,29 @@ p  { margin: 0 0 1.1em; }
    changing the schedule changes this block and nothing has to be redrawn.
    -------------------------------------------------------------------------- */
 
-/* The ribbon. Seven columns, one per day, coloured by region. */
+/* The ribbon. Seven slim columns, one per day, carrying a day name and a
+   colour and nothing else. It is a key to the cards below, not a second copy
+   of them. */
 .weekribbon {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: .4rem;
-  margin-bottom: 1.6rem;
+  gap: .35rem;
+  margin-bottom: 2rem;
 }
 .weekribbon__day {
   position: relative;
-  border: 1px solid var(--line);
   border-radius: var(--r);
   background: var(--bg-elev);
-  padding: .7rem .5rem .8rem;
+  border: 1px solid var(--line);
+  padding: .55rem .3rem;
   text-align: center;
   overflow: hidden;
 }
-/* The colour bar along the top edge is the only thing that says which region. */
+/* The colour bar along the top edge is the only thing that says which market. */
 .weekribbon__day::before {
   content: "";
   position: absolute; inset: 0 0 auto 0;
-  height: 3px;
+  height: 2px;
   background: var(--line);
 }
 .weekribbon__day--in::before { background: var(--india); }
@@ -560,32 +571,18 @@ p  { margin: 0 0 1.1em; }
 
 .weekribbon__d {
   display: block;
-  font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
   color: var(--text-dim);
-  margin-bottom: .35rem;
 }
-.weekribbon__what {
-  display: block;
-  font-size: .72rem; line-height: 1.3;
-  color: var(--text);
-  font-weight: 500;
-}
-.weekribbon__day--today {
-  border-color: var(--brass-2);
-  box-shadow: inset 0 0 0 1px var(--brass-2);
-}
-.weekribbon__today {
-  display: block;
-  margin-top: .45rem;
-  font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--brass);
-}
+.weekribbon__day--today { border-color: var(--brass-2); }
+.weekribbon__day--today .weekribbon__d { color: var(--brass); }
 
-/* The cards. One per slot, in the order the week runs. */
+/* The cards. One per country, in the order the week meets them. Days, place,
+   one line. Anything more belongs on the about page, not here. */
 .cadence {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.2rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
 }
 .cadence__card {
   border: 1px solid var(--line);
@@ -594,7 +591,6 @@ p  { margin: 0 0 1.1em; }
   background: var(--bg-elev);
   position: relative;
   overflow: hidden;
-  display: flex; flex-direction: column;
 }
 .cadence__card::before {
   content: "";
@@ -604,43 +600,20 @@ p  { margin: 0 0 1.1em; }
 .cadence__card--in::before { background: var(--india); }
 .cadence__card--us::before { background: var(--us); }
 .cadence__card--uk::before { background: var(--uk); }
+.cadence__card--today { border-color: color-mix(in srgb, var(--brass) 40%, var(--line)); }
 
-.cadence__head {
-  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
-  margin-bottom: .9rem;
-}
-/* Which days, stated plainly. This is the fact most readers came for. */
+/* Which days, in the quiet interface face. The country is the headline. */
 .cadence__when {
-  font-family: var(--font-display);
-  font-size: 1.15rem; font-weight: 600;
-  margin: 0 0 .2rem;
-}
-.cadence__what {
-  font-size: .95rem; font-weight: 600;
-  color: var(--text);
+  font-family: var(--f-ui);
+  font-size: .72rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-dim);
   margin: 0 0 .5rem;
 }
+.cadence__where {
+  font-size: 1.3rem;
+  margin: 0 0 .6rem;
+}
 .cadence__meta { font-size: .88rem; color: var(--text-dim); margin: 0; line-height: 1.6; }
-.cadence__list {
-  list-style: none; padding: 0;
-  margin: .9rem 0 0;
-  display: flex; flex-direction: column; gap: .35rem;
-}
-.cadence__list li {
-  font-size: .82rem; color: var(--text-dim);
-  padding-left: 1rem; position: relative;
-}
-.cadence__list li::before {
-  content: ""; position: absolute; left: 0; top: .5rem;
-  width: 5px; height: 5px; border-radius: 50%;
-  background: currentColor; opacity: .55;
-}
-/* Pushed to the bottom so the counts line up across cards of unequal text. */
-.cadence__foot {
-  margin-top: auto; padding-top: 1.1rem;
-  font-size: .8rem; color: var(--text-dim);
-}
-.cadence__foot strong { color: var(--text); font-weight: 600; }
 
 /* --------------------------------------------------------------------------
    10. Hero
@@ -1134,6 +1107,39 @@ p  { margin: 0 0 1.1em; }
   margin-bottom: .45rem;
   color: var(--text-2);
 }
+/* A group of checkboxes has no single control to label, so the caption is a
+   span styled to match the real labels rather than a <label> pointing nowhere. */
+.form-group .label {
+  display: block;
+  font-size: .8rem; font-weight: 600; letter-spacing: .04em;
+  margin-bottom: .45rem;
+  color: var(--text-2);
+}
+
+/* Pick any combination. Rows rather than a dropdown, because the whole point
+   is that more than one can be true at once. */
+.checkset { display: flex; flex-direction: column; gap: .3rem; }
+.checkset__item {
+  display: flex !important; align-items: center; gap: .6rem;
+  padding: .6rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-elev);
+  cursor: pointer;
+  font-size: .88rem; font-weight: 500 !important;
+  color: var(--text) !important;
+  margin-bottom: 0 !important;
+  transition: border-color .16s ease;
+}
+.checkset__item:hover { border-color: var(--brass-2); }
+.checkset__item:has(input:checked) { border-color: color-mix(in srgb, var(--brass) 45%, var(--line)); }
+.checkset__item input { width: 15px; height: 15px; accent-color: var(--brass); flex: none; cursor: pointer; }
+/* The same colour the market carries everywhere else on the site. */
+.checkset__dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.checkset__dot--in { background: var(--india); }
+.checkset__dot--us { background: var(--us); }
+.checkset__dot--uk { background: var(--uk); }
+
 .form-group .hint { font-size: .78rem; color: var(--text-dim); margin-top: .4rem; }
 .form-group .err { font-size: .8rem; color: var(--neg); margin-top: .4rem; display: none; }
 .form-group.is-invalid .err { display: block; }
@@ -1567,10 +1573,6 @@ html, body { overflow-x: hidden; }
   .auth { grid-template-columns: 1fr; }
   .auth__panel { order: 2; padding: 2.5rem 24px; }
   .cadence { grid-template-columns: 1fr; }
-  /* Seven columns stop being readable long before the cards do. Drop the
-     descriptions and keep the ribbon as a pure colour reference. */
-  .weekribbon__what { display: none; }
-  .weekribbon__day { padding: .6rem .3rem; }
   .rrow { grid-template-columns: 1fr; gap: .6rem; }
   .rrow__right { flex-direction: row; align-items: center; }
   .rrow__when { order: -1; }
@@ -1609,7 +1611,7 @@ html, body { overflow-x: hidden; }
   .site-nav a[aria-current="page"]::after { display: none; }
   .site-nav a[aria-current="page"] { color: var(--brass); }
   .nav-toggle { display: inline-flex; }
-  .user-pill__mail { display: none; }
+  .user-pill__name { display: none; }
   .schedule-strip__today { margin-left: 0; width: 100%; }
   .hero__stats { gap: 1.6rem; }
   .toolbar { padding: .9rem; }
