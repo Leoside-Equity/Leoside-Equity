@@ -604,8 +604,16 @@ const LS = (function () {
         'If it is not there, open the three dot menu and choose "Cast, save and share", then "Install page as app"',
         'Confirm'
       ],
-      /* Explains the common case where the icon is genuinely absent. */
-      footnote: mobile ? '' : 'If neither appears, the app is most likely already installed.'
+      /* Ordered by how likely each is. A private window is the usual reason
+         the icon is missing on a site that is otherwise installable, and it is
+         not something the page can work around: Chrome disables installing
+         entirely in Incognito, so neither the prompt nor the address bar icon
+         exists there. Saying so beats sending somebody hunting for a button
+         that is not going to appear. */
+      footnote: mobile ? '' :
+        'No install icon? A private or Incognito window cannot install apps at ' +
+        'all, so open the site in a normal window first. Otherwise it is most ' +
+        'likely already installed.'
     };
   }
 

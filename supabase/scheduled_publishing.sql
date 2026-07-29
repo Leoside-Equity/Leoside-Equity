@@ -166,26 +166,45 @@ grant execute on function public.upsert_report(jsonb) to authenticated;
 -- One condition, written once, used by both readers' functions: a report is
 -- live if it was published outright, or if its scheduled moment has passed.
 -- ---------------------------------------------------------------------------
+-- STABLE, not IMMUTABLE. It reads now(), so its result changes between
+-- statements. Marking it immutable would licence Postgres to evaluate it once
+-- and reuse the answer, which is precisely the thing that must not happen to
+-- a check whose whole job is to notice that six o'clock has passed.
 create or replace function public.is_live(p_published boolean, p_go_live timestamptz)
 returns boolean
-language sql immutable parallel safe as $$
+language sql stable parallel safe as $$
   select coalesce(p_published, false)
       or (p_go_live is not null and p_go_live <= now());
 $$;
 
-create or replace function public.list_reports()
+-- Dropped rather than replaced. Postgres refuses to change the shape of a
+-- function's result with CREATE OR REPLACE, and this one already returns a
+-- published_at column, so replacing it in place fails with
+-- "cannot change return type of existing function".
+drop function if exists public.list_reports();
+
+create function public.list_reports()
 returns table (
   id text, published_on date, market text, ticker text, company text,
   exchange text, sector text, rating text, target text, last_price text,
-  horizon text, read_mins int, title text, standfirst text, word_count int
+  horizon text, read_mins int, title text, standfirst text, word_count int,
+  published_at timestamptz
 )
 language sql stable security definer set search_path = public as $$
   select r.id, r.published_on, r.market, r.ticker, r.company, r.exchange,
          r.sector, r.rating, r.target, r.last_price, r.horizon, r.read_mins,
-         r.title, r.standfirst, r.word_count
+         r.title, r.standfirst, r.word_count,
+         -- A scheduled report goes live without anything writing to
+         -- published_at, so the moment it was released is go_live_at. The
+         -- front end gets one timestamp either way and does not need to know
+         -- which route the report took.
+         coalesce(r.published_at, r.go_live_at) as published_at
     from public.reports r
    where public.is_live(r.is_published, r.go_live_at)
-   order by r.published_on desc, r.created_at desc, r.id desc;
+   order by r.published_on desc,
+            coalesce(r.published_at, r.go_live_at) desc nulls last,
+            r.created_at desc,
+            r.id desc;
 $$;
 
 create or replace function public.get_report(p_id text)
@@ -234,7 +253,12 @@ grant execute on function public.get_report(text) to anon, authenticated;
 -- Scheduled reports sit in the drafts list, soonest first, so what is about to
 -- go out is at the top of the queue rather than buried by publication date.
 -- ---------------------------------------------------------------------------
-create or replace function public.admin_list_reports()
+-- Also dropped first. It returns `setof public.reports`, and adding go_live_at
+-- to that table changed the row type, which CREATE OR REPLACE will not accept
+-- for the same reason as above.
+drop function if exists public.admin_list_reports();
+
+create function public.admin_list_reports()
 returns setof public.reports
 language plpgsql stable security definer set search_path = public as $$
 declare v_admin boolean;
@@ -242,10 +266,15 @@ begin
   select p.is_admin into v_admin from public.profiles p where p.id = auth.uid();
   if not coalesce(v_admin, false) then raise exception 'Not authorised'; end if;
   return query
-    select * from public.reports
-     order by go_live_at asc nulls last,
-              published_on desc, published_at desc nulls last,
-              created_at desc, id desc;
+    select * from public.reports r
+     -- Anything still waiting comes first, soonest out at the top. Everything
+     -- already dealt with falls in behind, newest first.
+     order by (r.go_live_at is not null and r.go_live_at > now()) desc,
+              case when r.go_live_at > now() then r.go_live_at end asc,
+              r.published_on desc,
+              r.published_at desc nulls last,
+              r.created_at desc,
+              r.id desc;
 end $$;
 
 grant execute on function public.admin_list_reports() to authenticated;
