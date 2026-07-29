@@ -520,6 +520,135 @@ const LS = (function () {
     document.addEventListener('keydown', onKey);
   }
 
+  /* ------------------------------------------------------- mail fallback
+     A mailto: link hands off to whatever the operating system has registered
+     for mail. When nothing is registered, and on Windows 11 without Outlook
+     that is the common case, the browser does nothing at all: no error, no
+     dialog, no navigation. The click looks broken and the address stays out
+     of reach.
+
+     Nothing on the page can ask whether a handler exists. What it can do is
+     notice that the handoff evidently did not happen: if a mail client opens,
+     the page loses focus or is hidden within a moment. Still focused and
+     visible a second later means nothing took over.
+
+     The heuristic is only allowed to ADD an offer of help. The link itself is
+     never intercepted and preventDefault is never called, so on a machine that
+     does have a mail client the behaviour is exactly as before and the panel
+     never appears. Worst case here is a small toast somebody ignores. */
+  function mountMailFallback() {
+    let timer = null;
+
+    function cancel() { clearTimeout(timer); timer = null; }
+
+    document.addEventListener('click', function (e) {
+      const link = e.target.closest && e.target.closest('a[href^="mailto:"]');
+      /* defaultPrevented would mean something else already handled it. */
+      if (!link || e.defaultPrevented) return;
+
+      /* The subject travels with the address, so whatever the link was for,
+         Legal or Privacy, survives into the Gmail compose window. */
+      const href = link.getAttribute('href').replace(/^mailto:/, '');
+      const address = href.split('?')[0];
+      const query = href.indexOf('?') === -1 ? '' : href.slice(href.indexOf('?') + 1);
+      const subject = new URLSearchParams(query).get('subject') || '';
+
+      cancel();
+      timer = setTimeout(function () {
+        if (document.visibilityState === 'visible' && document.hasFocus()) {
+          showMailToast(address, subject);
+        }
+      }, 1200);
+    });
+
+    /* Either of these means something took the click, so no toast. */
+    window.addEventListener('blur', cancel);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') cancel();
+    });
+  }
+
+  /* Gmail's web compose, with the recipient and subject already filled in.
+     Used as the fallback route rather than the primary one, so anybody with a
+     working mail client never sees it. */
+  function gmailHref(address, subject) {
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to=' +
+      encodeURIComponent(address) +
+      (subject ? '&su=' + encodeURIComponent(subject) : '');
+  }
+
+  function showMailToast(address, subject) {
+    const existing = document.getElementById('mailToast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'mailtoast';
+    toast.id = 'mailToast';
+    toast.setAttribute('role', 'status');
+
+    /* Gmail is a real link rather than a button calling window.open. A link
+       carries the user's click through as activation, so nothing here can be
+       caught by a popup blocker, and it still supports the ordinary browser
+       behaviours: middle click, ctrl click, open in new window. */
+    toast.innerHTML =
+      '<div class="mailtoast__body">' +
+        '<strong>No mail app opened</strong>' +
+        '<span>Nothing on this device is set up to handle mail links. ' +
+        'Write to us in Gmail instead, or take the address.</span>' +
+        '<code class="mailtoast__addr">' + esc(address) + '</code>' +
+      '</div>' +
+      '<div class="mailtoast__actions">' +
+        '<a class="btn btn--sm" id="mailGmail" target="_blank" rel="noopener" href="' +
+          esc(gmailHref(address, subject)) + '">Open in Gmail</a>' +
+        '<button class="btn btn--ghost btn--sm" type="button" id="mailCopy">Copy address</button>' +
+        '<button class="btn btn--quiet btn--sm" type="button" id="mailClose">Close</button>' +
+      '</div>';
+
+    document.body.appendChild(toast);
+
+    /* Once Gmail is open in its own tab this panel has done its job. */
+    document.getElementById('mailGmail').addEventListener('click', function () {
+      setTimeout(function () { toast.remove(); }, 300);
+    });
+
+    const copyBtn = document.getElementById('mailCopy');
+    copyBtn.addEventListener('click', function () {
+      copyText(address).then(function (ok) {
+        copyBtn.textContent = ok ? 'Copied' : 'Press Ctrl C to copy';
+        if (ok) setTimeout(function () { toast.remove(); }, 1100);
+      });
+    });
+
+    document.getElementById('mailClose').addEventListener('click', function () {
+      toast.remove();
+    });
+  }
+
+  /* The async clipboard API needs a secure context and a permission that can
+     be refused, so the old selection based route stays as a fallback. */
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text)
+        .then(function () { return true; })
+        .catch(function () { return legacyCopy(text); });
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+
+  function legacyCopy(text) {
+    try {
+      const field = document.createElement('textarea');
+      field.value = text;
+      field.setAttribute('readonly', '');
+      field.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+      document.body.appendChild(field);
+      field.select();
+      const ok = document.execCommand('copy');
+      field.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+
   /* There was a mountReveal() here that faded sections in as they scrolled
      into view. It is gone, and the CSS that went with it is gone.
 
@@ -855,6 +984,7 @@ const LS = (function () {
     mountFooter();
     mountCookieNotice();
     mountInstall();
+    mountMailFallback();
     mountTabBar(page);
     watchWidth(page);
     registerWorker();

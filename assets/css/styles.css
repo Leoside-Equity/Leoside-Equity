@@ -1967,6 +1967,51 @@ h2 { letter-spacing: -.016em; }
 .iosbar__close svg { width: 15px; height: 15px; }
 
 /* ==========================================================================
+   MAIL FALLBACK
+   Shown only when a mailto: click evidently reached no mail client. Sits in
+   the corner rather than over the page: it is an offer of help, not an error
+   somebody has to dismiss before carrying on.
+   ========================================================================== */
+.mailtoast {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 340;
+  width: min(23rem, calc(100vw - 2rem));
+  display: flex; flex-direction: column; gap: .9rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+}
+.mailtoast__body { display: flex; flex-direction: column; gap: .35rem; }
+.mailtoast__body strong { font-size: .92rem; }
+.mailtoast__body span { font-size: .82rem; color: var(--text-dim); line-height: 1.5; }
+.mailtoast__addr {
+  margin-top: .3rem;
+  padding: .5rem .65rem;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+  font-family: var(--f-ui);
+  font-size: .82rem;
+  color: var(--brass);
+  overflow-wrap: anywhere;
+  /* Selectable in one gesture, so the address is still obtainable even if both
+     copy routes are blocked. */
+  user-select: all;
+}
+/* Three actions now, so they wrap rather than overflow the panel on a narrow
+   screen. Gmail leads and keeps the full width of its own line if the others
+   drop below it. */
+.mailtoast__actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.mailtoast__actions .btn { flex: 0 1 auto; }
+
+/* Clears the tab bar on a phone. */
+.has-tabbar .mailtoast { bottom: calc(4.9rem + env(safe-area-inset-bottom, 0px)); }
+
+/* ==========================================================================
    TAB BAR
    Only drawn when the app is installed AND the screen is phone or tablet
    sized. In a browser tab this would fight the browser's own bottom toolbar,
