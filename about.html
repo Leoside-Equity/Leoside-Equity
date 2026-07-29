@@ -102,8 +102,6 @@
   Boot.start('about', function () {
     var m = document.getElementById('contactMail');
     m.href = LS.mailHref();
-    m.target = '_blank';
-    m.rel = 'noopener';
     m.textContent = SITE.email;
 
     /* The week, read straight off SITE.schedule so this page cannot describe

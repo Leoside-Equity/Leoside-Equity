@@ -168,22 +168,33 @@ const LS = (function () {
       esc(label) + '</span>';
   }
   /* ------------------------------------------------------------ contact link
-     Opens Gmail's compose window with the address already filled in, rather
-     than handing off to mailto: and whatever desktop client happens to be
-     registered. `su` carries a subject when one is given.
+     A plain mailto:, which hands off to whatever mail client the reader
+     actually uses: Apple Mail, Outlook, Gmail, Thunderbird, or the default on
+     their phone.
 
-     Opened in a new tab so nobody loses the page they were reading, and with
-     rel="noopener" because a link that opens a window otherwise hands that
-     window a reference back to this one. */
+     This used to point at Gmail's compose window. That made sense while the
+     contact address was itself a Gmail one, but on a custom domain it sent
+     everybody to a Google product regardless of what they use, and anyone not
+     signed into Gmail landed on a sign in page instead of a compose box.
+
+     The address goes in literally. encodeURIComponent would turn the @ into
+     %40, which is legal in a URL but which a number of mail clients and OS
+     handlers fail to parse back into an address, so the link opens a compose
+     window addressed to nobody. Only the subject is encoded, where spaces and
+     punctuation genuinely need it.
+
+     Subject uses the standard ?subject= rather than Gmail's &su=.
+
+     No target="_blank": a mailto handled by a desktop client never navigates,
+     so opening it in a new tab leaves an empty one behind. */
   function mailHref(subject) {
-    return 'https://mail.google.com/mail/?view=cm&fs=1&to=' +
-      encodeURIComponent(SITE.email) +
-      (subject ? '&su=' + encodeURIComponent(subject) : '');
+    return 'mailto:' + SITE.email +
+      (subject ? '?subject=' + encodeURIComponent(subject) : '');
   }
 
   function mailLink(label, subject, cls) {
     return '<a' + (cls ? ' class="' + cls + '"' : '') +
-      ' href="' + mailHref(subject) + '" target="_blank" rel="noopener">' +
+      ' href="' + mailHref(subject) + '">' +
       esc(label || SITE.email) + '</a>';
   }
 
