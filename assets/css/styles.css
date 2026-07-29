@@ -1527,6 +1527,17 @@ h2 { letter-spacing: -.016em; }
 .checkset__dot--uk { background: var(--uk); }
 
 .form-group .hint { font-size: .78rem; color: var(--text-dim); margin-top: .4rem; }
+
+/* The publishing date hint, which says what pressing the button will actually
+   do before it is pressed. Scheduled is brass, immediate is quiet green. */
+.hint--scheduled, .hint--now {
+  display: flex; align-items: flex-start; gap: .45rem;
+  line-height: 1.5;
+}
+.hint--scheduled svg, .hint--now svg { width: 14px; height: 14px; flex: none; margin-top: .15rem; }
+.hint--scheduled { color: var(--brass); }
+.hint--scheduled strong { color: var(--brass); font-weight: 650; }
+.hint--now { color: var(--pos); }
 .form-group .err { font-size: .8rem; color: var(--neg); margin-top: .4rem; display: none; }
 .form-group.is-invalid .err { display: block; }
 .form-group.is-invalid .input { border-color: var(--neg); }

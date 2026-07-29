@@ -21,7 +21,11 @@
    ========================================================================== */
 
 /* Bump this to force every client onto a fresh copy of the shell. */
-const CACHE = 'leoside-shell-v1';
+/* Bumped when the shell changes. v2 adds the real PWA icons: the manifest used
+   to declare 192 and 512 against a 335px file, and Chrome validates declared
+   sizes against actual pixels, so it rejected the icon set and never fired
+   beforeinstallprompt at all. */
+const CACHE = 'leoside-shell-v2';
 
 const SHELL = [
   '/',
@@ -44,6 +48,9 @@ const SHELL = [
   '/assets/js/cards.js',
   '/assets/js/home.js',
   '/assets/img/logo.png',
+  '/assets/img/icon-192.png',
+  '/assets/img/icon-512.png',
+  '/assets/img/icon-maskable-512.png',
   '/manifest.webmanifest'
 ];
 

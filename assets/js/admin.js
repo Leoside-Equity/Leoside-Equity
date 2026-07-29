@@ -148,7 +148,63 @@ Boot.start('admin', function () {
       marketHint.style.color = 'var(--brass)';
     }
   }
-  dateEl.addEventListener('change', paintMarket);
+  /* ---------------------------------------------------------- the date
+     Three states, and the form says which one it is in before anything is
+     saved rather than after.
+
+       before today   refused. The picker will not offer it and the database
+                      rejects it too, so a crafted API call cannot backdate
+                      a report either.
+       today          publishes straight away.
+       later          held as a scheduled draft and goes live at 06:00 on the
+                      day, without anything needing to run at six o'clock.
+
+     Dates are compared as plain YYYY-MM-DD strings. That is not laziness: it
+     avoids every timezone trap that comes with turning a date input into a
+     Date object, and the strings sort correctly by definition. */
+  function todayISO() { return LS.toISO(new Date()); }
+
+  function dateState() {
+    const v = dateEl.value;
+    if (!v) return 'empty';
+    const t = todayISO();
+    if (v < t) return 'past';
+    if (v === t) return 'today';
+    return 'future';
+  }
+
+  /* The picker itself refuses yesterday. Re-applied on every paint because a
+     form left open overnight would otherwise still be offering the old date. */
+  function clampDate() {
+    dateEl.min = todayISO();
+    if (dateEl.value && dateEl.value < dateEl.min) dateEl.value = dateEl.min;
+  }
+
+  const dateHint = document.getElementById('dateHint');
+
+  function paintDate() {
+    clampDate();
+    if (!dateHint) return;
+
+    const state = dateState();
+    if (state === 'future') {
+      dateHint.innerHTML = LS.icon('clock') +
+        '<span>Scheduled. Publishing saves it to drafts and it goes live at ' +
+        '<strong>6:00 am on ' + LS.esc(LS.fmtDate(dateEl.value, 'short')) + '</strong>. ' +
+        'You can edit or delete it until then.</span>';
+      dateHint.className = 'hint hint--scheduled';
+    } else if (state === 'today') {
+      dateHint.innerHTML = LS.icon('check') + '<span>Publishing puts this live straight away.</span>';
+      dateHint.className = 'hint hint--now';
+    } else {
+      dateHint.textContent = '';
+      dateHint.className = 'hint';
+    }
+    paintButtons();
+  }
+
+  dateEl.addEventListener('change', function () { paintDate(); paintMarket(); });
+  dateEl.addEventListener('input', paintDate);
   marketEl.addEventListener('change', paintMarket);
 
   /* ------------------------------------------------------- what is loaded
@@ -192,6 +248,7 @@ Boot.start('admin', function () {
     document.getElementById('f-horizon').value = '12 months';
     document.getElementById('f-rating').value = 'Fairly valued';
     syncUrl();
+    paintDate();
     paintMarket();
     paintButtons();
     paintEditingBar();
@@ -233,6 +290,7 @@ Boot.start('admin', function () {
     (row.body || []).forEach(function (s) { addSection(s.h, (s.p || []).join('\n\n')); });
     if (!secWrap.children.length) addSection();
     syncUrl();
+    paintDate();
     paintMarket();
     paintButtons();
     paintEditingBar();
@@ -254,13 +312,22 @@ Boot.start('admin', function () {
   function paintButtons() {
     const editing = editingRow();
     const isLive = !!(editing && editing.is_published);
+    const scheduled = dateState() === 'future';
+
     draftBtn.textContent = isLive ? 'Save changes' : 'Save draft';
-    publishBtn.textContent = isLive ? 'Save and open' : 'Publish report';
+    /* The primary button says what it will actually do. Calling it "Publish"
+       on a future date would be a lie: nothing becomes readable that day. */
+    publishBtn.textContent = isLive
+      ? 'Save and open'
+      : (scheduled ? 'Schedule report' : 'Publish report');
+
     saveHint.textContent = editing
       ? (isLive
           ? 'Editing a published report. Save changes keeps it live. '
           : 'Editing a draft. Save draft keeps it hidden until you publish. ')
-      : 'Save draft keeps it hidden from readers. Publish makes it live straight away. ';
+      : (scheduled
+          ? 'Save draft keeps it hidden with no date attached. Schedule holds it in drafts and releases it at 6:00 am on the chosen day. '
+          : 'Save draft keeps it hidden from readers. Publish makes it live straight away. ');
     saveHint.textContent += 'Either way the form clears afterwards.';
   }
 
@@ -342,6 +409,7 @@ Boot.start('admin', function () {
     (snap.sections || []).forEach(function (s) { addSection(s.h, (s.p || []).join('\n\n')); });
     if (!secWrap.children.length) addSection();
     syncUrl();
+    paintDate();
     paintMarket();
     paintButtons();
     paintEditingBar();
@@ -385,23 +453,43 @@ Boot.start('admin', function () {
     return rows.filter(function (r) { return !r.is_published; });
   }
 
+  /* "Wed, 30 Jul at 6:00 am", for a report that is waiting its turn. */
+  function goLiveLabel(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const hour = d.getHours();
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    const suffix = hour < 12 ? 'am' : 'pm';
+    const h12 = ((hour + 11) % 12) + 1;
+    return LS.fmtDate(LS.toISO(d), 'short') + ' at ' + h12 + ':' + mins + ' ' + suffix;
+  }
+
   function paintDrafts() {
     const list = drafts();
     if (!list.length) {
       draftList.innerHTML = '<li><div style="padding:1.4rem 1.35rem" class="muted small">' +
-        'No drafts. Anything you save without publishing waits for you here.</div></li>';
+        'No drafts. Anything you save without publishing, or schedule for a later day, waits for you here.</div></li>';
       return;
     }
     draftList.innerHTML = list.map(function (r) {
+      /* A scheduled report is a draft with a date on it. Shown as such, with
+         the moment it goes out, so the queue can be read at a glance. */
+      const scheduled = !!r.go_live_at && new Date(r.go_live_at) > new Date();
+
       return '<li><div style="display:flex;align-items:center;gap:.9rem;padding:.95rem 1.35rem;flex-wrap:wrap">' +
         '<span style="min-width:0;flex:1 1 220px">' +
-          '<span class="t">' + LS.esc(r.title) + '</span>' +
+          '<span class="t">' + LS.esc(r.title) +
+            (scheduled ? ' <span class="tag tag--brass">Scheduled</span>' : '') + '</span>' +
           '<span class="m">' + LS.esc(r.ticker) + ' · ' + LS.fmtDate(r.published_on, 'short') +
-            ' · ' + LS.esc(LS.market(r.market).name) + '</span>' +
+            ' · ' + LS.esc(LS.market(r.market).name) +
+            (scheduled ? ' · goes live ' + LS.esc(goLiveLabel(r.go_live_at)) : '') + '</span>' +
         '</span>' +
         '<span class="r" style="display:inline-flex;gap:.35rem;align-items:center">' +
           '<a class="btn btn--ghost btn--sm" href="admin.html?edit=' + encodeURIComponent(r.id) + '">Edit</a>' +
-          '<button class="btn btn--sm" type="button" data-publish="' + LS.esc(r.id) + '">Publish</button>' +
+          /* Publishing a scheduled report early is a legitimate thing to want,
+             so the button stays, relabelled so it is clear what it overrides. */
+          '<button class="btn btn--sm" type="button" data-publish="' + LS.esc(r.id) + '">' +
+            (scheduled ? 'Publish now' : 'Publish') + '</button>' +
           '<button class="btn btn--danger btn--sm" type="button" data-delete="' + LS.esc(r.id) + '">Delete</button>' +
         '</span>' +
       '</div></li>';
@@ -460,7 +548,12 @@ Boot.start('admin', function () {
     });
   });
 
-  /* Publish straight from the list, without loading it into the form first. */
+  /* Publish straight from the list, without loading it into the form first.
+
+     The date is forced to today. A draft written last week carries a date the
+     database now refuses, and a scheduled report published early would simply
+     be rescheduled if its future date were sent back unchanged. Publishing
+     something today means it is dated today. */
   function publishDraft(id, btn) {
     const row = rows.find(function (r) { return r.id === id; });
     if (!row) return;
@@ -470,7 +563,7 @@ Boot.start('admin', function () {
 
     const p = {
       id: row.id,
-      published_on: row.published_on,
+      published_on: todayISO(),
       market: row.market,
       ticker: row.ticker,
       company: row.company,
@@ -553,6 +646,15 @@ Boot.start('admin', function () {
   function save(intent) {
     /* Let the browser flag missing required fields before anything is sent. */
     if (!form.reportValidity()) return;
+
+    /* Caught here as well as in the database. The date input's min attribute
+       stops the picker offering it, but a typed date can still get through,
+       and a clear message beats a constraint violation. */
+    if (dateState() === 'past') {
+      fail('That date has already passed. Reports cannot be backdated, so pick today or a later day.');
+      dateEl.focus();
+      return;
+    }
 
     const body = collect();
     if (!body.length) { fail('Add at least one section with some text before saving.'); return; }

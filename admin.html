@@ -41,8 +41,11 @@
 
       <form id="publishForm" autocomplete="off">
         <div class="stat-row" style="margin-bottom:1.4rem">
+          <!-- min is set by admin.js on every paint, so a form left open
+               overnight cannot still be offering yesterday. -->
           <div class="form-group"><label for="f-date">Publishing date</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-date" type="date" required></div>
+            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-date" type="date" required>
+            <div class="hint" id="dateHint"></div></div>
           <!-- Options are built by admin.js from REGIONS, so this list cannot
                fall out of step with the markets the site covers. -->
           <div class="form-group"><label for="f-market">Market</label>
