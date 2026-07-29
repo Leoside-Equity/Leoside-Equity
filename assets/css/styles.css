@@ -501,7 +501,8 @@ h2 { letter-spacing: -.016em; }
   background: var(--brass);
   border-radius: 2px;
 }
-.site-header__actions { display: flex; align-items: center; gap: .6rem; }
+/* Positioned so the account menu inside it has something to anchor to. */
+.site-header__actions { display: flex; align-items: center; gap: .6rem; position: relative; }
 
 /* Menu-only auth links, revealed at the narrowest widths. */
 .site-nav .nav-auth { display: none; }
@@ -562,11 +563,15 @@ h2 { letter-spacing: -.016em; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
+/* Anchored to .site-header__actions, so it hangs directly under the account
+   button. It used to be a child of the header itself, where right: 24px meant
+   24px from the edge of the screen rather than from the button. */
 .menu {
   position: absolute;
-  right: 24px;
-  top: calc(var(--header-h) - 4px);
+  right: 0;
+  top: calc(100% + .55rem);
   min-width: 232px;
+  max-width: min(19rem, calc(100vw - 32px));
   background: var(--bg-elev);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
@@ -772,7 +777,10 @@ h2 { letter-spacing: -.016em; }
   .weekstack { grid-template-columns: 1fr; gap: 1.6rem; }
   .weekstack__intro { position: static; }
   .weekstack__intro p { max-width: none; }
-  .weekstack__cards { padding-bottom: 30vh; gap: 1.1rem; }
+  /* Just enough travel for the last card to reach its offset and hold for a
+     moment. 30vh was here before and it read as a screenful of nothing
+     between the last card and the next section. */
+  .weekstack__cards { padding-bottom: 4rem; gap: 1.1rem; }
   .weekcard {
     padding: 1.5rem 1.6rem;
     /* Tighter offsets so three stacked cards do not push the top one off a
@@ -2268,10 +2276,16 @@ html, body { overflow-x: clip; }
   .site-nav a[aria-current="page"] { color: var(--brass); }
   /* The hamburger only exists as a fallback. Where the tab bar is drawn it is
      removed entirely: two routes to the same four pages, one of them out of
-     thumb reach, is one route too many. */
+     thumb reach, is one route too many.
+
+     The account pill goes with it. Its dropdown covered a third of a phone
+     screen, and everything in it is one tap away on the Dashboard tab. The
+     header then looks the same signed in as signed out, which is the point. */
   .nav-toggle { display: inline-flex; }
   .has-tabbar .nav-toggle,
-  .has-tabbar .site-nav { display: none; }
+  .has-tabbar .site-nav,
+  .has-tabbar .user-pill,
+  .has-tabbar .menu { display: none; }
   .user-pill__name { display: none; }
 
   /* The install button keeps its icon and drops its label, so it survives the

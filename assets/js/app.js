@@ -259,14 +259,20 @@ const LS = (function () {
       '<div class="wrap site-header__bar">' +
         brand('index.html') +
         '<nav class="site-nav" id="siteNav" aria-label="Primary">' + navLinks(page, user) + '</nav>' +
+        /* The account menu lives inside the actions group, not as a sibling of
+           the whole header bar. It is absolutely positioned, so it anchors to
+           the nearest positioned ancestor: as a child of the header that meant
+           the full width of the viewport, and the panel opened against the far
+           right edge of the screen instead of under the pill that summoned it.
+           Sitting here, it lines up with the button. */
         '<div class="site-header__actions">' +
           '<span id="installSlot"></span>' +
           '<button class="icon-btn" id="themeToggle" aria-label="Switch theme"></button>' +
           right +
+          (user ? userMenu(user) : '') +
           '<button class="icon-btn nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">' + icon('menu') + '</button>' +
         '</div>' +
-      '</div>' +
-      (user ? userMenu(user) : '');
+      '</div>';
 
     setTheme(currentTheme());
     wireHeader(!!user);
@@ -744,18 +750,23 @@ const LS = (function () {
     if (!window.matchMedia('(max-width: 780px)').matches) return;
     if (document.getElementById('tabBar')) return;
 
+    /* The same four tabs whether or not somebody is signed in. Only the last
+       one changes, from Sign in to Dashboard.
+
+       An earlier version swapped two tabs for Saved and Account, both pointing
+       at dashboard.html. That was a mistake twice over: the bar rearranged
+       itself the moment you signed in, and the two tabs differed only by a
+       hash, so a browser that dropped or normalised the fragment landed both
+       of them on the same section. Every tab now goes to its own page. */
     const user = Auth.current();
     const tabs = [
-      { href: 'index.html',   label: 'Latest',    key: 'index',     icon: 'home' },
-      { href: 'reports.html', label: 'Reports',   key: 'reports',   icon: 'doc' }
+      { href: 'index.html',   label: 'Latest',  key: 'index',   icon: 'home' },
+      { href: 'reports.html', label: 'Reports', key: 'reports', icon: 'doc' },
+      { href: 'about.html',   label: 'About',   key: 'about',   icon: 'info' },
+      user
+        ? { href: 'dashboard.html', label: 'Dashboard', key: 'dashboard', icon: 'grid' }
+        : { href: 'signin.html',    label: 'Sign in',   key: 'signin',    icon: 'user' }
     ];
-    if (user) {
-      tabs.push({ href: 'dashboard.html', label: 'Saved', key: 'dashboard', icon: 'bookmark' });
-      tabs.push({ href: 'dashboard.html#account', label: 'Account', key: 'account', icon: 'user' });
-    } else {
-      tabs.push({ href: 'about.html',  label: 'About',   key: 'about',  icon: 'info' });
-      tabs.push({ href: 'signin.html', label: 'Sign in', key: 'signin', icon: 'user' });
-    }
 
     const bar = document.createElement('nav');
     bar.className = 'tabbar';

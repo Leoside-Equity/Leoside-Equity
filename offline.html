@@ -3,29 +3,144 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Offline · Leoside Equity</title>
+<title>No connection · Leoside Equity</title>
 <meta name="description" content="You are offline.">
 <link rel="icon" href="assets/img/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/img/logo.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0E141C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Leoside">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
 <script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<script>/* Captured here, in the head, because beforeinstallprompt fires long before app.js runs at the end of the body. Missing it means no native install prompt is ever available. */
-(function(){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__leosideInstall=e;});})();</script>
 </head>
 <body>
 <main id="main">
-  <div class="wrap wrap--tight" style="padding:5rem 0;text-align:center">
-    <img src="assets/img/logo.png" alt="" width="56" height="56" style="margin:0 auto 1.6rem">
-    <h1 style="margin-bottom:.8rem">You are offline</h1>
-    <p class="lede" style="max-width:46ch;margin:0 auto 2rem">
-      Reports are fetched fresh every time, so they need a connection. The moment
-      you are back online this page will work again.
-    </p>
-    <button class="btn btn--lg" type="button" onclick="location.reload()">Try again</button>
-  </div>
+  <!-- Deliberately self contained: no header, no footer, no app.js. This page
+       is served by the service worker when the network is gone, so anything it
+       depends on is one more thing that can fail to load at the worst moment. -->
+  <section class="offline">
+    <div class="offline__aurora" aria-hidden="true"></div>
+
+    <div class="wrap offline__inner">
+      <img class="offline__mark" src="assets/img/logo.png" alt="" width="52" height="52">
+
+      <p class="eyebrow eyebrow--plain offline__eyebrow">Leoside Equity</p>
+      <h1>You are offline.<br><em>The desk is still here.</em></h1>
+      <p class="lede">
+        Reports are fetched fresh every time you open one, so they need a connection.
+        Nothing has been lost: your account, your saved list and your reading history
+        are all held on the server and will be exactly where you left them.
+      </p>
+
+      <div class="offline__actions">
+        <button class="btn btn--lg" type="button" id="retry">Try again</button>
+        <a class="btn btn--on-ink btn--lg" href="index.html">Back to the home page</a>
+      </div>
+
+      <p class="offline__status" id="status" role="status">
+        <span class="offline__dot" id="dot"></span>
+        <span id="statusText">Waiting for a connection</span>
+      </p>
+    </div>
+  </section>
 </main>
+
+<style>
+  /* Scoped to this page, so it never has to be maintained alongside the rest
+     of the stylesheet. */
+  .offline {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    background: var(--bg-ink);
+    color: var(--text-on-ink);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    padding: 3rem 0;
+  }
+  .offline__aurora {
+    position: absolute; inset: -20% -10% auto -10%;
+    height: 130%;
+    background:
+      radial-gradient(38% 44% at 26% 28%, rgba(198,161,90,.18), transparent 70%),
+      radial-gradient(30% 38% at 74% 64%, rgba(143,178,218,.12), transparent 72%);
+    filter: blur(30px);
+    pointer-events: none;
+    animation: offline-drift 30s ease-in-out infinite alternate;
+  }
+  @keyframes offline-drift {
+    from { transform: translate3d(-3%, -2%, 0) scale(1); }
+    to   { transform: translate3d(4%, 3%, 0) scale(1.1); }
+  }
+  @media (prefers-reduced-motion: reduce) { .offline__aurora { animation: none; } }
+
+  .offline__inner { position: relative; z-index: 1; max-width: 44rem; }
+  .offline__mark { margin: 0 auto 1.6rem; opacity: .9; }
+  .offline__eyebrow { justify-content: center; color: var(--brass-2); }
+  .offline h1 { color: var(--text-on-ink); margin-bottom: 1rem; }
+  .offline h1 em {
+    font-style: italic;
+    background: linear-gradient(100deg, var(--brass-3), var(--brass-2) 45%, var(--brass));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .offline .lede { color: var(--text-on-ink-2); margin: 0 auto 2rem; max-width: 46ch; }
+  .offline__actions { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+
+  .offline__status {
+    display: inline-flex; align-items: center; gap: .55rem;
+    margin: 2.2rem 0 0;
+    font-size: .82rem; color: var(--text-on-ink-2);
+  }
+  .offline__dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--neg);
+    box-shadow: 0 0 0 0 currentColor;
+    animation: offline-pulse 2s ease-out infinite;
+  }
+  .offline__dot.is-online { background: var(--pos); animation: none; }
+  @keyframes offline-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(219,128,120,.5); }
+    70%  { box-shadow: 0 0 0 9px rgba(219,128,120,0); }
+    100% { box-shadow: 0 0 0 0 rgba(219,128,120,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .offline__dot { animation: none; } }
+</style>
+
+<script>
+  (function () {
+    var retry  = document.getElementById('retry');
+    var dot    = document.getElementById('dot');
+    var text   = document.getElementById('statusText');
+
+    retry.addEventListener('click', function () { location.reload(); });
+
+    /* navigator.onLine only tells you whether there is a network interface,
+       not whether anything is reachable through it, so it is used to change
+       the wording rather than to promise the site will load. */
+    function paint() {
+      var on = navigator.onLine;
+      dot.classList.toggle('is-online', on);
+      text.textContent = on
+        ? 'Back online. Try again.'
+        : 'Waiting for a connection';
+    }
+
+    window.addEventListener('online', function () {
+      paint();
+      /* Reload itself once the connection returns, so somebody who walked back
+         into signal does not have to notice this page at all. */
+      setTimeout(function () { location.reload(); }, 700);
+    });
+    window.addEventListener('offline', paint);
+    paint();
+  })();
+</script>
 </body>
 </html>
