@@ -581,7 +581,12 @@ const LS = (function () {
     if (/Android/.test(ua)) {
       return {
         title: 'Install Leoside on your phone',
-        note: 'Chrome installs it as a normal app, with its own icon.',
+        /* Same reasoning as the desktop case below. Chrome on Android will
+           offer a plain shortcut in a private tab but not a real install, so
+           the advice comes first there too. */
+        callout: 'Browsing privately? Open the site in a normal tab first. ' +
+                 'Chrome cannot install an app from a private tab.',
+        note: 'In a normal tab, Chrome installs it as a real app with its own icon.',
         steps: [
           'Tap the three dot menu at the top right of Chrome',
           'Tap "Add to Home screen", or "Install app" if you see it',
@@ -598,22 +603,26 @@ const LS = (function () {
     }
     return {
       title: 'Install Leoside on your computer',
-      note: 'Chrome and Edge install it as a desktop app with its own window.',
+      /* This leads, before any mention of the address bar.
+
+         Chrome disables installing outright in a private window: the install
+         event never fires and the address bar icon is never drawn. Listing the
+         icon steps first sent people hunting for a button that cannot exist,
+         which is exactly the wrong order. The condition they can actually do
+         something about goes at the top; the steps below it are for a normal
+         window and now say so. */
+      callout: 'In a private or Incognito window? Close it and open the site in ' +
+               'a normal window. Chrome cannot install apps from a private ' +
+               'window at all, so no install icon will appear here no matter ' +
+               'how long you look.',
+      note: 'In a normal window, Chrome and Edge install it as a desktop app with its own window.',
       steps: [
         'Look for the install icon at the right hand end of the address bar, a screen with a downward arrow',
         'If it is not there, open the three dot menu and choose "Cast, save and share", then "Install page as app"',
         'Confirm'
       ],
-      /* Ordered by how likely each is. A private window is the usual reason
-         the icon is missing on a site that is otherwise installable, and it is
-         not something the page can work around: Chrome disables installing
-         entirely in Incognito, so neither the prompt nor the address bar icon
-         exists there. Saying so beats sending somebody hunting for a button
-         that is not going to appear. */
       footnote: mobile ? '' :
-        'No install icon? A private or Incognito window cannot install apps at ' +
-        'all, so open the site in a normal window first. Otherwise it is most ' +
-        'likely already installed.'
+        'If you are in a normal window and there is still no icon, the app is most likely already installed.'
     };
   }
 
@@ -629,6 +638,11 @@ const LS = (function () {
       '<div class="installhelp__card">' +
         '<button class="installhelp__close" type="button" aria-label="Close">' + icon('close') + '</button>' +
         '<h3 id="installHelpTitle">' + esc(info.title) + '</h3>' +
+        /* Sits above everything else, because it is the one thing that stops
+           the steps below from working at all. */
+        (info.callout
+          ? '<p class="installhelp__callout">' + icon('alert') + '<span>' + esc(info.callout) + '</span></p>'
+          : '') +
         '<p>' + esc(info.note) + '</p>' +
         (info.steps.length
           ? '<ol class="installhelp__steps">' +

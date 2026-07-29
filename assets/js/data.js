@@ -16,7 +16,10 @@
 const SITE = {
   name: 'Leoside Equity',
   tagline: 'Daily equity research across the United States, the United Kingdom and India.',
-  email: 'Leoside.Equity@gmail.com',
+  /* The one place the contact address is written down. The footer, the about
+     page, the terms and the privacy policy all read it from here, so changing
+     it here changes it everywhere. */
+  email: 'support@leosideequity.com',
   founded: 2026,
   // Words a signed out visitor may read before the gate appears.
   freeWords: 90,

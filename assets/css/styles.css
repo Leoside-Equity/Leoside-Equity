@@ -1894,6 +1894,26 @@ h2 { letter-spacing: -.016em; }
 .installhelp__close:hover { color: var(--text); }
 .installhelp__close svg { width: 16px; height: 16px; }
 
+/* The private window warning. Deliberately louder than the steps under it:
+   in a private window those steps cannot succeed, so this is the only thing
+   on the panel worth reading. */
+.installhelp__callout {
+  display: flex; align-items: flex-start; gap: .6rem;
+  margin: 0 0 1.2rem !important;
+  padding: .85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--brass) 38%, transparent);
+  border-radius: var(--r);
+  background: var(--brass-wash);
+  color: var(--text-2) !important;
+  font-size: .87rem !important;
+  line-height: 1.55 !important;
+}
+.installhelp__callout svg {
+  width: 16px; height: 16px; flex: none;
+  margin-top: .12rem;
+  color: var(--brass);
+}
+
 .installhelp__steps {
   counter-reset: step;
   list-style: none;
