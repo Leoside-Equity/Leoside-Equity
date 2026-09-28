@@ -1,0 +1,14 @@
+# Build output and tools
+dist/
+node_modules/
+
+# Local editor and assistant settings
+.claude/settings.local.json
+
+# Never commit secrets. The site needs none: the Supabase publishable key in
+# assets/js/config.js is public by design. A service_role key or database
+# password must never appear anywhere in this folder.
+.env
+.env.*
+*.pem
+*.key

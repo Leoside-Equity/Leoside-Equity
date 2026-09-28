@@ -1,49 +1,69 @@
 /* ==========================================================================
-   Leoside Equity: shared report card and row templates
+   Leoside Equity: report templates shared between pages
    ========================================================================== */
 
 const Cards = (function () {
   'use strict';
 
-  function lockFlag() {
-    return Auth.current()
-      ? ''
-      : '<span class="rcard__lock">' + LS.icon('lock') + 'Preview</span>';
+  function time(r, style) {
+    return '<time datetime="' + LS.esc(r.date) + '">' + LS.fmtDate(r.date, style || 'medium') + '</time>';
   }
 
-  /* Grid card, used on the home page and the archive grid view. */
+  /* One ruled row of a report index. The headline link is stretched over the
+     whole row, so there is one link per report, not three. The date and the
+     market on the left, what the report is about beside them. */
+  function index(r) {
+    return '<li class="index__row">' +
+      '<div class="index__when"><time datetime="' + LS.esc(r.date) + '"><b>' + LS.fmtDate(r.date, 'short') + '</b> ' + LS.parseDate(r.date).getFullYear() + '</time>' +
+        LS.marketTag(r.market) + '</div>' +
+      '<div class="index__body"><h3><a href="' + LS.reportUrl(r.id) + '">' + LS.esc(r.title) + '</a></h3>' +
+        '<p>' + LS.esc(r.standfirst) + '</p></div>' +
+      LS.icon('arrow').replace('<svg ', '<svg class="index__go" ') +
+    '</li>';
+  }
+
+  /* A card in the home page's stack. The top strip (date, market, ticker)
+     is the part that stays in view once the next card slides over it, so
+     each card can still be told apart and clicked. One link per card, as in
+     the index. */
   function card(r) {
-    return '<article class="rcard">' +
-      '<div class="rcard__top">' +
+    const m = LS.market(r.market);
+    const co = String(r.company || '').replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    return '<li class="deck__item"><article class="dcard dcard--' + m.slug + '">' +
+      '<div class="dcard__strip">' +
+        '<time datetime="' + LS.esc(r.date) + '"><b>' + LS.fmtDate(r.date, 'short') + '</b> ' + LS.parseDate(r.date).getFullYear() + '</time>' +
         LS.marketTag(r.market) +
-        '<span class="rcard__ticker">' + LS.esc(r.ticker) + '</span>' +
-        '<span class="rcard__date tnum">' + LS.fmtDate(r.date, 'short') + '</span>' +
+        '<span class="dcard__tk">' + LS.esc((r.exchange ? r.exchange + ': ' : '') + r.ticker) + '</span>' +
       '</div>' +
-      '<h3><a href="' + LS.reportUrl(r.id) + '">' + LS.esc(r.title) + '</a></h3>' +
-      '<p class="rcard__excerpt">' + LS.esc(r.standfirst) + '</p>' +
-      '<div class="rcard__foot">' +
-        LS.ratingTag(r.rating) +
-        '<span class="sep">·</span><span>' + LS.esc(r.sector) + '</span>' +
-        lockFlag() +
+      '<div class="dcard__body">' +
+        '<h3><a href="' + LS.reportUrl(r.id) + '">' + LS.esc(r.title) + '</a></h3>' +
+        '<p>' + LS.esc(r.standfirst) + '</p>' +
       '</div>' +
-    '</article>';
+      '<div class="dcard__foot">' +
+        '<span>' + (co ? '<b>' + LS.esc(co) + '</b>' : '') + '<span>' + (r.readMins || 1) + ' minute read</span></span>' +
+        '<span class="dcard__go" aria-hidden="true">Read the report' + LS.icon('arrow') + '</span>' +
+      '</div>' +
+    '</article></li>';
   }
 
-  /* Wide row, used on the archive list view.
+  /* A ruled list entry, used on the not found page. */
+  function item(r) {
+    return '<li><article class="ritem">' +
+      '<div class="ritem__meta">' + LS.marketTag(r.market) + '<span class="tk">' + LS.esc(r.ticker) + '</span>' + time(r, 'short') + '</div>' +
+      '<h3><a href="' + LS.reportUrl(r.id) + '">' + LS.esc(r.title) + '</a></h3>' +
+      '<p>' + LS.esc(r.standfirst) + '</p>' +
+    '</article></li>';
+  }
 
-     This is a div rather than an anchor because admins get a delete button
-     inside it, and a button nested in an anchor is invalid HTML that swallows
-     its own clicks. The whole row still behaves like one link: the heading
-     anchor carries a stretched ::after overlay, and the admin controls sit
-     above it on the z axis. */
+  /* An archive row. A div rather than a link because admins get buttons in
+     it, and a button inside a link is invalid and swallows its own clicks. */
   function row(r) {
     const user = Auth.current();
     const isAdmin = !!(user && user.isAdmin);
-
-    return '<div class="rrow" data-report="' + LS.esc(r.id) + '">' +
+    return '<article class="rrow" data-report="' + LS.esc(r.id) + '">' +
       '<div class="rrow__when"><b>' + LS.fmtDate(r.date, 'short') + '</b>' + LS.parseDate(r.date).getFullYear() + '</div>' +
       '<div>' +
-        '<div class="row" style="gap:.5rem">' + LS.marketTag(r.market) +
+        '<div class="row">' + LS.marketTag(r.market) +
           '<span class="rcard__ticker">' + LS.esc(r.ticker) + '</span>' +
           '<span class="muted small">' + LS.esc(r.company) + '</span>' +
         '</div>' +
@@ -51,28 +71,24 @@ const Cards = (function () {
         '<p>' + LS.esc(r.standfirst) + '</p>' +
       '</div>' +
       '<div class="rrow__right">' + LS.ratingTag(r.rating) +
-        (user
-          ? '<span class="small muted">' + r.readMins + ' min read</span>'
-          : '<span class="rcard__lock">' + LS.icon('lock') + 'Sign in to read</span>') +
+        (user ? '<span class="small muted">' + (r.readMins || 1) + ' min read</span>'
+              : '<span class="rcard__lock">Sign in to read</span>') +
         (isAdmin ? adminControls(r) : '') +
       '</div>' +
-    '</div>';
+    '</article>';
   }
 
-  /* Elevated controls. Rendered only for an admin, and backed by a row level
-     security policy so the button cannot do anything for anyone else. */
   function adminControls(r) {
     return '<span class="rrow__admin">' +
-      '<a class="btn btn--quiet btn--sm" href="admin.html?edit=' + encodeURIComponent(r.id) + '">Edit</a>' +
-      '<button class="btn btn--danger btn--sm" type="button" data-delete="' + LS.esc(r.id) + '">Delete</button>' +
+      '<a class="btn btn--ghost btn--sm" href="admin.html?edit=' + encodeURIComponent(r.id) + '">Edit</a>' +
+      '<button class="btn btn--danger btn--sm" type="button" data-delete="' + LS.esc(r.id) + '" data-title="' + LS.esc(r.title) + '">Delete</button>' +
     '</span>';
   }
 
-  /* Compact link used in sidebars. */
   function mini(r) {
     return '<li><a href="' + LS.reportUrl(r.id) + '">' + LS.esc(r.title) +
       '<span class="when">' + LS.fmtDate(r.date, 'short') + ' · ' + LS.esc(r.ticker) + '</span></a></li>';
   }
 
-  return { card: card, row: row, mini: mini, adminControls: adminControls };
+  return { index: index, card: card, item: item, row: row, mini: mini, adminControls: adminControls };
 })();

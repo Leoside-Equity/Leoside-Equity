@@ -1,29 +1,17 @@
 /* ==========================================================================
-   Leoside Equity: single report page, including the sign in gate
+   Leoside Equity: a single report
    --------------------------------------------------------------------------
-   The page never decides for itself how much of a report to show. It asks
-   Data.getReport() and renders whatever comes back: a `preview` string with
-   locked true, or a full `body` with locked false.
-
-   In Supabase mode that decision is made by get_report() in the database,
-   which reads auth.uid() from a signed token. Reading the JavaScript, calling
-   the function directly, or editing localStorage gets a signed out visitor
-   nothing but the preview.
-
-   Note for anyone editing this file: do NOT reach for a bare `supabase`
-   global or query `from('reports')` directly here. The client is `SB`, RLS
-   blocks direct reads of that table by design, and the page markup is built
-   by this script rather than sitting in report.html. Go through Data and Auth.
+   The page never decides how much of a report to show. It renders what
+   Data.getReport() returns: a preview with locked true, or the full body.
+   In Supabase mode that decision is made by get_report() in the database.
    ========================================================================== */
 
 Boot.start('reports', function () {
   'use strict';
 
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
-
-  const head  = document.getElementById('articleHead');
-  const body  = document.getElementById('articleBody');
+  const id = new URLSearchParams(location.search).get('id');
+  const head = document.getElementById('articleHead');
+  const body = document.getElementById('articleBody');
   const aside = document.getElementById('articleAside');
 
   if (!id) return notFound('No report was named in the link.');
@@ -32,248 +20,229 @@ Boot.start('reports', function () {
     if (!report) return notFound();
     render(report);
   }).catch(function (err) {
-    console.error('[Leoside] could not load report:', err);
-    notFound('We could not load that report just now. Please refresh in a moment.');
+    console.error('[Leoside] report did not load:', err);
+    notFound('The report did not load. Check your connection and try again.', true);
   });
 
-  /* ------------------------------------------------------------ not found */
-  function notFound(message) {
-    head.innerHTML = message
-      ? '<h1>Report unavailable</h1><p class="lede">' + LS.esc(message) + '</p>' +
-        '<a class="btn" href="reports.html">Back to all reports</a>'
-      : (REPORTS.length
-        ? '<h1>Report not found</h1><p class="lede">That link does not match any published report.</p>' +
-          '<a class="btn" href="reports.html">Back to all reports</a>'
-        : '<h1>Nothing published yet</h1>' +
-          '<p class="lede">There are no reports yet. Once they start going out, every one of them will be readable here.</p>' +
-          '<a class="btn" href="index.html">Back to the home page</a>');
+  function setMeta(name, value, attr) {
+    let el = document.querySelector('meta[' + (attr || 'name') + '="' + name + '"]');
+    if (!el) { el = document.createElement('meta'); el.setAttribute(attr || 'name', name); document.head.appendChild(el); }
+    el.setAttribute('content', value);
   }
 
-  /* --------------------------------------------------------------- render */
+  function notFound(message, retry) {
+    document.title = 'Report not found · ' + SITE.name;
+    setMeta('robots', 'noindex');
+    head.innerHTML =
+      '<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="reports.html">Reports</a></li><li aria-current="page">Not found</li></ol></nav>' +
+      '<h1>' + (message ? 'Report unavailable' : (REPORTS.length ? 'Report not found' : 'Nothing published yet')) + '</h1>' +
+      '<p class="lede">' + LS.esc(message || (REPORTS.length
+        ? 'That link does not match any published report. It may have been renamed or withdrawn.'
+        : 'Once reports start going out, every one of them will be readable here.')) + '</p>' +
+      '<div class="row" style="margin-top:24px">' +
+        (retry ? '<button class="btn" type="button" id="retryReport">Try again</button>' : '') +
+        '<a class="btn' + (retry ? ' btn--ghost' : '') + '" href="reports.html">All reports</a></div>';
+    body.innerHTML = '';
+    aside.innerHTML = '';
+    const r = document.getElementById('retryReport');
+    if (r) r.addEventListener('click', function () { location.reload(); });
+  }
+
+  function stat(label, value) {
+    return '<div class="keystat"><dt class="label">' + LS.esc(label) + '</dt><dd>' + LS.esc(value || 'Not stated') + '</dd></div>';
+  }
+
   function render(report) {
+    const user = Auth.current();
     const unlocked = !report.locked;
-
     const m = LS.market(report.market);
-    /* A note on a whole market or a sector is an argument about direction, not
-       a number against a share price, so the valuation block is left out
-       rather than printed as a row of dashes. */
     const priced = LS.hasValuation(report.market);
+    const url = SITE.url + '/report.html?id=' + encodeURIComponent(report.id);
+    const author = report.author || (SITE.name + ' research desk');
+    const updated = report.updatedAt && report.updatedAt.slice(0, 10) > report.date ? report.updatedAt.slice(0, 10) : null;
 
+    /* --------------------------------------------------------- head tags */
     document.title = report.ticker + ': ' + report.title + ' · ' + SITE.name;
-    const metaTag = document.querySelector('meta[name="description"]');
-    if (metaTag) metaTag.setAttribute('content', report.standfirst || '');
+    setMeta('description', report.standfirst || '');
+    setMeta('og:title', report.title, 'property');
+    setMeta('og:description', report.standfirst || '', 'property');
+    setMeta('og:url', url, 'property');
+    setMeta('og:type', 'article', 'property');
+    setMeta('twitter:title', report.title);
+    setMeta('twitter:description', report.standfirst || '');
+    let canon = document.querySelector('link[rel="canonical"]');
+    if (!canon) { canon = document.createElement('link'); canon.rel = 'canonical'; document.head.appendChild(canon); }
+    canon.href = url;
+    if (report.isPublished === false) setMeta('robots', 'noindex');
+
+    const ld = document.createElement('script');
+    ld.type = 'application/ld+json';
+    ld.textContent = JSON.stringify([{
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: String(report.title).slice(0, 110),
+      description: report.standfirst,
+      datePublished: report.publishedAt || report.date,
+      dateModified: report.updatedAt || report.publishedAt || report.date,
+      author: report.author ? { '@type': 'Person', name: report.author } : { '@type': 'Organization', name: SITE.name, url: SITE.url },
+      publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url, logo: { '@type': 'ImageObject', url: SITE.url + '/assets/img/icon-512.png' } },
+      mainEntityOfPage: url,
+      image: SITE.url + '/assets/img/og-image.png',
+      articleSection: m.name,
+      about: report.company,
+      isAccessibleForFree: false,
+      inLanguage: 'en'
+    }, {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url + '/' },
+        { '@type': 'ListItem', position: 2, name: 'Reports', item: SITE.url + '/reports.html' },
+        { '@type': 'ListItem', position: 3, name: m.name, item: SITE.url + '/reports.html?region=' + m.code },
+        { '@type': 'ListItem', position: 4, name: report.ticker, item: url }
+      ]
+    }]).replace(/</g, '\\u003c');
+    document.head.appendChild(ld);
 
     /* -------------------------------------------------------------- head */
     head.innerHTML =
-      '<nav class="crumbs" aria-label="Breadcrumb">' +
-        '<a href="index.html">Home</a><span>/</span>' +
-        '<a href="reports.html">Reports</a><span>/</span>' +
-        '<a href="reports.html?region=' + m.code + '">' + LS.esc(m.name) + '</a><span>/</span>' +
-        LS.esc(report.ticker) +
-      '</nav>' +
-      '<div class="row" style="gap:.5rem;margin-bottom:1.2rem">' +
-        LS.marketTag(report.market) +
-        (priced ? LS.ratingTag(report.rating) : '') +
-        '<span class="tag tag--line">' + LS.esc(report.sector || 'Uncategorised') + '</span>' +
-      '</div>' +
+      '<nav class="crumbs" aria-label="Breadcrumb"><ol>' +
+        '<li><a href="/">Home</a></li><li><a href="reports.html">Reports</a></li>' +
+        '<li><a href="reports.html?region=' + m.code + '">' + LS.esc(m.name) + '</a></li>' +
+        '<li aria-current="page">' + LS.esc(report.ticker) + '</li></ol></nav>' +
+      (report.isPublished === false
+        ? '<div class="notice notice--brass">' + LS.icon('info') + '<span>This report is a draft or is scheduled. Only admins can see it.</span></div>' : '') +
+      (report.correction
+        ? '<div class="notice notice--info" role="note">' + LS.icon('info') + '<span><strong>Correction' +
+            (report.correctedAt ? ', ' + LS.fmtDate(report.correctedAt.slice(0, 10), 'medium') : '') + '.</strong> ' + LS.esc(report.correction) + '</span></div>' : '') +
+      '<div class="article-tags">' + LS.marketTag(report.market) + (priced ? LS.ratingTag(report.rating) : '') +
+        '<span class="tag tag--plain">' + LS.esc(report.sector || 'General') + '</span></div>' +
       '<h1>' + LS.esc(report.title) + '</h1>' +
       '<p class="lede">' + LS.esc(report.standfirst || '') + '</p>' +
-      '<div class="article-meta">' +
-        '<span>' + LS.esc(report.company) + (report.exchange ? ' · ' + LS.esc(report.exchange) : '') +
-          ': <strong>' + LS.esc(report.ticker) + '</strong></span>' +
-        '<span class="sep">|</span><span>' + LS.fmtDate(report.date) + '</span>' +
-        '<span class="sep">|</span><span>' + (report.readMins || 1) + ' min read</span>' +
-        '<span class="sep">|</span><span>' + LS.wordCount(report) + ' words</span>' +
-        /* Only a signed in reader has a saved list, so only they get the button. */
-        (Auth.current()
-          ? '<button class="btn btn--ghost btn--sm" id="saveBtn" type="button" style="margin-left:auto"></button>'
-          : '') +
+      '<div class="byline">' +
+        '<span>By <strong>' + LS.esc(author) + '</strong></span>' +
+        '<span>' + LS.esc(report.company) + (report.exchange ? ', ' + LS.esc(report.exchange) : '') + ': <strong>' + LS.esc(report.ticker) + '</strong></span>' +
+        '<span><time datetime="' + LS.esc(report.date) + '">' + LS.fmtDate(report.date) + '</time></span>' +
+        (updated ? '<span class="updated">Updated <time datetime="' + updated + '">' + LS.fmtDate(updated, 'medium') + '</time></span>' : '') +
+        '<span>' + (report.readMins || 1) + ' min read, ' + LS.wordCount(report).toLocaleString() + ' words</span>' +
+        '<span class="byline__actions">' +
+          (user ? '<button class="btn btn--ghost btn--sm" id="saveBtn" type="button"></button>' : '') +
+          '<button class="btn btn--ghost btn--sm" type="button" data-copy-url data-copied="Link to this report copied.">' + LS.icon('link') + 'Copy link</button>' +
+          (unlocked ? '<button class="btn btn--ghost btn--sm" type="button" data-print>' + LS.icon('print') + 'Print</button>' : '') +
+        '</span>' +
       '</div>' +
       (priced
-        ? '<div class="keystats">' +
-            stat('Valuation stance', report.rating) +
-            stat('Fair value', report.target) +
-            stat('Last price', report.last) +
-            stat('Projected horizon', report.horizon) +
-            stat('Market', m.name) +
-          '</div>'
+        ? '<dl class="keystats">' +
+            stat('Valuation stance', report.rating) + stat('Fair value band', report.target) +
+            stat('Last price at writing', report.last) + stat('Horizon', report.horizon) + stat('Market', m.name) +
+          '</dl>'
         : '');
 
     /* -------------------------------------------------------------- body */
     const disclosure =
-      '<div class="disclosure">' +
-        '<b>Disclosure and disclaimer</b>' +
-        'This report is general commentary produced for education and discussion. It is not personalised investment advice, ' +
-        'not an offer or solicitation to buy or sell any security, and not a recommendation suited to your particular ' +
-        'circumstances. ' +
-        (priced
-          ? 'A valuation stance describes how the current market price compares with our estimate of ' +
-            'intrinsic value on the date of writing. It is an observation about price, not an instruction to transact: ' +
-            'Undervalued does not mean buy, Overvalued does not mean sell, and neither says anything about whether a ' +
-            'security is suitable for you. A fair value band is an estimate produced by a model, not a price forecast. '
-          : 'Views about where a market or a sector may go are opinions about a great many businesses at once, ' +
-            'which makes them broader rather than safer. Nothing here is a prediction or a signal to act. ') +
-        SITE.name + ' is not a registered investment adviser or research analyst. Figures are drawn from ' +
-        'public filings and other sources believed to be reliable but are not guaranteed to be accurate or complete. ' +
-        'A position may be held in any security mentioned, whether or not a disclosure appears here. ' +
-        'Markets carry risk, including total loss of capital. ' +
-        'Please read the full <a class="link" href="disclaimer.html">research disclaimer</a> before acting on anything here.' +
-      '</div>';
+      '<section class="disclosure" aria-labelledby="discTitle">' +
+        '<h2 id="discTitle">Disclosures</h2>' +
+        '<p><strong>Who wrote this.</strong> ' + LS.esc(author) + ', ' + LS.esc(SITE.name) + '. Leoside Equity is an independent publisher and is not authorised or registered by SEBI, the SEC, FINRA, the FCA or any other regulator.</p>' +
+        '<p><strong>Dates.</strong> Filed under ' + LS.fmtDate(report.date) + (report.publishedAt ? ', first published ' + new Date(report.publishedAt).toUTCString().replace(' GMT', ' UTC') : '') + '. Prices and figures are as of the time of writing and are not updated.</p>' +
+        '<p><strong>Not advice.</strong> This is general commentary for education. It is not personal advice and not an offer or recommendation to buy or sell any security. ' +
+          (priced
+            ? 'A valuation stance compares the price with our own estimate of value on the date of writing: Undervalued does not mean buy and Overvalued does not mean sell. A fair value band is a model estimate, not a price forecast. '
+            : 'Views on a market or a sector are opinions about many businesses at once, not predictions or signals to act. ') +
+          'Figures come from public filings and sources we believe reliable but do not audit. You can lose all of the money you invest. Read the full <a class="link" href="disclaimer.html">research disclaimer</a>.</p>' +
+        '<p class="print-only">' + LS.esc(url) + '</p>' +
+      '</section>';
 
     if (unlocked) {
       body.innerHTML = '<div class="prose" id="prose">' +
         (report.body || []).map(function (section, i) {
-          return '<h2 id="s' + i + '">' + LS.esc(section.h) + '</h2>' +
+          return (section.h ? '<h2 id="s' + (i + 1) + '">' + LS.esc(section.h) + '</h2>' : '') +
             (section.p || []).map(function (t) { return '<p>' + LS.esc(t) + '</p>'; }).join('');
         }).join('') +
       '</div>' + disclosure;
       Auth.recordRead(report.id);
     } else {
       const next = encodeURIComponent('report.html?id=' + report.id);
-      const opening = (report.body && report.body[0] && report.body[0].h) || 'Opening';
+      const age = report.reason === 'age';
       body.innerHTML =
-        '<div class="gate-wrap">' +
-          '<div class="prose">' +
-            '<h2>' + LS.esc(opening) + '</h2>' +
-            '<p>' + LS.esc(report.preview || '') + '</p>' +
-          '</div>' +
-          '<div class="gate-fade"></div>' +
-        '</div>' +
-        '<div class="gate">' +
-          '<div class="gate__icon">' + LS.icon('lock') + '</div>' +
-          '<h3>Sign in to read the full report</h3>' +
-          '<p>An account costs nothing and opens this report end to end, along with every other report.</p>' +
-          '<div class="gate__actions">' +
-            '<a class="btn btn--lg" href="signup.html?next=' + next + '">Create a free account</a>' +
-            '<a class="btn btn--ghost btn--lg" href="signin.html?next=' + next + '">Sign in</a>' +
-          '</div>' +
-          '<div class="gate__perks">' +
-            '<span>' + LS.icon('check') + 'No payment details</span>' +
-            '<span>' + LS.icon('check') + 'Every report included</span>' +
-            '<span>' + LS.icon('check') + 'Takes about thirty seconds</span>' +
-          '</div>' +
-        '</div>' + disclosure;
+        '<div class="gate-wrap"><div class="prose"><p>' + LS.esc(report.preview || '') + '</p></div></div>' +
+        '<section class="gate" aria-labelledby="gateTitle">' +
+          (age
+            ? '<h2 id="gateTitle">One question before you read</h2>' +
+              '<p>Your account has not answered the age question yet. Answer it once and every report opens in full.</p>' +
+              '<div class="gate__actions"><button class="btn btn--lg" type="button" id="gateAge">Answer now</button></div>'
+            : '<h2 id="gateTitle">Sign in to read the rest</h2>' +
+              '<p>The full report is free with an account, as is every other report in the archive.</p>' +
+              '<div class="gate__actions">' +
+                '<a class="btn btn--lg" href="signup.html?next=' + next + '">Create a free account</a>' +
+                '<a class="btn btn--ghost btn--lg" href="signin.html?next=' + next + '">Sign in</a>' +
+              '</div>' +
+              '<p class="gate__facts">No payment details are asked for. You can delete the account, and everything attached to it, from your dashboard at any time.</p>') +
+        '</section>' + disclosure;
+      const ageBtn = document.getElementById('gateAge');
+      if (ageBtn) ageBtn.addEventListener('click', function () { location.reload(); });
     }
 
     /* ------------------------------------------------------------- aside */
-    const sameMarket = REPORTS.filter(function (r) {
-      return LS.market(r.market).code === m.code && r.id !== report.id;
-    }).slice(0, 4);
-    const alsoRead = REPORTS.filter(function (r) { return r.id !== report.id; }).slice(0, 4);
+    const sameMarket = REPORTS.filter(function (r) { return LS.market(r.market).code === m.code && r.id !== report.id; }).slice(0, 4);
+    const recent = REPORTS.filter(function (r) { return r.id !== report.id && sameMarket.indexOf(r) === -1; }).slice(0, 4);
+    const sections = (report.body || []).map(function (s, i) { return s.h ? { id: 's' + (i + 1), h: s.h } : null; }).filter(Boolean);
 
     aside.innerHTML =
-      (unlocked && report.body
-        ? '<div class="aside-card"><h4>In this report</h4><nav class="toc">' +
-            report.body.map(function (s, i) { return '<a href="#s' + i + '">' + LS.esc(s.h) + '</a>'; }).join('') +
-          '</nav></div>'
-        : '<div class="aside-card"><h4>Free account</h4>' +
-          '<p class="small muted" style="margin-bottom:1rem">Sign in to read the full report, keep a saved list, and get a dashboard organised by month and week.</p>' +
-          '<a class="btn btn--sm btn--block" href="signup.html">Create an account</a></div>') +
+      (unlocked && sections.length
+        ? '<nav class="aside-block" aria-labelledby="tocTitle"><h2 id="tocTitle">In this report</h2><div class="toc">' +
+            sections.map(function (s) { return '<a href="#' + s.id + '">' + LS.esc(s.h) + '</a>'; }).join('') +
+          '</div></nav>'
+        : '') +
       (sameMarket.length
-        ? '<div class="aside-card"><h4>More ' + LS.esc(m.name) + ' coverage</h4><ul>' +
-            sameMarket.map(Cards.mini).join('') + '</ul></div>' : '') +
-      /* No publishing calendar in this column. Somebody reading a report knows
-         which market they are in and what day it is; the schedule belongs on
-         the pages that explain the site, not alongside the writing. It is
-         still on the home page, the about page and the method page. */
-      (alsoRead.length
-        ? '<div class="aside-card"><h4>Recently published</h4><ul>' +
-            alsoRead.map(Cards.mini).join('') + '</ul></div>' : '');
+        ? '<section class="aside-block" aria-labelledby="moreTitle"><h2 id="moreTitle">More ' + LS.esc(m.name) + '</h2><ul>' + sameMarket.map(Cards.mini).join('') + '</ul></section>' : '') +
+      (recent.length
+        ? '<section class="aside-block" aria-labelledby="recentTitle"><h2 id="recentTitle">Recently published</h2><ul>' + recent.map(Cards.mini).join('') + '</ul></section>' : '') +
+      '<section class="aside-block"><h2>About the research</h2><ul>' +
+        '<li><a href="method.html">How a report is put together</a></li>' +
+        '<li><a href="disclaimer.html">What a valuation stance means</a></li>' +
+      '</ul></section>';
 
-    /* ------------------------------------------------------ save button
-       Absent for signed out visitors, so everything below is skipped. */
+    /* ------------------------------------------------------ save button */
     const saveBtn = document.getElementById('saveBtn');
-    if (saveBtn) wireSave();
-
-    function wireSave() {
-
-    function paintSave(state) {
-      const on = typeof state === 'boolean' ? state : Auth.isSaved(report.id);
-      saveBtn.innerHTML = (on ? LS.icon('bookmarkFill') : LS.icon('bookmark')) + (on ? 'Saved ✓' : 'Save');
-      saveBtn.setAttribute('aria-pressed', String(on));
-      saveBtn.classList.toggle('is-saved', on);
-    }
-    paintSave();
-
-    saveBtn.addEventListener('click', function () {
-      if (saveBtn.disabled) return;
-      saveBtn.disabled = true;
-
-      try {
-        /* Confirm with the server that the session is still real rather than
-           trusting a cache that may have gone stale in another tab. */
-        Auth.verifySession().then(function (user) {
-          if (!user) {
-            saveBtn.disabled = false;
-            paintSave(false);
-            window.alert('Please sign in to save reports');
+    if (saveBtn) {
+      const paint = function (on) {
+        on = typeof on === 'boolean' ? on : Auth.isSaved(report.id);
+        saveBtn.innerHTML = LS.icon(on ? 'bookmarkFill' : 'bookmark') + (on ? 'Saved' : 'Save');
+        saveBtn.setAttribute('aria-pressed', String(on));
+      };
+      paint();
+      saveBtn.addEventListener('click', function () {
+        if (saveBtn.disabled) return;
+        saveBtn.disabled = true;
+        Auth.verifySession().then(function (u) {
+          if (!u) {
             location.href = 'signin.html?next=' + encodeURIComponent('report.html?id=' + report.id);
             return;
           }
-
-          saveBtn.innerHTML = LS.icon('bookmark') + 'Saving…';
           return Auth.toggleSave(report.id).then(function (res) {
             saveBtn.disabled = false;
-            /* Paint from the state the cache actually reached, so a rejected
-               write leaves the icon showing the truth rather than the wish. */
-            paintSave(res.saved);
-            if (!res.ok) {
-              console.error('[Leoside] could not update saved reports:', res.error);
-              window.alert('Could not update your saved list.\n\n' + res.error);
-            }
+            paint(res.saved);
+            if (!res.ok) LS.toast(res.error || 'Your saved list could not be updated.', 'err');
+            else LS.toast(res.saved ? 'Saved to your dashboard.' : 'Removed from your saved reports.');
           });
-        }).catch(function (err) {
+        }).catch(function () {
           saveBtn.disabled = false;
-          paintSave();
-          console.error('[Leoside] save button failed:', err);
-          window.alert('Something went wrong updating your saved list. Please try again.');
+          paint();
+          LS.toast('Something went wrong. Please try again.', 'err');
         });
-      } catch (err) {
-        saveBtn.disabled = false;
-        paintSave();
-        console.error('[Leoside] save button threw:', err);
-        window.alert('Something went wrong updating your saved list. Please try again.');
-      }
-    });
+      });
+    }
 
-    }  /* end wireSave */
-
-    /* -------------------------------------------------- prev and next */
-    let index = -1;
-    REPORTS.forEach(function (r, i) { if (r.id === report.id) index = i; });
+    /* ----------------------------------------------------- prev and next */
+    const index = REPORTS.findIndex(function (r) { return r.id === report.id; });
     const newer = index > 0 ? REPORTS[index - 1] : null;
     const older = index !== -1 ? REPORTS[index + 1] : null;
-
     const nav = document.getElementById('prevNext');
     if (nav && (newer || older)) {
-      nav.className = 'section';
-      nav.style.paddingTop = '1rem';
-      nav.innerHTML = '<div class="section-head"><div><p class="eyebrow eyebrow--plain">Keep reading</p>' +
-        '<h2 style="font-size:1.5rem">Around this report</h2></div>' +
-        '<a class="btn btn--ghost btn--sm" href="reports.html">All reports</a></div>' +
-        '<div class="card-grid">' +
-          (newer ? Cards.card(newer) : '') +
-          (older ? Cards.card(older) : '') +
-        '</div>';
-    }
-
-    /* ----------------------------------------------- reading progress */
-    const bar = document.getElementById('readbar');
-    if (bar) {
-      const progress = function () {
-        const doc = document.documentElement;
-        const max = doc.scrollHeight - doc.clientHeight;
-        bar.style.width = (max > 0 ? Math.min(100, (doc.scrollTop / max) * 100) : 0) + '%';
-      };
-      window.addEventListener('scroll', progress, { passive: true });
-      window.addEventListener('resize', progress);
-      progress();
+      nav.innerHTML = '<div class="prevnext">' +
+        (older ? '<a href="' + LS.reportUrl(older.id) + '"><span class="label">Older report</span><span class="t">' + LS.esc(older.title) + '</span></a>' : '<span></span>') +
+        (newer ? '<a class="n" href="' + LS.reportUrl(newer.id) + '"><span class="label">Newer report</span><span class="t">' + LS.esc(newer.title) + '</span></a>' : '') +
+      '</div>';
     }
   }
-
-  function stat(label, value) {
-    return '<div class="keystat"><span class="l">' + LS.esc(label) + '</span><span class="v">' +
-      LS.esc(value || 'Not stated') + '</span></div>';
-  }
-
 });

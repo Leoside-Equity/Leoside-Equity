@@ -1,18 +1,15 @@
 /* ==========================================================================
-   Leoside Equity: account layer
+   Leoside Equity: accounts
    --------------------------------------------------------------------------
    Two backends behind one interface, chosen by CONFIG.USE_SUPABASE.
 
-     false  local mode. Accounts live in localStorage. No server. Good for
-            working on the design, useless as security.
-     true   Supabase mode. Real accounts, real sessions, and the report gate
-            enforced in the database rather than in the browser.
+     false  local mode. Accounts in localStorage, for design work only.
+     true   Supabase. Real accounts, and the report gate enforced in the
+            database, not in the browser.
 
-   Everything the rest of the site calls is unchanged and still synchronous
-   (current, saved, history and so on). That works because the session and the
-   two small user lists are fetched once at boot and cached in memory. Wait for
-   Auth.ready before reading any of them; Boot.start in store.js does that for
-   you, so no page has to think about it.
+   Reads (current, saved, history) stay synchronous because the session and
+   the two small lists are fetched once at boot and cached. Wait for
+   Auth.ready first; Boot.start in store.js does that for every page.
    ========================================================================== */
 
 const Auth = (function () {
@@ -25,7 +22,9 @@ const Auth = (function () {
   const K_SAVED   = 'leoside.saved';
   const K_HISTORY = 'leoside.history';
 
-  /* In memory caches, filled during boot and kept in step after that. */
+  const MIN_PASSWORD = 10;
+  const MAX_NAME = 120;
+
   let cachedUser    = null;
   let cachedSaved   = [];
   let cachedHistory = [];
@@ -38,92 +37,102 @@ const Auth = (function () {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
   }
 
-  /* Local mode only. Never reaches production; Supabase hashes properly. */
-  function digest(str) {
-    let h = 5381;
-    for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
-    return 'd' + (h >>> 0).toString(36);
-  }
-
   function normalise(email) { return String(email || '').trim().toLowerCase(); }
 
-  /* ------------------------------------------------------ market interest
-     Readers pick any combination of the three markets, so this is a set
-     rather than a single choice. It is stored as a sorted comma separated
-     string ('IN,UK,US') because one text column is enough for three flags and
-     it keeps the profiles table from sprouting a boolean per country.
-
-     Sorting on the way in matters: it makes the stored value canonical, so
-     'UK,IN' and 'IN,UK' cannot both exist and split the counts in two.
-
-     'both' was the old value for "everything" and is still in the database on
-     older rows, so it maps to the full set rather than to nothing. An empty
-     or unrecognised value does the same: somebody who has expressed no
-     preference wants everything, not silence. */
-  const MARKET_CODES = ['IN', 'UK', 'US'];
-
-  function normaliseMarkets(value) {
-    if (Array.isArray(value)) value = value.join(',');
-    const raw = String(value || '').trim();
-    if (!raw || raw === 'both' || raw === 'all') return MARKET_CODES.join(',');
-
-    const picked = MARKET_CODES.filter(function (code) {
-      return raw.split(',').some(function (part) { return part.trim().toUpperCase() === code; });
-    });
-    return picked.length ? picked.join(',') : MARKET_CODES.join(',');
-  }
-
-  /* The stored string back as an array, for anything drawing checkboxes. */
-  function marketList(value) { return normaliseMarkets(value).split(','); }
-
   function validEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalise(email));
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalise(email)) && normalise(email).length <= 254;
   }
 
-  /* 0 to 4, drives the strength meter on the sign up form. */
+  /* 0 to 4, for the strength meter. Length counts for more than variety. */
   function passwordScore(pw) {
     if (!pw) return 0;
     let s = 0;
-    if (pw.length >= 8) s++;
-    if (pw.length >= 12) s++;
+    if (pw.length >= MIN_PASSWORD) s++;
+    if (pw.length >= 14) s++;
     if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
     if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) s++;
     return Math.min(s, 4);
   }
 
-  /* Local mode stand in for profiles.is_admin. See CONFIG.developerEmails.
-     Deliberately not consulted in live mode: there the database decides, and
-     the UI has to agree with it or you get buttons that refuse to work. */
-  function isDeveloperEmail(email) {
-    const list = (typeof CONFIG !== 'undefined' && CONFIG.developerEmails) || [];
-    const target = normalise(email);
-    return list.some(function (e) { return String(e).trim().toLowerCase() === target; });
+  /* ------------------------------------------------------------ market set
+     Stored canonically as a sorted comma separated string: 'IN,UK,US'. */
+  const MARKET_CODES = ['IN', 'UK', 'US'];
+  function normaliseMarkets(value) {
+    if (Array.isArray(value)) value = value.join(',');
+    const raw = String(value || '').trim();
+    if (!raw || raw === 'both' || raw === 'all') return MARKET_CODES.join(',');
+    const picked = MARKET_CODES.filter(function (code) {
+      return raw.split(',').some(function (part) { return part.trim().toUpperCase() === code; });
+    });
+    return picked.length ? picked.join(',') : MARKET_CODES.join(',');
+  }
+  function marketList(value) { return normaliseMarkets(value).split(','); }
+
+  /* ------------------------------------------------------------ age check
+     The browser works out a band from the date of birth and only the band
+     leaves the page. 'under' never reaches the server at all. */
+  function ageFrom(y, m, d) {
+    const now = new Date();
+    let age = now.getFullYear() - y;
+    const beforeBirthday = (now.getMonth() + 1 < m) || (now.getMonth() + 1 === m && now.getDate() < d);
+    if (beforeBirthday) age--;
+    return age;
+  }
+  function ageBand(birth) {
+    if (!birth || !birth.y || !birth.m || !birth.d) return null;
+    const probe = new Date(birth.y, birth.m - 1, birth.d);
+    if (probe.getMonth() !== birth.m - 1 || probe.getDate() !== birth.d || probe > new Date()) return null;
+    const age = ageFrom(birth.y, birth.m, birth.d);
+    if (age < SITE.minAge) return 'under';
+    if (age < SITE.adultAge) return '13-17';
+    return '18+';
   }
 
   function initials(user) {
     if (!user) return '?';
-    const source = (user.name || user.email || '').trim();
-    const bits = source.split(/[\s.@_-]+/).filter(Boolean);
+    const bits = String(user.name || user.email || '').trim().split(/[\s.@_-]+/).filter(Boolean);
     if (!bits.length) return '?';
     return (bits[0][0] + (bits[1] ? bits[1][0] : '')).toUpperCase();
   }
 
+  /* Error text for readers. Database detail is kept for admins and DEBUG. */
+  function friendly(message, fallback) {
+    const msg = String(message || '');
+    if (/rate_limited|too many requests/i.test(msg)) return 'Too many requests. Please wait a minute and try again.';
+    if (/failed to fetch|network|abort/i.test(msg)) return 'We could not reach the server. Check your connection and try again.';
+    if ((cachedUser && cachedUser.isAdmin) || (typeof CONFIG !== 'undefined' && CONFIG.DEBUG)) return msg || fallback;
+    return fallback;
+  }
+
   /* ======================================================================
-     Local mode
+     Local mode. Passwords are hashed with PBKDF2 (SHA-256, 150,000 rounds,
+     random salt) through the browser's WebCrypto API, so even the offline
+     build never keeps anything reversible.
      ====================================================================== */
+  function hex(buf) {
+    return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function pbkdf2(password, saltHex) {
+    const enc = new TextEncoder();
+    const salt = new Uint8Array(saltHex.match(/../g).map(function (h) { return parseInt(h, 16); }));
+    return crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits'])
+      .then(function (key) {
+        return crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: salt, iterations: 150000 }, key, 256);
+      })
+      .then(hex);
+  }
+  function newSalt() { return hex(crypto.getRandomValues(new Uint8Array(16))); }
+
   const Local = {
     users: function () { return read(K_USERS, {}); },
 
-    shape: function (record) {
-      if (!record) return null;
+    shape: function (r) {
+      if (!r) return null;
       return {
-        id: record.email,
-        email: record.email,
-        name: record.name,
-        market: normaliseMarkets(record.market),
-        avatar: record.avatar || null,
-        joined: record.joined,
-        isAdmin: isDeveloperEmail(record.email)
+        id: r.email, email: r.email, name: r.name,
+        market: normaliseMarkets(r.market), avatar: r.avatar || null,
+        joined: r.joined, isAdmin: false,
+        ageBand: r.ageBand || null, ageConfirmed: !!r.ageBand, termsVersion: r.termsVersion || null
       };
     },
 
@@ -141,29 +150,34 @@ const Auth = (function () {
       if (all[email]) {
         return Promise.resolve({ ok: false, field: 'email', error: 'An account already exists for this address. Try signing in.' });
       }
-      all[email] = {
-        email: email, name: String(d.name).trim(), pw: digest(String(d.password)),
-        market: normaliseMarkets(d.market),
-        joined: new Date().toISOString()
-      };
-      write(K_USERS, all);
-      write(K_SESSION, { email: email, since: Date.now() });
-      cachedUser = Local.shape(all[email]);
-      cachedSaved = []; cachedHistory = [];
-      return Promise.resolve({ ok: true, user: cachedUser, needsConfirmation: false });
+      const salt = newSalt();
+      return pbkdf2(String(d.password), salt).then(function (hash) {
+        all[email] = {
+          email: email, name: String(d.name).trim().slice(0, MAX_NAME), salt: salt, hash: hash,
+          market: normaliseMarkets(d.market), joined: new Date().toISOString(),
+          ageBand: d.ageBand, termsVersion: SITE.termsVersion
+        };
+        write(K_USERS, all);
+        write(K_SESSION, { email: email, since: Date.now() });
+        cachedUser = Local.shape(all[email]);
+        cachedSaved = []; cachedHistory = [];
+        return { ok: true, user: cachedUser, needsConfirmation: false };
+      });
     },
 
     signIn: function (email, password) {
       const key = normalise(email);
       const record = Local.users()[key];
-      if (!record || record.pw !== digest(String(password || ''))) {
-        return Promise.resolve({ ok: false, field: 'password', error: 'We could not match that email and password.' });
-      }
-      write(K_SESSION, { email: key, since: Date.now() });
-      cachedUser = Local.shape(record);
-      cachedSaved = read(K_SAVED + ':' + key, []);
-      cachedHistory = read(K_HISTORY + ':' + key, []);
-      return Promise.resolve({ ok: true, user: cachedUser });
+      const fail = { ok: false, field: 'password', error: 'We could not match that email and password.' };
+      if (!record || !record.salt) return Promise.resolve(fail);
+      return pbkdf2(String(password || ''), record.salt).then(function (hash) {
+        if (hash !== record.hash) return fail;
+        write(K_SESSION, { email: key, since: Date.now() });
+        cachedUser = Local.shape(record);
+        cachedSaved = read(K_SAVED + ':' + key, []);
+        cachedHistory = read(K_HISTORY + ':' + key, []);
+        return { ok: true, user: cachedUser };
+      });
     },
 
     signOut: function () {
@@ -175,10 +189,10 @@ const Auth = (function () {
     update: function (changes) {
       if (!cachedUser) return Promise.resolve({ ok: false });
       const all = Local.users();
-      const patch = Object.assign({}, changes);
-      /* Same canonical form the live backend stores, so switching modes does
-         not change what a preference means. */
-      if (patch.market !== undefined) patch.market = normaliseMarkets(patch.market);
+      const patch = {};
+      if (changes.name !== undefined) patch.name = String(changes.name).trim().slice(0, MAX_NAME);
+      if (changes.market !== undefined) patch.market = normaliseMarkets(changes.market);
+      if (changes.avatar !== undefined) patch.avatar = changes.avatar;
       Object.assign(all[cachedUser.email], patch);
       write(K_USERS, all);
       cachedUser = Local.shape(all[cachedUser.email]);
@@ -209,97 +223,91 @@ const Auth = (function () {
         market: normaliseMarkets((profile && profile.market) || meta.market),
         avatar: (profile && profile.avatar) || null,
         joined: user.created_at,
-        isAdmin: !!(profile && profile.is_admin)
+        isAdmin: !!(profile && profile.is_admin),
+        ageBand: (profile && profile.age_band) || null,
+        /* Older projects without migration 0014 have no such column; treat
+           those as confirmed so nobody is stuck behind a question the
+           database cannot record. */
+        ageConfirmed: !profile || !('age_confirmed_at' in profile) || !!profile.age_confirmed_at,
+        termsVersion: (profile && profile.terms_version) || null
       };
     },
 
     loadUser: function (user) {
       if (!user) { cachedUser = null; return Promise.resolve(); }
-      return SB.from('profiles').select('*').eq('id', user.id).maybeSingle()
-        .then(function (res) { cachedUser = Live.shape(user, res.data); })
+      return Promise.resolve(SB.from('profiles').select('*').eq('id', user.id).maybeSingle())
+        .then(function (res) { cachedUser = Live.shape(user, res && res.data); })
         .catch(function () { cachedUser = Live.shape(user, null); });
     },
 
-    /* Loaded independently on purpose. These used to share one Promise.all
-       with a single catch, so a failure on either table wiped both caches.
-       That is how a missing reading_history table ended up making saved
-       reports look like they were never stored. */
+    /* The two lists load independently, so a failure in one cannot empty the
+       other. */
     loadLists: function () {
       if (!cachedUser) { cachedSaved = []; cachedHistory = []; return Promise.resolve(); }
 
-      /* Neither removed_at nor saved_at is guaranteed to exist yet, and a
-         missing column fails the whole select, which would empty the saved
-         list for no good reason. Step down through the variants until one
-         answers. */
       const savedQ = Promise.resolve(
         SB.from('saved_reports').select('report_id')
           .is('removed_at', null).order('saved_at', { ascending: false })
       ).then(function (r) {
-        if (!r.error) return r;
-        return Promise.resolve(SB.from('saved_reports').select('report_id').is('removed_at', null));
-      }).then(function (r) {
-        if (!r.error) return r;
-        return Promise.resolve(SB.from('saved_reports').select('report_id').order('saved_at', { ascending: false }));
-      }).then(function (r) {
-        if (!r.error) return r;
-        return Promise.resolve(SB.from('saved_reports').select('report_id'));
-      }).then(function (r) {
         if (r.error) throw r.error;
         cachedSaved = (r.data || []).map(function (x) { return x.report_id; });
       }).catch(function (e) {
         cachedSaved = [];
-        console.warn('[Leoside] could not load saved reports:', (e && e.message) || e);
+        console.warn('[Leoside] saved reports did not load:', (e && e.message) || e);
       });
 
-      const historyQ = SB.from('reading_history')
-        .select('report_id, read_at').order('read_at', { ascending: false }).limit(40)
-        .then(function (r) {
-          if (r.error) throw r.error;
-          cachedHistory = (r.data || []).map(function (x) {
-            return { id: x.report_id, at: new Date(x.read_at).getTime() };
-          });
-        })
-        .catch(function (e) {
-          cachedHistory = [];
-          console.warn('[Leoside] could not load reading history:', (e && e.message) || e);
+      const historyQ = Promise.resolve(
+        SB.from('reading_history').select('report_id, read_at')
+          .order('read_at', { ascending: false }).limit(40)
+      ).then(function (r) {
+        if (r.error) throw r.error;
+        cachedHistory = (r.data || []).map(function (x) {
+          return { id: x.report_id, at: new Date(x.read_at).getTime() };
         });
+      }).catch(function (e) {
+        cachedHistory = [];
+        console.warn('[Leoside] reading history did not load:', (e && e.message) || e);
+      });
 
       return Promise.all([savedQ, historyQ]);
     },
 
     boot: function () {
-      return SB.auth.getSession()
+      return Promise.resolve(SB.auth.getSession())
         .then(function (res) {
-          const session = res.data && res.data.session;
+          const session = res && res.data && res.data.session;
           return Live.loadUser(session ? session.user : null);
         })
         .then(Live.loadLists)
         .then(function () {
-          /* Keep the cache honest if the session changes in another tab. */
-          SB.auth.onAuthStateChange(function (event, session) {
+          SB.auth.onAuthStateChange(function (event) {
             if (event === 'SIGNED_OUT') { cachedUser = null; cachedSaved = []; cachedHistory = []; }
           });
         });
     },
 
     signUp: function (d) {
-      return SB.auth.signUp({
+      const meta = {
+        name: String(d.name).trim().slice(0, MAX_NAME),
+        market: normaliseMarkets(d.market),
+        age_band: d.ageBand,
+        guardian_ok: d.ageBand === '13-17' ? 'true' : 'false',
+        terms_version: SITE.termsVersion
+      };
+      if (d.utm) meta.utm = d.utm;
+
+      return Promise.resolve(SB.auth.signUp({
         email: normalise(d.email),
         password: String(d.password),
-        options: {
-          emailRedirectTo: CONFIG.redirectTo(),
-          data: { name: String(d.name).trim(), market: normaliseMarkets(d.market) }
-        }
-      }).then(function (res) {
+        options: { emailRedirectTo: CONFIG.redirectTo(), data: meta }
+      })).then(function (res) {
         if (res.error) {
-          const msg = res.error.message || 'We could not create that account.';
-          return { ok: false, field: /pass/i.test(msg) ? 'password' : 'email', error: msg };
+          const msg = res.error.message || '';
+          if (/password/i.test(msg)) return { ok: false, field: 'password', error: msg };
+          if (/registered|exists/i.test(msg)) return { ok: false, field: 'email', error: 'An account already exists for this address. Try signing in.' };
+          return { ok: false, field: 'email', error: friendly(msg, 'We could not create that account. Please try again.') };
         }
-        /* With email confirmation on, there is no session until they click
-           the link. Tell the caller so it can say so instead of redirecting. */
-        if (!res.data.session) {
-          return { ok: true, user: null, needsConfirmation: true };
-        }
+        if (!res.data.session) return { ok: true, user: null, needsConfirmation: true };
         return Live.loadUser(res.data.user).then(Live.loadLists).then(function () {
           return { ok: true, user: cachedUser, needsConfirmation: false };
         });
@@ -307,9 +315,12 @@ const Auth = (function () {
     },
 
     signIn: function (email, password) {
-      return SB.auth.signInWithPassword({ email: normalise(email), password: String(password || '') })
+      return Promise.resolve(SB.auth.signInWithPassword({ email: normalise(email), password: String(password || '') }))
         .then(function (res) {
           if (res.error) {
+            const msg = res.error.message || '';
+            if (/rate|too many/i.test(msg)) return { ok: false, field: 'password', error: 'Too many attempts. Please wait a few minutes and try again.' };
+            if (/confirm/i.test(msg)) return { ok: false, field: 'email', error: 'Please confirm your email address first. The link is in the message we sent when you signed up.' };
             return { ok: false, field: 'password', error: 'We could not match that email and password.' };
           }
           return Live.loadUser(res.data.user).then(Live.loadLists).then(function () {
@@ -320,166 +331,74 @@ const Auth = (function () {
 
     signOut: function () {
       cachedUser = null; cachedSaved = []; cachedHistory = [];
-      return SB.auth.signOut();
+      return Promise.resolve(SB.auth.signOut()).catch(function () {});
     },
 
     update: function (changes) {
-      if (!cachedUser) return Promise.resolve({ ok: false });
+      if (!cachedUser) return Promise.resolve({ ok: false, error: 'You are not signed in.' });
       const row = {};
-      if (changes.name !== undefined) row.name = changes.name;
+      if (changes.name !== undefined) row.name = String(changes.name).trim().slice(0, MAX_NAME);
       if (changes.market !== undefined) row.market = normaliseMarkets(changes.market);
       if (changes.avatar !== undefined) row.avatar = changes.avatar;
 
-      const write = function (payload) {
-        return SB.from('profiles').update(payload).eq('id', cachedUser.id);
-      };
-
-      return Promise.resolve(write(row)).then(function (res) {
-        if (!res.error) {
-          Object.assign(cachedUser, changes);
+      return Promise.resolve(SB.from('profiles').update(row).eq('id', cachedUser.id).select('id'))
+        .then(function (res) {
+          if (res.error) return { ok: false, error: friendly(res.error.message, 'We could not save that. Please try again.') };
+          Object.assign(cachedUser, row);
           return { ok: true, user: cachedUser };
-        }
-
-        /* A project that has not run migration 0013 has no avatar column, and
-           PostgREST rejects the whole statement over it. Losing a name change
-           because a photo could not be stored is the wrong trade, so the rest
-           is saved and the message says exactly what is missing. */
-        const missingAvatar = row.avatar !== undefined &&
-          /avatar/i.test(res.error.message || '') &&
-          /(column|schema cache|find)/i.test(res.error.message || '');
-
-        if (!missingAvatar) return { ok: false, error: res.error.message };
-
-        const withoutAvatar = Object.assign({}, row);
-        delete withoutAvatar.avatar;
-        if (!Object.keys(withoutAvatar).length) {
-          return { ok: false, error: 'Profile photos need database migration 0013. Everything else still saves.' };
-        }
-
-        return Promise.resolve(write(withoutAvatar)).then(function (retry) {
-          if (retry.error) return { ok: false, error: retry.error.message };
-          const applied = Object.assign({}, changes);
-          delete applied.avatar;
-          Object.assign(cachedUser, applied);
-          return {
-            ok: true, user: cachedUser, partial: true,
-            error: 'Saved, except the photo: this project still needs database migration 0013.'
-          };
-        });
-      });
+        })
+        .catch(function (e) { return { ok: false, error: friendly(e && e.message, 'We could not save that. Please try again.') }; });
     },
 
-    /* Resolves to { ok } or { ok: false, error }. Nothing is swallowed here
-       any more: the caller needs to know so it can put the button back.
-
-       onConflict is required, not optional. Without it supabase-js resolves an
-       upsert against the table's PRIMARY KEY. This table is keyed on a
-       separate id column with a UNIQUE constraint across (user_id, report_id),
-       so a plain upsert looks like a fresh insert, reaches the unique index
-       and fails with
-
-         duplicate key value violates unique constraint
-         saved_reports_user_id_report_id_key
-
-       Naming the conflict target turns that into the merge it was meant to be.
-       A 23505 slipping through anyway still means the row is present, which is
-       the end state we wanted, so it counts as success rather than an error. */
+    /* Asks for the affected rows back, because row level security filters
+       rather than refuses: a write it blocks returns success having changed
+       nothing, and only the empty result shows it. */
     persistSaved: function (id, added) {
       if (!cachedUser) return Promise.resolve({ ok: false, error: 'You are not signed in.' });
-
-      /* Removing a save stamps removed_at rather than deleting the row, so the
-         metrics screen can still tell "nobody saved this" apart from "people
-         saved it and then dropped it". Re-saving clears the stamp and reuses
-         the same row, which is why nobody is ever counted twice.
-
-         That column only exists once migration 0007 has been run, so both
-         paths fall back to the older behaviour if it is not there yet. Saving
-         a report is not something that should break waiting on a migration. */
-      const noColumn = function (err) {
-        return !!(err && /removed_at/i.test(err.message || ''));
-      };
-
-      /* Every write asks for the affected rows back. Row level security
-         filters rows rather than rejecting statements, so a write the policy
-         does not allow returns success having touched nothing. Without asking
-         what changed, an unsave that the database quietly refused looks like
-         it worked, the cache drops the id, and the next save collides with a
-         row the reader was never allowed to alter. Counting the returned rows
-         is the only way to tell "done" from "silently ignored". */
       const attempt = added
-        ? Promise.resolve(SB.from('saved_reports').upsert(
+        ? SB.from('saved_reports').upsert(
             { user_id: cachedUser.id, report_id: id, removed_at: null },
-            { onConflict: 'user_id,report_id' }
-          ).select('report_id')).then(function (res) {
-            if (res && res.error && noColumn(res.error)) {
-              return SB.from('saved_reports').upsert(
-                { user_id: cachedUser.id, report_id: id },
-                { onConflict: 'user_id,report_id' }
-              ).select('report_id');
-            }
-            return res;
-          })
-        : Promise.resolve(SB.from('saved_reports')
-            .update({ removed_at: new Date().toISOString() })
-            .eq('user_id', cachedUser.id).eq('report_id', id).select('report_id')
-          ).then(function (res) {
-            if (res && res.error && noColumn(res.error)) {
-              return SB.from('saved_reports').delete()
-                .eq('user_id', cachedUser.id).eq('report_id', id).select('report_id');
-            }
-            return res;
-          });
+            { onConflict: 'user_id,report_id' }).select('report_id')
+        : SB.from('saved_reports').update({ removed_at: new Date().toISOString() })
+            .eq('user_id', cachedUser.id).eq('report_id', id).select('report_id');
 
       return Promise.resolve(attempt).then(function (res) {
         if (res && res.error) {
-          /* The row already being there is the outcome we wanted anyway. */
           if (added && res.error.code === '23505') return { ok: true };
-          return { ok: false, error: res.error.message };
+          return { ok: false, error: friendly(res.error.message, 'Your saved list could not be updated. Please try again.') };
         }
         if (res && Array.isArray(res.data) && res.data.length === 0) {
-          return {
-            ok: false,
-            error: 'The database accepted that but changed nothing, which means row level ' +
-                   'security blocked it. Run supabase/migrations/0010_saved_reports_policies.sql.'
-          };
+          return { ok: false, error: friendly('Row level security blocked the change (migration 0010).', 'Your saved list could not be updated. Please try again.') };
         }
         return { ok: true };
       }).catch(function (e) {
-        return { ok: false, error: (e && e.message) || 'Network error.' };
+        return { ok: false, error: friendly(e && e.message, 'Your saved list could not be updated. Please try again.') };
       });
     },
 
-    /* Reading history is a nice to have. If the table is missing or the write
-       fails, log it and carry on rather than breaking the page. */
+    /* Reading history is a convenience; a failed write is logged, not shown. */
     persistHistory: function (id) {
       if (!cachedUser) return Promise.resolve({ ok: false });
       return Promise.resolve(
         SB.from('reading_history').upsert(
           { user_id: cachedUser.id, report_id: id, read_at: new Date().toISOString() },
-          { onConflict: 'user_id,report_id' }
-        )
+          { onConflict: 'user_id,report_id' })
       ).then(function (res) {
-        if (res && res.error && res.error.code === '23505') return { ok: true };
-        if (res && res.error) {
-          console.warn('[Leoside] could not record reading history:', res.error.message);
-          return { ok: false, error: res.error.message };
+        if (res && res.error && res.error.code !== '23505') {
+          console.warn('[Leoside] reading history not recorded:', res.error.message);
         }
         return { ok: true };
-      }).catch(function (e) {
-        console.warn('[Leoside] could not record reading history:', (e && e.message) || e);
-        return { ok: false };
-      });
+      }).catch(function () { return { ok: false }; });
     }
   };
 
   const Backend = LIVE ? Live : Local;
 
   /* ======================================================================
-     Public interface. Identical in both modes.
+     Public interface, identical in both modes
      ====================================================================== */
-
   const ready = Backend.boot().catch(function (err) {
-    console.error('[Leoside] auth boot failed', err);
+    console.error('[Leoside] session did not load', err);
   });
 
   function current() { return cachedUser; }
@@ -488,45 +407,73 @@ const Auth = (function () {
     const name = String(details.name || '').trim();
     const pw = String(details.password || '');
     if (!name) return Promise.resolve({ ok: false, field: 'name', error: 'Please tell us what to call you.' });
+    if (name.length > MAX_NAME) return Promise.resolve({ ok: false, field: 'name', error: 'That name is longer than ' + MAX_NAME + ' characters.' });
     if (!validEmail(details.email)) return Promise.resolve({ ok: false, field: 'email', error: 'That does not look like a valid email address.' });
-    if (pw.length < 8) return Promise.resolve({ ok: false, field: 'password', error: 'Use at least 8 characters.' });
+    if (pw.length < MIN_PASSWORD) return Promise.resolve({ ok: false, field: 'password', error: 'Use at least ' + MIN_PASSWORD + ' characters.' });
+    if (pw.length > 72) return Promise.resolve({ ok: false, field: 'password', error: 'Use 72 characters or fewer.' });
+    if (details.ageBand !== '18+' && details.ageBand !== '13-17') {
+      return Promise.resolve({ ok: false, field: 'dob', error: 'Enter your date of birth.' });
+    }
+    if (details.ageBand === '13-17' && !details.guardian) {
+      return Promise.resolve({ ok: false, field: 'guardian', error: 'A parent or guardian needs to agree before you can create an account.' });
+    }
     if (!details.agreed) return Promise.resolve({ ok: false, field: 'terms', error: 'Please accept the terms and the privacy policy.' });
+    SessionStore.setRemember(true);
     return Backend.signUp(details);
   }
 
-  function signIn(email, password) { return Backend.signIn(email, password); }
+  function signIn(email, password, remember) {
+    SessionStore.setRemember(remember !== false);
+    return Backend.signIn(email, password);
+  }
   function signOut() { return Backend.signOut(); }
   function update(changes) { return Backend.update(changes); }
 
-  /* Google is the only social provider on the site. */
   function signInWithGoogle() {
-    if (!LIVE) {
-      return Promise.resolve({ ok: false, error: 'Google sign in switches on once the backend is connected. Use the email form for now.' });
-    }
-    return SB.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: CONFIG.redirectTo() }
-    }).then(function (res) {
-      return res.error ? { ok: false, error: res.error.message } : { ok: true };
-    });
+    if (!LIVE) return Promise.resolve({ ok: false, error: 'Google sign in needs the backend, which is off in this build.' });
+    SessionStore.setRemember(true);
+    return Promise.resolve(SB.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: CONFIG.redirectTo() } }))
+      .then(function (res) { return res.error ? { ok: false, error: friendly(res.error.message, 'Google sign in did not start. Please try again.') } : { ok: true }; });
   }
 
-  /* Saved list and history read from cache, so callers stay synchronous. */
+  /* For members who arrived through Google or signed up before the check. */
+  function confirmAgeAndTerms(band, guardian) {
+    if (!cachedUser) return Promise.resolve({ ok: false, error: 'You are not signed in.' });
+    if (!LIVE) {
+      const all = Local.users();
+      all[cachedUser.email].ageBand = band;
+      all[cachedUser.email].termsVersion = SITE.termsVersion;
+      write(K_USERS, all);
+      cachedUser = Local.shape(all[cachedUser.email]);
+      return Promise.resolve({ ok: true });
+    }
+    return Promise.resolve(SB.rpc('confirm_age_and_terms', {
+      p_band: band, p_guardian: !!guardian, p_terms_version: SITE.termsVersion
+    })).then(function (res) {
+      if (res.error) return { ok: false, error: friendly(res.error.message, 'That could not be saved. Please try again.') };
+      cachedUser.ageBand = band;
+      cachedUser.ageConfirmed = true;
+      cachedUser.termsVersion = SITE.termsVersion;
+      return { ok: true };
+    }).catch(function (e) { return { ok: false, error: friendly(e && e.message, 'That could not be saved. Please try again.') }; });
+  }
+
   function saved() { return cachedSaved.slice(); }
   function isSaved(id) { return cachedSaved.indexOf(id) !== -1; }
 
-  /* Resolves to { ok, saved, error }. `saved` is the state the cache actually
-     ended up in, so the caller can paint from it without guessing. The cache
-     updates immediately for a responsive button and rolls back if the write
-     fails, so the icon never claims something the database did not do. */
+  /* The cache moves first so the button responds at once, and moves back if
+     the write fails, so the icon never claims something that did not happen. */
+  let saving = false;
   function toggleSave(id) {
+    if (saving) return Promise.resolve({ ok: false, saved: isSaved(id), error: 'Still saving the last change.' });
+    saving = true;
     const at = cachedSaved.indexOf(id);
     const added = at === -1;
     if (added) cachedSaved.unshift(id); else cachedSaved.splice(at, 1);
 
-    const write = LIVE ? Live.persistSaved(id, added) : Local.persistSaved();
-
-    return Promise.resolve(write).then(function (res) {
+    const write_ = LIVE ? Live.persistSaved(id, added) : Local.persistSaved();
+    return Promise.resolve(write_).then(function (res) {
+      saving = false;
       if (res && res.ok === false) {
         const now = cachedSaved.indexOf(id);
         if (added && now !== -1) cachedSaved.splice(now, 1);
@@ -537,46 +484,24 @@ const Auth = (function () {
     });
   }
 
-  /* Sends a password reset link. Supabase owns the email; no password is ever
-     handled here.
-
-     redirectTo must point at reset.html, not signin.html. The link carries a
-     recovery token which supabase-js exchanges for a session on arrival, and
-     signin.html sends anyone holding a session to the dashboard. Pointing it
-     there meant the reader was silently signed in and never got the chance to
-     type a new password. reset.html is the page that actually asks. */
+  /* reset.html is where the link lands: it holds the recovery session and
+     asks for the new password. */
   function sendPasswordReset(address) {
     const email = normalise(address || (cachedUser && cachedUser.email));
-    if (!validEmail(email)) {
-      return Promise.resolve({ ok: false, error: 'That does not look like a valid email address.' });
-    }
-    if (!LIVE) {
-      return Promise.resolve({
-        ok: false,
-        error: 'Password resets need the backend, which is not connected yet.'
-      });
-    }
-    return Promise.resolve(
-      SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/reset.html' })
-    ).then(function (res) {
-      return res && res.error ? { ok: false, error: res.error.message } : { ok: true };
-    }).catch(function (e) {
-      return { ok: false, error: (e && e.message) || 'Could not send the reset email.' };
-    });
+    if (!validEmail(email)) return Promise.resolve({ ok: false, error: 'That does not look like a valid email address.' });
+    if (!LIVE) return Promise.resolve({ ok: false, error: 'Password resets need the backend, which is off in this build.' });
+    return Promise.resolve(SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/reset.html' }))
+      .then(function (res) {
+        return res && res.error ? { ok: false, error: friendly(res.error.message, 'The reset email could not be sent. Please try again in a minute.') } : { ok: true };
+      })
+      .catch(function (e) { return { ok: false, error: friendly(e && e.message, 'The reset email could not be sent.') }; });
   }
 
-  /* Deletes the signed in account for good.
-
-     This has to go through a database function. Supabase only exposes user
-     deletion through auth.admin, which needs the service_role key, and that
-     key must never appear in front end code: anyone reading the page source
-     would then be able to delete any account. delete_own_account() is a
-     security definer function that reads auth.uid() from the signed token and
-     can therefore only ever delete the caller's own row. Everything in the
-     public tables follows through the on delete cascade foreign keys. */
+  /* Deletes the account and everything attached to it: profile, photo, saved
+     list, reading history and error reports, then the sign in itself. Goes
+     through a database function that can only ever delete the caller. */
   function deleteAccount() {
     if (!cachedUser) return Promise.resolve({ ok: false, error: 'You are not signed in.' });
-
     if (!LIVE) {
       const all = Local.users();
       delete all[cachedUser.email];
@@ -587,32 +512,43 @@ const Auth = (function () {
       } catch (e) {}
       return Local.signOut().then(function () { return { ok: true }; });
     }
-
     return Promise.resolve(SB.rpc('delete_own_account')).then(function (res) {
-      if (res && res.error) {
-        const msg = res.error.message || '';
-        if (/could not find the function/i.test(msg)) {
-          return { ok: false, error: 'Account deletion is not set up on the database yet. ' +
-            'Run supabase/migrations/0009_account_deletion.sql.' };
-        }
-        return { ok: false, error: msg };
-      }
-      /* The row is gone but this browser still holds a token for it, so clear
-         the session before anything tries to use it again. */
+      if (res && res.error) return { ok: false, error: friendly(res.error.message, 'Your account could not be deleted. Please try again, or write to us and we will do it by hand.') };
       cachedUser = null; cachedSaved = []; cachedHistory = [];
-      return Promise.resolve(SB.auth.signOut()).then(
-        function () { return { ok: true }; },
-        function () { return { ok: true }; }
-      );
+      clearLocalTraces();
+      return Promise.resolve(SB.auth.signOut()).then(function () { return { ok: true }; }, function () { return { ok: true }; });
     }).catch(function (e) {
-      return { ok: false, error: (e && e.message) || 'Could not delete the account.' };
+      return { ok: false, error: friendly(e && e.message, 'Your account could not be deleted. Please try again.') };
     });
   }
 
-  /* Confirms with the server that the session is real, rather than trusting a
-     cache that may have gone stale in another tab. Never throws: getUser()
-     rejects outright when there is no session, which is a normal state here,
-     not an error worth propagating. */
+  /* What this browser holds that belongs to an account, cleared on deletion. */
+  function clearLocalTraces() {
+    try {
+      ['leoside.admin.autosave', 'leoside.utm', 'leoside.reports.cache'].forEach(function (k) {
+        localStorage.removeItem(k); sessionStorage.removeItem(k);
+      });
+    } catch (e) {}
+  }
+
+  /* Everything held about the member, as a JSON file they can keep. */
+  function exportData() {
+    if (!cachedUser) return Promise.resolve({ ok: false, error: 'You are not signed in.' });
+    if (!LIVE) {
+      const u = Local.users()[cachedUser.email] || {};
+      const copy = Object.assign({}, u); delete copy.hash; delete copy.salt;
+      return Promise.resolve({ ok: true, data: {
+        exported_at: new Date().toISOString(), account: copy,
+        saved_reports: cachedSaved, reading_history: cachedHistory
+      } });
+    }
+    return Promise.resolve(SB.rpc('export_my_data')).then(function (res) {
+      if (res.error) return { ok: false, error: friendly(res.error.message, 'The export could not be prepared. Please try again.') };
+      return { ok: true, data: res.data };
+    }).catch(function (e) { return { ok: false, error: friendly(e && e.message, 'The export could not be prepared.') }; });
+  }
+
+  /* Confirms with the server that the session is still valid. Never throws. */
   function verifySession() {
     if (!LIVE) return Promise.resolve(cachedUser);
     return Promise.resolve(SB.auth.getUser())
@@ -633,7 +569,6 @@ const Auth = (function () {
     if (LIVE) Live.persistHistory(id); else Local.persistHistory();
   }
 
-  /* Send a signed out visitor to sign in, remembering where they were. */
   function requireAuth() {
     if (cachedUser) return true;
     const next = location.pathname.split('/').pop() + location.search + location.hash;
@@ -642,13 +577,14 @@ const Auth = (function () {
   }
 
   return {
-    ready: ready, live: LIVE,
+    ready: ready, live: LIVE, MIN_PASSWORD: MIN_PASSWORD,
     signUp: signUp, signIn: signIn, signInWithGoogle: signInWithGoogle,
     signOut: signOut, current: current, update: update,
+    confirmAgeAndTerms: confirmAgeAndTerms, ageBand: ageBand,
     initials: initials, validEmail: validEmail, passwordScore: passwordScore,
     MARKET_CODES: MARKET_CODES, normaliseMarkets: normaliseMarkets, marketList: marketList,
     saved: saved, isSaved: isSaved, toggleSave: toggleSave, verifySession: verifySession,
-    sendPasswordReset: sendPasswordReset, deleteAccount: deleteAccount,
-    history: history, recordRead: recordRead, requireAuth: requireAuth
+    sendPasswordReset: sendPasswordReset, deleteAccount: deleteAccount, exportData: exportData,
+    history: history, recordRead: recordRead, requireAuth: requireAuth, friendly: friendly
   };
 })();
