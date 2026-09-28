@@ -1,143 +1,137 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Publish · Leoside Equity</title>
+<meta name="description" content="Publishing screen for Leoside Equity administrators.">
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="assets/img/logo.png" type="image/png">
-<link rel="apple-touch-icon" href="assets/img/logo.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0E141C">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Leoside">
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css">
-<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<script>/* Captured here, in the head, because beforeinstallprompt fires long before app.js runs at the end of the body. Missing it means no native install prompt is ever available. */
-(function(){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__leosideInstall=e;});})();</script>
+<meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08090B" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/img/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://karzpemgpmrlaaflghpk.supabase.co" crossorigin>
+<link rel="preload" href="/assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<script src="/assets/js/boot.js"></script>
 </head>
-<body>
+<body data-page="admin" data-no-fab>
 <a class="skip-link" href="#main">Skip to content</a>
-<header id="siteHeader"></header>
+<div class="loadbar" aria-hidden="true"></div>
+
+<header id="siteHeader" class="site-header">
+  <div class="wrap site-header__bar">
+    <a class="brand" href="/" aria-label="Leoside Equity, home"><span class="brand__mark" aria-hidden="true"><img src="/assets/img/logo-64.webp" srcset="/assets/img/logo-64.webp 1x, /assets/img/logo-128.webp 2x" alt="" width="32" height="32"></span><span class="brand__text"><span class="brand__name">Leo<span class="brand__split">side</span> Equity</span><span class="brand__tag">The research desk</span></span></a>
+  </div>
+</header>
 
 <main id="main">
-  <div class="wrap doc" style="max-width:900px">
-    <header class="doc__head">
-      <p class="eyebrow eyebrow--plain">Admin</p>
-      <h1 id="adminTitle">Publish a report</h1>
-      <p class="doc__meta" id="adminMeta">Checking your access…</p>
-    </header>
+  <header class="page-head">
+    <div class="wrap">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/dashboard.html">Dashboard</a></li><li aria-current="page">Publish</li></ol></nav>
+        <h1 id="adminTitle">Publish a report</h1>
+        <p class="page-head__meta" id="adminMeta" role="status">Checking your access.</p>
+    </div>
+  </header>
 
-    <div id="adminBody" hidden>
-      <div class="notice notice--info" id="adminNote" hidden></div>
+  <div class="wrap" style="max-width:960px">
 
+    <div id="adminBody" class="section section--tight" hidden>
+      <div class="notice" id="adminNote" hidden></div>
       <div class="notice notice--info" id="editingBar" hidden></div>
-      <div class="notice notice--ok" id="autosaveBar" hidden></div>
+      <div class="notice notice--ok" id="autosaveBar" role="status" hidden></div>
 
-      <form id="publishForm" autocomplete="off">
-        <div class="stat-row" style="margin-bottom:1.4rem">
-          <!-- min is set by admin.js on every paint, so a form left open
-               overnight cannot still be offering yesterday. -->
+      <form id="publishForm" autocomplete="off" novalidate>
+        <div class="form-grid">
           <div class="form-group"><label for="f-date">Publishing date</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-date" type="date" required>
-            <div class="hint" id="dateHint"></div></div>
-          <!-- Options are built by admin.js from REGIONS, so this list cannot
-               fall out of step with the markets the site covers. -->
+            <input class="input" id="f-date" type="date" required data-lpignore="true" aria-describedby="dateHint">
+            <div class="hint" id="dateHint" aria-live="polite"></div></div>
           <div class="form-group"><label for="f-market">Market</label>
-            <select class="select" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-market"></select>
+            <select class="select" id="f-market" aria-describedby="marketHint"></select>
             <div class="hint" id="marketHint"></div></div>
-          <!-- Placeholders are rewritten by admin.js to suit the market. The
-               labels stay put: a ticker box is a ticker box whether it holds a
-               symbol, an index or a sector. -->
           <div class="form-group"><label for="f-ticker">Ticker or symbol</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-ticker" type="text" placeholder="AAPL" required></div>
+            <input class="input" id="f-ticker" type="text" maxlength="40" required data-lpignore="true"></div>
           <div class="form-group"><label for="f-exchange">Exchange</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-exchange" type="text" placeholder="Nasdaq"></div>
+            <input class="input" id="f-exchange" type="text" maxlength="80" data-lpignore="true"></div>
           <div class="form-group"><label for="f-sector">Sector</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-sector" type="text" placeholder="Technology"></div>
+            <input class="input" id="f-sector" type="text" maxlength="80" data-lpignore="true"></div>
+        </div>
+
+        <div class="notice notice--brass" id="indiaRule" hidden>
+          <span><strong>Indian market rule.</strong> Keep this to the market or a sector. Do not give a view, price or target on any individual Indian listed security, and do not quote an individual security's price from the last 30 days alongside a view on its future. Leoside Equity is not registered with SEBI.</span>
         </div>
 
         <div class="form-group"><label for="f-company">Subject</label>
-          <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-company" type="text" placeholder="Apple Inc." required>
-          <div class="hint">The company, the market or the industry the report is about.</div></div>
+          <input class="input" id="f-company" type="text" maxlength="160" required data-lpignore="true" aria-describedby="companyHint">
+          <p class="hint" id="companyHint">The company, the market or the sector the report is about.</p></div>
 
         <div class="form-group"><label for="f-title">Headline</label>
-          <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-title" type="text" placeholder="The argument in one line" required></div>
+          <input class="input" id="f-title" type="text" maxlength="300" required data-lpignore="true" aria-describedby="titleHint">
+          <p class="hint" id="titleHint">State the argument. Avoid wording that reads as an instruction to buy or sell, such as "buying opportunity" or "upside", since the report is not advice.</p></div>
 
         <div class="form-group"><label for="f-standfirst">Standfirst</label>
-          <textarea class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-standfirst" rows="3" placeholder="Two sentences that state the argument before anyone clicks." required></textarea></div>
+          <textarea class="input" id="f-standfirst" rows="3" maxlength="1500" required data-lpignore="true"></textarea></div>
 
-        <!-- Hidden by admin.js on markets where there is no single share price
-             to value against. See REGIONS[x].valuation in data.js. -->
-        <div class="stat-row" style="margin-bottom:1.4rem" id="valuationBlock">
+        <div class="form-grid" id="valuationBlock">
           <div class="form-group"><label for="f-rating">Valuation stance</label>
-            <select class="select" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-rating">
-              <option>Undervalued</option><option selected>Fairly valued</option><option>Overvalued</option>
-            </select>
-            <div class="hint">How the market price compares with your estimate of intrinsic value.</div></div>
+            <select class="select" id="f-rating"><option>Undervalued</option><option selected>Fairly valued</option><option>Overvalued</option></select></div>
           <div class="form-group"><label for="f-target">Fair value band</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-target" type="text" placeholder="$150 to $168"></div>
-          <div class="form-group"><label for="f-last">Last close</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-last" type="text" placeholder="$121"></div>
-          <div class="form-group"><label for="f-horizon">Projected horizon</label>
-            <input class="input" autocomplete="off" data-lpignore="true" data-form-type="other" id="f-horizon" type="text" value="12 months"></div>
+            <input class="input" id="f-target" type="text" maxlength="60" placeholder="$150 to $168" data-lpignore="true"></div>
+          <div class="form-group"><label for="f-last">Last price at writing</label>
+            <input class="input" id="f-last" type="text" maxlength="60" placeholder="$121 at 12 Sep close" data-lpignore="true"></div>
+          <div class="form-group"><label for="f-horizon">Horizon</label>
+            <input class="input" id="f-horizon" type="text" maxlength="60" value="12 months" data-lpignore="true"></div>
         </div>
 
-        <h3 style="margin-top:2.5rem">The report</h3>
-        <p class="muted small">One section per block. Separate paragraphs inside a section with a blank line.</p>
+        <h2 style="font-size:1.4rem;margin-top:32px">The report</h2>
+        <p class="muted small">One section per block. Separate paragraphs with a blank line.</p>
         <div id="sections"></div>
-        <button class="btn btn--ghost btn--sm" type="button" id="addSection" style="margin-bottom:2rem">Add another section</button>
+        <button class="btn btn--ghost btn--sm" type="button" id="addSection">Add another section</button>
 
-        <div class="panel"><div class="panel__body">
-          <div class="row row--between">
-            <span class="muted small">Everything you type is kept on this device until you save it, so a refresh will not lose it.</span>
-            <span class="muted small" id="wordTally"></span>
-          </div>
-        </div></div>
+        <div class="row row--between" style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line)">
+          <span class="muted small">Unsaved typing is kept on this device, so a refresh will not lose it.</span>
+          <span class="muted small" id="wordTally" aria-live="polite"></span>
+        </div>
 
-        <div class="row" style="margin-top:1.5rem;gap:.7rem">
+        <div class="row" style="margin-top:24px">
           <button class="btn btn--lg" type="button" id="publishBtn">Publish report</button>
           <button class="btn btn--ghost btn--lg" type="button" id="draftBtn">Save draft</button>
-          <button class="btn btn--quiet btn--lg" type="button" id="newReport">New / clear form</button>
-          <a class="btn btn--quiet btn--lg" href="reports.html">View all reports</a>
+          <button class="btn btn--quiet" type="button" id="newReport">Clear the form</button>
+          <a class="btn btn--quiet" href="/reports.html">All reports</a>
         </div>
-        <p class="muted small" id="saveHint" style="margin-top:.9rem"></p>
+        <p class="muted small" id="saveHint" style="margin-top:12px"></p>
       </form>
 
-      <section style="margin-top:3.5rem">
-        <div class="section-head" style="margin-bottom:1rem">
-          <div><h2 style="font-size:1.5rem">Manage drafts</h2>
-          <p>Saved but not published, so only you can see them. Published reports are edited and deleted from the <a class="link" href="reports.html">reports page</a>.</p></div>
-        </div>
-        <div class="panel"><div class="panel__body panel__body--flush">
-          <ul class="dlist" id="draftList"></ul>
-        </div></div>
+      <section class="section" aria-labelledby="draftsTitle">
+        <div class="shead"><h2 id="draftsTitle">Drafts and scheduled reports</h2><a class="shead__more" href="/reports.html">Published reports</a></div>
+        <p class="muted">Only admins can see these. Published reports are edited and deleted from the reports page.</p>
+        <div class="panel"><ul class="dlist" id="draftList"></ul></div>
       </section>
     </div>
 
-    <div id="adminDenied" hidden>
+    <div id="adminDenied" class="section" hidden>
       <div class="empty">
-        <h3>This page is not for you</h3>
-        <p>Publishing is limited to admin accounts. If this is your site, set <code>is_admin</code> to true on your row in the profiles table.</p>
-        <a class="btn btn--ghost btn--sm" href="index.html">Back to the home page</a>
+        <h2>This page is for administrators</h2>
+        <p>Publishing is limited to admin accounts, and the database checks that on every save.</p>
+        <a class="btn btn--ghost" href="/">Home page</a>
       </div>
     </div>
   </div>
 </main>
 
-<footer id="siteFooter"></footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/config.js"></script>
-<script src="assets/js/data.js"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/js/store.js"></script>
-<script src="assets/js/app.js"></script>
-<script src="assets/js/admin.js"></script>
+<!-- core:start -->
+<script defer src="/assets/vendor/supabase-2.117.1.js"></script>
+<script defer src="/assets/js/config.js"></script>
+<script defer src="/assets/js/data.js"></script>
+<script defer src="/assets/js/auth.js"></script>
+<script defer src="/assets/js/store.js"></script>
+<script defer src="/assets/js/app.js"></script>
+<script defer src="/assets/js/cards.js"></script>
+<!-- core:end -->
+<script defer src="/assets/js/admin.js"></script>
 </body>
 </html>

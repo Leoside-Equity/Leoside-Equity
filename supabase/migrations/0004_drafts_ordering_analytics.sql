@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — hide drafts, fix "latest", add admin analytics
+-- Leoside Equity: hide drafts, fix "latest", add admin analytics
 --
 -- Run this in the SQL Editor after 0003. Safe to re-run.
 --

@@ -1,115 +1,94 @@
-# Connecting the backend
+# Supabase setup and security checklist
 
-Fifteen minutes, start to finish. Do these in order.
+Project: `https://karzpemgpmrlaaflghpk.supabase.co`. The publishable key in `assets/js/config.js` is public by design. The `service_role` key and the database password must never appear in any file in this folder.
 
-Your project is already filled in at `assets/js/config.js`:
+## 1. Run the migrations (do this first)
 
-- **URL** `https://karzpemgpmrlaaflghpk.supabase.co`
-- **Publishable key** `sb_publishable_A496gz-...`
+In the Supabase dashboard, open SQL Editor, paste each file whole and run it. On an existing project, only step 1d is new.
 
-Both are public client-side keys and are safe in the repo. The `service_role` / secret key is not, and must never appear in any file in this folder.
+1. a. `migrations/0001` to `0010`, in order (already done on the live project).
+   b. `apply_now.sql` (covers 0011 to 0013).
+   c. `fix_publish.sql`, then `scheduled_publishing.sql`.
+   d. **`migrations/0014_security_privacy_and_backdating.sql`**. Required. It closes two live security holes:
+      - Any signed in member can currently make themselves an admin from the browser console, because a column level `revoke` cannot override Supabase's table level `UPDATE` grant.
+      - The `reports` table currently answers direct API reads, so anyone with the public key can fetch the full text of every report, including drafts, without an account.
 
----
+   It also adds backdated publishing, the age and terms records, author and disclosure fields, rate limits, the error log and data export.
 
-## 1. Run the migration
+The last query in 0014 prints a row of checks. Every column should read `true`.
 
-Supabase dashboard → **SQL Editor** → New query. Paste the whole of `supabase/migrations/0001_leoside_init.sql` and run it.
-
-That creates the profiles, reports, saved and history tables, and the three functions that do the real work.
-
-Then run every remaining file in `supabase/migrations/` **in numerical order**, `0002` through `0011`.
-
-`0011` is not optional. It is the one that lets the new publishing week exist: until it runs, `reports.market` still carries a check constraint allowing only `IN` and `US`, and saving anything from `admin.html` under `IN_MACRO`, `UK` or `IN_SECTOR` will be rejected by the database with a constraint violation. It also drops `profiles.digest_opt_in`, since there is no mailing list.
-
-> **Do not re-run `0004` through `0008` once `0011` has been applied.** Those files rebuild `admin_stats()` with a `digest_opt_in` count in it, and `0006` ends with a verification `select` over the same column. `0011` drops that column, so re-running an earlier file afterwards either fails outright or quietly reinstates a broken `admin_stats()` and takes the dashboard's Audience panel down with it. If you need to re-apply an earlier migration for some other reason, run `0011` again straight after it to put things back.
-
-Each migration up to `0010` is individually safe to re-run in order; it is only the backwards jump across `0011` that bites.
-
-**Check it worked.** In the same editor run:
-
-```sql
-select public.get_report('anything');
-```
-
-You should get `null`, not a permission error. Then:
-
-```sql
-select * from public.reports;
-```
-
-Empty table, no error. If instead you see "permission denied", the RLS setup is doing its job on the API but you are querying as the SQL editor's superuser, so this should still work. If it errors, re-run the migration.
-
-## 2. Turn on email confirmation
-
-Authentication → **Sign In / Providers** → Email. Leave "Confirm email" **on**. It costs one extra click for the reader and stops fake signups inflating your numbers.
-
-This is the only email the site sends, alongside password resets and account notices. There is no digest and no mailing list, and the privacy policy and terms both state that plainly, so do not wire one up without changing them first.
-
-Authentication → **URL Configuration**:
-
-- Site URL: your live domain (use `http://localhost:5173` until you deploy)
-- Redirect URLs: add both `http://localhost:5173/**` and `https://yourdomain.com/**`
-
-## 3. Add Google sign in
-
-1. Google Cloud Console → new project → **APIs & Services → OAuth consent screen**. External, fill in the app name and your support email.
-2. **Credentials → Create credentials → OAuth client ID → Web application.**
-3. Supabase → Authentication → Providers → Google. Copy the **Callback URL** shown there.
-4. Paste that URL into Google's **Authorised redirect URIs**. Save.
-5. Copy Google's Client ID and Client Secret back into Supabase. Enable the provider.
-
-## 4. Flip the switch
-
-In `assets/js/config.js`:
+**Check it yourself afterwards.** In a private browser window on the site, open the console and run:
 
 ```js
-USE_SUPABASE: true,
+await SB.from('reports').select('id, body').limit(1)             // must return an error or []
+await SB.rpc('get_report', { p_id: 'an-existing-report-id' })     // locked: true, a preview, no body
 ```
 
-Reload the site. The header, the gate, sign up, sign in and the dashboard all now run against the database. Nothing else changes.
-
-If the console shows `Invalid API key`, swap `SUPABASE_KEY` for `CONFIG.SUPABASE_ANON_JWT` on the line below it. Older builds of supabase-js do not recognise the newer publishable key format.
-
-## 5. Make yourself an admin
-
-Sign up on your own site with your real address and confirm the email. Then in Supabase → **Table Editor → profiles**, find your row and set `is_admin` to `true`.
-
-Now `admin.html` works. That is your daily publishing screen: fill in the fields, paste each section, hit save. It writes through `upsert_report()`, which checks `is_admin` in the database, so the page being hidden is convenience and the actual permission is enforced server side.
-
-## 6. Confirm the gate is real
-
-This is the part worth testing properly, because it is the whole point.
-
-1. Publish a report from `admin.html`.
-2. Open it while signed in. Full text.
-3. Open a private window, go to the same URL. You should see the standfirst, the key stats and 90 words, then the sign in card.
-4. In that private window, open the console and run:
+Signed in as a normal member:
 
 ```js
-await SB.rpc('get_report', { p_id: 'your-report-id' })
+await SB.from('profiles').update({ is_admin: true }).eq('id', (await SB.auth.getUser()).data.user.id)
+// must fail with a permission error
 ```
 
-You should get `locked: true` and a `preview` field, with **no `body`**. That is the proof: someone calling the API directly with your public key still cannot read the report. If a `body` comes back, stop and re-check that `alter table public.reports enable row level security` ran and that you did not add a select policy.
+## 2. Authentication settings
 
----
+Authentication > Providers > Email:
 
-## Tracking signups
+- Confirm email: **on**.
+- Minimum password length: **10** (the site asks for 10).
+- Leaked password protection: **on** (checks new passwords against known breaches).
+- Secure email change: **on**.
 
-Supabase → Authentication → Users shows the running total. For a daily chart, run this in the SQL editor:
+Authentication > Rate Limits: the defaults are sensible. Keep sign in, sign up and password reset limits low (for example 30 sign ups per hour per IP).
 
-```sql
-select date_trunc('day', created_at)::date as day,
-       count(*) as signups,
-       sum(count(*)) over (order by date_trunc('day', created_at)) as running_total
-  from auth.users
- group by 1
- order by 1 desc;
+Authentication > Attack Protection: consider turning on CAPTCHA (hCaptcha or Cloudflare Turnstile) if sign up abuse appears. It needs a small front end change and a privacy policy update, because the CAPTCHA provider then receives visitor data.
+
+Authentication > URL Configuration: Site URL `https://leosideequity.com`, redirect URLs `https://leosideequity.com/**` and `http://localhost:5173/**`.
+
+Authentication > Email Templates: paste the files from `supabase/email-templates/` into Confirm signup, Reset password, Change email address and Magic link, with the subject line written at the top of each file. Each explains why it was sent and how to stop all email (delete the account). They are account messages, not marketing, so no newsletter style unsubscribe applies.
+
+For more than a handful of sign ups a day, set up custom SMTP (Authentication > SMTP, for example Resend or Postmark). Supabase's built in sender is heavily rate limited. **If you do, name that provider in section 8 of `privacy.html`.**
+
+## 3. Make yourself an admin
+
+After 0014, members can no longer set this themselves. In Table Editor > profiles, set `is_admin` to `true` on your row, then sign out and in again.
+
+## 4. Account and billing security
+
+These are dashboard settings no code can change. Do them now:
+
+- **Two factor authentication** on your Supabase account (Account > Security), on the hosting account (Netlify, Vercel or Cloudflare), on the domain registrar, and on the Google account that owns the OAuth client.
+- **Spend cap** on (Organization > Billing). It is on by default on the Pro plan; leave it on so a traffic spike cannot run up a bill.
+- **Network restrictions** (Project Settings > Database > Network Restrictions): allow direct database connections only from your own IP. The website never connects to the database directly, only through the API, so this blocks nothing the site needs.
+- **SSL enforcement** for direct database connections (Project Settings > Database): on.
+- **Security Advisor** (Advisors > Security): run it after 0014 and fix anything it lists.
+
+## 5. Backups and a restore test
+
+The free plan has no automatic backups. Pro keeps daily backups for seven days, with point in time recovery as an add on.
+
+To take your own backup and prove it restores (needs the database password from Project Settings > Database, which must never be committed):
+
+```bash
+npx supabase db dump --db-url "$DATABASE_URL" -f backup-schema.sql
+npx supabase db dump --db-url "$DATABASE_URL" -f backup-data.sql --data-only
 ```
 
-Deliberately not exposed as a view, because anything in the public schema is reachable through the API and `auth.users` should never be.
+Restore test: create a second, empty Supabase project, run both files against its connection string with `psql`, then point a local copy of `config.js` at it and confirm reports open. Do this once now and again every few months.
 
-## What to do at scale
+## 6. Uptime monitoring
 
-The free tier gives 50,000 monthly active users and 5 GB of egress. Auth is fine at that size; egress is the thing that bites first.
+Add free monitors in UptimeRobot or Better Stack for:
 
-When you get busy, publish the archive listing as a static `reports.json` on your host instead of calling `list_reports()` on every page load. It is public metadata with no bodies in it, so it does not need the database, and moving it onto CDN bandwidth cuts Supabase traffic by roughly 80%. The gate keeps running through `get_report()`, which is the only call that actually needs to be there.
+- `https://leosideequity.com/`, expecting status 200 and the text "Leoside Equity".
+- `https://karzpemgpmrlaaflghpk.supabase.co/rest/v1/rpc/list_reports` as a POST with header `apikey: <publishable key>` and body `{}`, expecting 200.
+
+Errors readers hit in their browsers appear under Dashboard > Error log for admins. They are kept for 30 days.
+
+## 7. Performance at scale
+
+- Connection pooling is built in: the API goes through Supabase's pooler, so there is nothing to configure for the website.
+- Indexes for every query the site runs are created by 0014.
+- The report list is cached in each browser for two minutes, so moving between pages does not refetch it.
+- Past a few thousand reports, move `list_reports()` to a static `reports.json` written by the build, so the archive is served from the CDN.

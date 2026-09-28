@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="t">
+  <title id="t">Leoside Equity</title>
+  <!-- One colour, drawn on a 64 unit grid. The eight point star is the mane;
+       the face and the rising line are cut out of it, so the mark keeps a
+       clean silhouette and reads on any background. -->
+  <defs>
+    <mask id="cut">
+      <rect width="64" height="64" fill="#fff"/>
+      <path d="M21 18 26.5 13.5 32 16.5 37.5 13.5 43 18 43.5 29 38 38 32 41.5 26 38 20.5 29Z" fill="#000"/>
+      <path d="M8 51.5 21 45 28 50.5 45 40.5" fill="none" stroke="#000" stroke-width="3.4" stroke-linejoin="miter" stroke-linecap="butt"/>
+      <path d="M53.2 35.7 43.9 36.5 47.9 43.4Z" fill="#000"/>
+    </mask>
+  </defs>
+  <g fill="currentColor">
+    <path mask="url(#cut)" d="M61.7 32 53 40.7 53 53 40.7 53 32 61.7 23.3 53 11 53 11 40.7 2.3 32 11 23.3 11 11 23.3 11 32 2.3 40.7 11 53 11 53 23.3Z"/>
+    <path d="M23.5 23 28.8 24.6 28.2 26.8 24 25.3Z"/>
+    <path d="M40.5 23 35.2 24.6 35.8 26.8 40 25.3Z"/>
+    <path d="M29 29.5 35 29.5 33.2 33.2 30.8 33.2Z"/>
+    <path d="M32 33 32 35M32 35C31 36.6 29.4 36.9 28.3 36.1M32 35C33 36.6 34.6 36.9 35.7 36.1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+  </g>
+</svg>

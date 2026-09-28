@@ -1,88 +1,139 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reports · Leoside Equity</title>
-<meta name="description" content="Every report Leoside Equity has published, searchable by company, market, sector and valuation stance.">
-<link rel="icon" href="assets/img/logo.png" type="image/png">
-<link rel="apple-touch-icon" href="assets/img/logo.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0E141C">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Leoside">
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css">
-<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<script>/* Captured here, in the head, because beforeinstallprompt fires long before app.js runs at the end of the body. Missing it means no native install prompt is ever available. */
-(function(){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__leosideInstall=e;});})();</script>
+<title>All reports: US, UK and Indian equity research · Leoside Equity</title>
+<meta name="description" content="Every Leoside Equity report in one archive. Search by company or ticker and filter by market, sector and valuation stance.">
+<link rel="canonical" href="https://leosideequity.com/reports.html">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08090B" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/img/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://karzpemgpmrlaaflghpk.supabase.co" crossorigin>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Leoside Equity">
+<meta property="og:locale" content="en_GB">
+<meta property="og:title" content="All reports · Leoside Equity">
+<meta property="og:description" content="Every Leoside Equity report, searchable by company, market, sector and valuation stance.">
+<meta property="og:url" content="https://leosideequity.com/reports.html">
+<meta property="og:image" content="https://leosideequity.com/assets/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Leoside Equity: written equity research on United States, United Kingdom and Indian markets, published daily.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://leosideequity.com/assets/img/og-image.png">
+<link rel="preload" href="/assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<script src="/assets/js/boot.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://leosideequity.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Reports", "item": "https://leosideequity.com/reports.html" }
+  ]
+}
+</script>
 </head>
-<body>
+<body data-page="reports">
 <a class="skip-link" href="#main">Skip to content</a>
-<header id="siteHeader"></header>
-<div id="scheduleStrip"></div>
+<div class="loadbar" aria-hidden="true"></div>
+
+<header id="siteHeader" class="site-header">
+  <div class="wrap site-header__bar">
+    <a class="brand" href="/" aria-label="Leoside Equity, home"><span class="brand__mark" aria-hidden="true"><img src="/assets/img/logo-64.webp" srcset="/assets/img/logo-64.webp 1x, /assets/img/logo-128.webp 2x" alt="" width="32" height="32"></span><span class="brand__text"><span class="brand__name">Leo<span class="brand__split">side</span> Equity</span><span class="brand__tag">The research desk</span></span></a>
+    <nav class="site-nav" aria-label="Primary"><a href="/">Latest</a><a href="/reports.html" aria-current="page">Reports</a><a href="/method.html">Method</a><a href="/about.html">About</a></nav>
+  </div>
+</header>
 
 <main id="main">
-  <section class="section" style="padding-bottom:0">
+  <header class="page-head">
     <div class="wrap">
-      <p class="eyebrow eyebrow--plain">Reports</p>
-      <h1 style="margin-bottom:.6rem">Everything we have published</h1>
-      <p class="lede" style="max-width:62ch">Every report since day one, in one place. Filter by market, sector or valuation stance, or search for a company by name or ticker.</p>
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li aria-current="page">Reports</li></ol></nav>
+        <h1>Every report we have published</h1>
+        <p class="lede">Search for a company by name or ticker, or narrow the archive by market, sector and valuation stance. The newest reports are at the top.</p>
+        <p class="page-head__meta">A valuation stance records where a company's share price stood against the author's range of values on the day the report was written. It is not advice to buy or sell, and it is not updated afterwards. The <a class="link" href="/disclaimer.html#ratings">research disclaimer</a> explains each stance, and the <a class="link" href="/method.html#figures">method page</a> defines every figure a report carries.</p>
     </div>
-  </section>
+  </header>
 
-  <section class="section">
-    <div class="wrap">
-      <div class="toolbar">
-        <div class="field grow" style="max-width:340px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
-          <input class="input input--search" id="q" type="search" placeholder="Company, ticker or theme" aria-label="Search reports">
-        </div>
-
-        <div class="seg" role="group" aria-label="Filter by market">
-          <button type="button" data-region="all" aria-pressed="true">All markets</button>
-          <button type="button" data-region="IN" aria-pressed="false">India</button>
-          <button type="button" data-region="US" aria-pressed="false">United States</button>
-          <button type="button" data-region="UK" aria-pressed="false">United Kingdom</button>
-        </div>
-
-        <select class="select" id="sector" aria-label="Filter by sector"><option value="all">All sectors</option></select>
-        <select class="select" id="rating" aria-label="Filter by valuation stance">
-          <option value="all">All stances</option>
-          <option value="Undervalued">Undervalued</option>
-          <option value="Fairly valued">Fairly valued</option>
-          <option value="Overvalued">Overvalued</option>
-        </select>
-        <select class="select" id="sort" aria-label="Sort order">
-          <option value="new">Newest first</option>
-          <option value="old">Oldest first</option>
-          <option value="az">Company A to Z</option>
-        </select>
-
-        <span class="result-count" id="count"></span>
+  <div class="wrap">
+    <div class="toolbar" role="search">
+      <div class="field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15.5 15.5l4.5 4.5"/></svg>
+        <label class="sr-only" for="q">Search reports</label>
+        <input class="input input--search" id="q" type="search" placeholder="Company, ticker or theme" autocomplete="off">
       </div>
-
-      <div class="notice notice--info" id="archiveGateNote" hidden></div>
-      <div id="results"></div>
+      <div class="seg" role="group" aria-label="Market">
+        <button type="button" data-region="all" aria-pressed="true">All markets</button>
+        <button type="button" data-region="US" aria-pressed="false">United States</button>
+        <button type="button" data-region="UK" aria-pressed="false">United Kingdom</button>
+        <button type="button" data-region="IN" aria-pressed="false">India</button>
+      </div>
+      <label class="sr-only" for="sector">Sector</label>
+      <select class="select" id="sector"><option value="all">All sectors</option></select>
+      <label class="sr-only" for="rating">Valuation stance</label>
+      <select class="select" id="rating">
+        <option value="all">All stances</option>
+        <option value="Undervalued">Undervalued</option>
+        <option value="Fairly valued">Fairly valued</option>
+        <option value="Overvalued">Overvalued</option>
+      </select>
+      <label class="sr-only" for="sort">Sort order</label>
+      <select class="select" id="sort">
+        <option value="new">Newest first</option>
+        <option value="old">Oldest first</option>
+        <option value="az">Company, A to Z</option>
+      </select>
+      <span class="result-count" id="count" role="status" aria-live="polite"></span>
     </div>
-  </section>
 
-  <section class="cta-band" id="archiveCta"></section>
-</main>
+    <section class="section section--tight" aria-label="Archive">
+      <div id="results">
+        <div class="rrow"><span class="sk sk--line"></span><div><span class="sk sk--title"></span><span class="sk sk--line sk-w90"></span></div><span></span></div>
+        <div class="rrow"><span class="sk sk--line"></span><div><span class="sk sk--title"></span><span class="sk sk--line sk-w60"></span></div><span></span></div>
+        <div class="rrow"><span class="sk sk--line"></span><div><span class="sk sk--title"></span><span class="sk sk--line sk-w90"></span></div><span></span></div>
+      </div>
+      <!-- Below the results rather than above them, so it cannot push the
+           list down when it appears. -->
+      <div class="notice notice--info" id="archiveGateNote" style="margin-top:32px" hidden></div>
+    </section>
+  </div>
 
-<footer id="siteFooter"></footer>
+  <section class="section join" id="joinBand" aria-labelledby="joinTitle">
+    <div class="wrap">
+      <img class="join__logo" src="/assets/img/logo-128.webp" srcset="/assets/img/logo-128.webp 128w, /assets/img/logo-256.webp 256w" sizes="104px" alt="" width="104" height="104" loading="lazy" decoding="async">
+      <h2 id="joinTitle">The reports are free with an account</h2>
+      <p>Signed out, each report shows its summary and the first 90 words. Signed in, every one opens in full, and you can save the ones you want to come back to.</p>
+      <div class="join__actions">
+        <a class="btn btn--lg" href="/signup.html">Create a free account</a>
+        <a class="btn btn--ghost btn--lg" href="/signin.html">Sign in</a>
+      </div>
+    </div>
+  </section></main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/config.js"></script>
-<script src="assets/js/data.js"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/js/store.js"></script>
-<script src="assets/js/app.js"></script>
-<script src="assets/js/cards.js"></script>
-<script src="assets/js/archive.js"></script>
+<footer id="siteFooter" class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Footer"><a href="/reports.html">Reports</a> · <a href="/method.html">Method</a> · <a href="/about.html">About</a> · <a href="/accessibility.html">Accessibility</a> · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a> · <a href="/disclaimer.html">Disclaimer</a> · <a href="/copyright.html">Copyright</a></nav>
+    <p class="footer-legal">General commentary, not investment advice. &copy; Leoside Equity.</p>
+  </div>
+</footer>
+
+<!-- core:start -->
+<script defer src="/assets/vendor/supabase-2.117.1.js"></script>
+<script defer src="/assets/js/config.js"></script>
+<script defer src="/assets/js/data.js"></script>
+<script defer src="/assets/js/auth.js"></script>
+<script defer src="/assets/js/store.js"></script>
+<script defer src="/assets/js/app.js"></script>
+<script defer src="/assets/js/cards.js"></script>
+<!-- core:end -->
+<script defer src="/assets/js/archive.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — repair reading_history
+-- Leoside Equity: repair reading_history
 --
 -- Run this in the SQL Editor. Safe to re-run.
 --

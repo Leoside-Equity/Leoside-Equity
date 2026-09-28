@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — restore the sign in gate, then add analytics
+-- Leoside Equity: restore the sign in gate, then add analytics
 --
 -- RUN THIS WHOLE FILE IN THE SUPABASE SQL EDITOR. Safe to re-run.
 --

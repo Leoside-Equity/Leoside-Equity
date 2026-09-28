@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Leoside Equity">
+  <title>Leoside Equity</title>
+
+  <defs>
+    <linearGradient id="leoGold" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0"    stop-color="#F6E3AC"/>
+      <stop offset="0.22" stop-color="#DCBA6B"/>
+      <stop offset="0.45" stop-color="#BE9138"/>
+      <stop offset="0.63" stop-color="#EFD48E"/>
+      <stop offset="0.82" stop-color="#C89C43"/>
+      <stop offset="1"    stop-color="#916821"/>
+    </linearGradient>
+
+    <!-- Wherever the rising line passes over the star or the lion, a channel
+         of background is cut through them first. That gap is what keeps the
+         two shapes reading as separate objects instead of fusing into one
+         mass, and it is how the reference handles the same crossing. -->
+    <mask id="leoArrowGap">
+      <rect width="100" height="100" fill="#fff"/>
+      <path d="M29 66 40 77 53 64 73 44" fill="none" stroke="#000"
+            stroke-width="12" stroke-linejoin="miter" stroke-linecap="butt"/>
+      <path d="M88 29 66.5 34.5 77.5 46.5Z" fill="#000" stroke="#000"
+            stroke-width="7" stroke-linejoin="miter"/>
+    </mask>
+  </defs>
+
+  <g mask="url(#leoArrowGap)">
+    <!-- ====================================================================
+         Eight point star as a frame: an outer {8/2} star on radius 48 with a
+         second on radius 42 punched out, so background shows through the
+         middle. That open centre is what stops the mark reading as a tile.
+         ==================================================================== -->
+    <path fill="url(#leoGold)" fill-rule="evenodd"
+          d="M98 50 83.94 64.06 83.94 83.94 64.06 83.94 50 98 35.94 83.94
+             16.06 83.94 16.06 64.06 2 50 16.06 35.94 16.06 16.06 35.94 16.06
+             50 2 64.06 16.06 83.94 16.06 83.94 35.94Z
+             M92 50 79.7 62.3 79.7 79.7 62.3 79.7 50 92 37.7 79.7
+             20.3 79.7 20.3 62.3 8 50 20.3 37.7 20.3 20.3 37.7 20.3
+             50 8 62.3 20.3 79.7 20.3 79.7 37.7Z"/>
+
+    <!-- ====================================================================
+         Mane. Six locks running out of the head to a point, on a radius that
+         keeps clear of the frame so a band of background stays visible
+         between them. The hole is where the face goes.
+         ==================================================================== -->
+    <path fill="url(#leoGold)" fill-rule="evenodd"
+          d="M44 15 52.6 23.1 63.9 26.5 61.25 38 63.9 49.5 52.6 52.9 44 61
+             35.4 52.9 24.1 49.5 26.75 38 24.1 26.5 35.4 23.1Z
+             M44 25.5C37.1 25.5 31.5 31.1 31.5 38 31.5 44.9 37.1 50.5 44 50.5
+             50.9 50.5 56.5 44.9 56.5 38 56.5 31.1 50.9 25.5 44 25.5Z"/>
+
+    <!-- ====================================================================
+         Face. Separate gold pieces on open ground rather than a filled head.
+         A solid disc is exactly what turns a mark like this into a blob at
+         34px, so only the brow, the eyes and the muzzle are drawn.
+         ==================================================================== -->
+    <g fill="url(#leoGold)">
+      <!-- Chunky on purpose. Fine lines vanish or turn to fuzz at 34px, so
+           every piece here is at least three units thick. -->
+      <path d="M33.5 34 39.5 29.6 44 32.6 48.5 29.6 54.5 34 50.5 37.4 44 35.2 37.5 37.4Z"/>
+      <path d="M34.8 40 41.6 41.2 39.6 45 35.2 43.8Z"/>
+      <path d="M53.2 40 52.8 43.8 48.4 45 46.4 41.2Z"/>
+      <path d="M44 40.6 49.4 47.4 44 50.4 38.6 47.4Z"/>
+    </g>
+  </g>
+
+  <!-- ======================================================================
+       The rising line, drawn last so it sits in the channel cut for it: one
+       step down at the low, then away to the upper right and out past the
+       star, which is the gesture the whole reference is built around.
+       ====================================================================== -->
+  <path d="M29 66 40 77 53 64 73 44" fill="none" stroke="url(#leoGold)"
+        stroke-width="5.5" stroke-linejoin="miter" stroke-linecap="butt"/>
+  <path fill="url(#leoGold)" d="M88 29 66.5 34.5 77.5 46.5Z"/>
+</svg>

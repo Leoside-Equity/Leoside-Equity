@@ -1,0 +1,9 @@
+# Netlify: build the site into dist/ and publish only that folder, so the
+# SQL migrations, scripts and source files are never served. Headers come
+# from dist/_headers, which the build copies across.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

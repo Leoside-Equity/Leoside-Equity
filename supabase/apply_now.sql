@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — bring the database up to date
+-- Leoside Equity: bring the database up to date
 -- ---------------------------------------------------------------------------
 -- Paste the whole of this file into the Supabase SQL Editor and run it once.
 --

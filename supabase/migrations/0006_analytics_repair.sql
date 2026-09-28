@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — make the analytics functions work on whatever the tables
+-- Leoside Equity: make the analytics functions work on whatever the tables
 -- actually look like
 --
 -- RUN THIS WHOLE FILE. Safe to re-run.

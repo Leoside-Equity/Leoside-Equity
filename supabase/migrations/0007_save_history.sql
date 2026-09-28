@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — keep a record of saves that were later removed
+-- Leoside Equity: keep a record of saves that were later removed
 --
 -- RUN THIS WHOLE FILE. Safe to re-run.
 --

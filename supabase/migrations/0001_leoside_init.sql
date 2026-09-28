@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — initial schema
+-- Leoside Equity: initial schema
 --
 -- Paste this whole file into the Supabase SQL Editor and run it once.
 -- It is written to be safe to re-run.

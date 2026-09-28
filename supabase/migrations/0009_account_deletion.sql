@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — let a reader delete their own account
+-- Leoside Equity: let a reader delete their own account
 --
 -- RUN THIS WHOLE FILE IN THE SUPABASE SQL EDITOR. Safe to re-run.
 --

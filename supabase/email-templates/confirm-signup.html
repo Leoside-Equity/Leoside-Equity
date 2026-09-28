@@ -1,0 +1,27 @@
+<!-- Supabase > Authentication > Email Templates > Confirm signup
+     Subject: Confirm your Leoside Equity account -->
+<!DOCTYPE html>
+<html lang="en-GB">
+<body style="margin:0;padding:0;background:#F4F0E8;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F0E8;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FAF7F1;border:1px solid #D6CDBC;">
+        <tr><td style="padding:28px 32px 8px;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#131A22;">Leoside Equity</td></tr>
+        <tr><td style="padding:8px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#394553;">
+          <h1 style="font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:26px;line-height:1.2;color:#131A22;margin:0 0 16px;">Confirm your email address</h1>
+          <p style="margin:0 0 16px;">Someone, hopefully you, created a Leoside Equity account with this address. Confirm it and every report opens in full.</p>
+          <p style="margin:24px 0;"><a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#0F1720;color:#F4F0E8;text-decoration:none;padding:12px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;">Confirm my email address</a></p>
+          <p style="margin:0 0 16px;font-size:14px;color:#5C6673;">If the button does not work, copy this address into your browser:<br><span style="word-break:break-all;">{{ .ConfirmationURL }}</span></p>
+          <p style="margin:0 0 24px;font-size:14px;color:#5C6673;">If you did not create this account, ignore this email. Nothing happens unless the link is used, and no further email will be sent.</p>
+        </td></tr>
+        <tr><td style="padding:16px 32px 28px;border-top:1px solid #D6CDBC;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#5C6673;">
+          You are receiving this because this address was used to sign up at leosideequity.com. This is a one time account message, not marketing: we do not send newsletters or promotions.
+          To stop all email from us, <a href="{{ .SiteURL }}/dashboard.html#account" style="color:#8A6424;">delete your account</a> at any time.
+          <a href="{{ .SiteURL }}/privacy.html" style="color:#8A6424;">Privacy policy</a>.<br>
+          Leoside Equity publishes general commentary, not investment advice.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

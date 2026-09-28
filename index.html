@@ -1,142 +1,173 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Leoside Equity · Daily equity research on the Indian, US and UK markets</title>
-<meta name="description" content="A written equity research report every day. US equities midweek, London on Thursday and Friday, India across the weekend. Free to read with an account.">
-<link rel="icon" href="assets/img/logo.png" type="image/png">
-<link rel="apple-touch-icon" href="assets/img/logo.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0E141C">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Leoside">
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css">
-<script>(function(){try{var t=localStorage.getItem('leoside.theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<script>/* Captured here, in the head, because beforeinstallprompt fires long before app.js runs at the end of the body. Missing it means no native install prompt is ever available. */
-(function(){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__leosideInstall=e;});})();</script>
+<title>Leoside Equity: daily equity research on US, UK and Indian markets</title>
+<meta name="description" content="A written equity research report every day: New York listed companies Monday to Wednesday, London on Thursday and Friday, the Indian market at the weekend. Free to read with an account.">
+<link rel="canonical" href="https://leosideequity.com/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08090B" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/img/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://karzpemgpmrlaaflghpk.supabase.co" crossorigin>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Leoside Equity">
+<meta property="og:locale" content="en_GB">
+<meta property="og:title" content="Leoside Equity: daily equity research on US, UK and Indian markets">
+<meta property="og:description" content="A written report every day on one market: New York, London or India. Free to read with an account.">
+<meta property="og:url" content="https://leosideequity.com/">
+<meta property="og:image" content="https://leosideequity.com/assets/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Leoside Equity: written equity research on United States, United Kingdom and Indian markets, published daily.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Leoside Equity: daily equity research">
+<meta name="twitter:description" content="A written report every day on one market: New York, London or India.">
+<meta name="twitter:image" content="https://leosideequity.com/assets/img/og-image.png">
+<link rel="preload" href="/assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<script src="/assets/js/boot.js"></script>
+<script type="application/ld+json">
+[{
+  "@context": "https://schema.org",
+  "@type": "NewsMediaOrganization",
+  "@id": "https://leosideequity.com/#org",
+  "name": "Leoside Equity",
+  "url": "https://leosideequity.com/",
+  "logo": { "@type": "ImageObject", "url": "https://leosideequity.com/assets/img/icon-512.png", "width": 512, "height": 512 },
+  "email": "support@leosideequity.com",
+  "foundingDate": "2026",
+  "description": "Independent publisher of written equity research and general market commentary on United States, United Kingdom and Indian markets.",
+  "publishingPrinciples": "https://leosideequity.com/method.html",
+  "correctionsPolicy": "https://leosideequity.com/disclaimer.html#corrections",
+  "contactPoint": { "@type": "ContactPoint", "contactType": "customer support", "email": "support@leosideequity.com", "availableLanguage": "English" }
+},
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://leosideequity.com/#site",
+  "name": "Leoside Equity",
+  "url": "https://leosideequity.com/",
+  "inLanguage": "en-GB",
+  "publisher": { "@id": "https://leosideequity.com/#org" },
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": { "@type": "EntryPoint", "urlTemplate": "https://leosideequity.com/reports.html?q={search_term_string}" },
+    "query-input": "required name=search_term_string"
+  }
+}]
+</script>
 </head>
-<body>
+<body data-page="index">
 <a class="skip-link" href="#main">Skip to content</a>
-<header id="siteHeader"></header>
-<div id="scheduleStrip"></div>
+<div class="loadbar" aria-hidden="true"></div>
+
+<header id="siteHeader" class="site-header">
+  <div class="wrap site-header__bar">
+    <a class="brand" href="/" aria-label="Leoside Equity, home"><span class="brand__mark" aria-hidden="true"><img src="/assets/img/logo-64.webp" srcset="/assets/img/logo-64.webp 1x, /assets/img/logo-128.webp 2x" alt="" width="32" height="32"></span><span class="brand__text"><span class="brand__name">Leo<span class="brand__split">side</span> Equity</span><span class="brand__tag">The research desk</span></span></a>
+    <nav class="site-nav" aria-label="Primary"><a href="/" aria-current="page">Latest</a><a href="/reports.html">Reports</a><a href="/method.html">Method</a><a href="/about.html">About</a></nav>
+  </div>
+</header>
 
 <main id="main">
 
-  <!-- ------------------------------------------------------------- hero -->
-  <section class="hero">
-    <div class="hero__aurora" aria-hidden="true"></div>
-    <div class="wrap hero__inner">
-      <div>
-        <p class="eyebrow">Equity research, seven days a week</p>
-        <h1>Markets explained,<br><em>every single day.</em></h1>
-        <p class="lede">Leoside Equity publishes a written research report every day. US equities midweek, London on Thursday and Friday, India across the weekend. Free to read from start to finish.</p>
-        <div class="hero__cta" id="heroCta"></div>
-        <p class="hero__note" id="heroNote"></p>
-
-        <div class="hero__stats" id="heroStats"></div>
-      </div>
-
-      <aside class="hero__feature" id="heroFeature" aria-label="Today's report"></aside>
-    </div>
-  </section>
-
-  <!-- ---------------------------------------------------------- latest -->
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow eyebrow--plain" data-index="01">The desk</p>
-          <h2>Recent research</h2>
-          <p id="latestSub">The most recent coverage across every market.</p>
+  <section class="hero" aria-labelledby="heroTitle">
+    <div class="wrap hero__grid">
+      <div class="hero__copy">
+        <h1 id="heroTitle">Equity research, <span class="hero__accent">one market a day.</span></h1>
+        <p class="lede">One written report every day. New York early in the week, London at the end of it, and India at the weekend.</p>
+        <div class="hero__cta" id="heroCta">
+          <a class="btn btn--lg" href="/reports.html">Read the reports</a>
+          <a class="btn btn--ghost btn--lg" href="/signup.html">Create a free account</a>
         </div>
-        <a class="btn btn--ghost" href="reports.html">Browse all reports</a>
+        <dl class="dateline" id="dateline">
+          <div><dt class="label">Today's market</dt><dd id="dlToday">&nbsp;</dd></div>
+          <div><dt class="label">Latest report</dt><dd id="dlLatest">&nbsp;</dd></div>
+        </dl>
       </div>
-    </div>
 
-    <!-- Breaks out of .wrap so the track can run to both edges of the screen
-         and read as a continuous belt rather than a boxed row. home.js fills
-         it and decides whether it should move at all. -->
-    <div class="marquee" id="latestMarquee">
-      <div class="marquee__track" id="latestGrid"></div>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------- the week
-       The heading holds still on the left while the market cards stack up
-       against it on the right. Cards are generated from SITE.schedule by
-       home.js, so this markup never names a day or a country. -->
-  <section class="section section--sunken" id="cadence">
-    <div class="wrap">
-      <div class="weekstack">
-        <div class="weekstack__intro">
-          <p class="eyebrow eyebrow--plain" data-index="02">The week</p>
-          <h2>Three markets,<br>one rhythm</h2>
-          <p>Every day has a fixed market, so you always know what is coming.</p>
-          <a class="btn btn--ghost" href="method.html">How the research is done</a>
+      <div class="globe">
+        <div class="globe__stage" id="globeStage">
+          <canvas tabindex="0" role="img" aria-label="A globe showing the part of the world in daylight now, with the New York, London and Mumbai exchanges marked. Drag or use the arrow keys to turn it."></canvas>
+          <div class="globe__fallback" id="globeFallback" aria-hidden="true"><span class="sk" style="width:62%;aspect-ratio:1;border-radius:50%"></span></div>
         </div>
-        <div class="weekstack__cards" id="weekCards"></div>
+        <ul class="clocks" id="clocks" aria-label="Exchange local times and regular session status"><li><button class="clock clock--us" type="button"><span class="clock__where"><b>NYSE</b> <span>New York</span></span><span class="clock__time">--:--</span><span class="clock__state">&nbsp;</span><span class="sr-only">, session 09:30 to 16:00 local time, turns the globe to New York</span></button></li><li><button class="clock clock--uk" type="button"><span class="clock__where"><b>LSE</b> <span>London</span></span><span class="clock__time">--:--</span><span class="clock__state">&nbsp;</span><span class="sr-only">, session 08:00 to 16:30 local time, turns the globe to London</span></button></li><li><button class="clock clock--in" type="button"><span class="clock__where"><b>NSE</b> <span>Mumbai</span></span><span class="clock__time">--:--</span><span class="clock__state">&nbsp;</span><span class="sr-only">, session 09:15 to 15:30 local time, turns the globe to Mumbai</span></button></li></ul>
+        <p class="clocks-note">Regular session hours. Holidays and early closes are not shown.</p>
       </div>
     </div>
   </section>
 
-  <!-- ------------------------------------------------------ why account -->
-  <section class="section">
+  <section class="reel" id="reel" aria-label="Companies covered">
+    <div class="reel__view"><div class="reel__track"></div></div>
+    <button class="reel__ctl" type="button" hidden></button>
+  </section>
+
+  <section class="section" id="latest" aria-labelledby="latestTitle">
     <div class="wrap">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow eyebrow--plain" data-index="03">Access</p>
-          <h2>Free to read. An account keeps it that way.</h2>
-          <p>Anyone can read the summary of every report. Signing in opens all of them, in full, for nothing.</p>
+      <div class="shead">
+        <h2 id="latestTitle">Latest research</h2>
+        <a class="more" href="/reports.html">All reports <svg class="more__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false"><path d="M4 12h15M14 7l5 5-5 5"/></svg></a>
+      </div>
+      <div id="lead">
+        <div class="feature">
+          <div><span class="sk sk--line sk-w40"></span><span class="sk sk--h1"></span><span class="sk sk--h1 sk-w60"></span><span class="sk sk--line sk-w90"></span><span class="sk sk--line sk-w60"></span></div>
+          <div class="cover" aria-hidden="true"><span class="sk" style="width:min(320px,100%);aspect-ratio:5/7;border-radius:12px"></span></div>
         </div>
       </div>
-
-      <div class="card-grid">
-        <article class="rcard">
-          <h3>Look before you sign up</h3>
-          <p class="rcard__excerpt" style="-webkit-line-clamp:6">Without an account you can see the summary of every report, along with the key statistics that go with it. Enough to know whether it is worth your time.</p>
-        </article>
-        <article class="rcard">
-          <h3>Sign in to read it in full</h3>
-          <p class="rcard__excerpt" style="-webkit-line-clamp:6">An account takes about thirty seconds and costs nothing. It opens every report we have ever published, with no limit on how much you read.</p>
-        </article>
-        <article class="rcard">
-          <h3>Your own dashboard</h3>
-          <p class="rcard__excerpt" style="-webkit-line-clamp:6">Members get a reading dashboard with reports organised by month, by week and by day, saved reports, and a record of what you have already read.</p>
-        </article>
-      </div>
+      <ol class="deck" id="recent" aria-label="Earlier reports"></ol>
     </div>
   </section>
 
-  <!-- -------------------------------------------------------------- cta -->
-  <section class="cta-band">
+
+  <section class="section section--band" id="cadence" aria-labelledby="weekTitle">
     <div class="wrap">
-      <p class="eyebrow eyebrow--plain" style="justify-content:center">Membership</p>
-      <h2>Everything we publish, at no cost</h2>
-      <p>No card, no trial period, no upsell. Create an account and every report opens.</p>
-      <div class="row" id="ctaButtons">
-        <a class="btn btn--lg" href="signup.html">Create a free account</a>
-        <a class="btn btn--on-ink btn--lg" href="signin.html">I already have one</a>
+      <div class="shead">
+        <div><h2 id="weekTitle">This week</h2><p class="shead__sub" id="weekRange">&nbsp;</p></div>
+        <p class="shead__aside">The rota is the same every week. Thursday's report is on a London company, and Sunday's covers the Indian market as a whole.</p>
+      </div>
+      <div class="week" id="week"></div>
+      <p class="week-note">Earlier weeks are kept in <a href="/reports.html">the archive</a>, which can be narrowed to a single market.</p>
+    </div>
+  </section>
+
+  <section class="section join" id="joinBand" aria-labelledby="joinTitle">
+    <div class="wrap">
+      <img class="join__logo" src="/assets/img/logo-128.webp" srcset="/assets/img/logo-128.webp 128w, /assets/img/logo-256.webp 256w" sizes="104px" alt="" width="104" height="104" loading="lazy" decoding="async">
+      <h2 id="joinTitle">Read every report in full</h2>
+      <p>A free account opens the full text of every report. There is no card and no paid tier, and you can download or delete your data at any time.</p>
+      <div class="join__actions">
+        <a class="btn btn--lg" href="/signup.html">Create a free account</a>
+        <a class="btn btn--ghost btn--lg" href="/signin.html">Sign in</a>
       </div>
     </div>
   </section>
 
 </main>
 
-<footer id="siteFooter"></footer>
+<footer id="siteFooter" class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Footer"><a href="/reports.html">Reports</a> · <a href="/method.html">Method</a> · <a href="/about.html">About</a> · <a href="/accessibility.html">Accessibility</a> · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a> · <a href="/disclaimer.html">Disclaimer</a> · <a href="/copyright.html">Copyright</a></nav>
+    <p class="footer-legal">General commentary, not investment advice. &copy; Leoside Equity.</p>
+  </div>
+</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/config.js"></script>
-<script src="assets/js/data.js"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/js/store.js"></script>
-<script src="assets/js/app.js"></script>
-<script src="assets/js/cards.js"></script>
-<script src="assets/js/home.js"></script>
+<!-- core:start -->
+<script defer src="/assets/vendor/supabase-2.117.1.js"></script>
+<script defer src="/assets/js/config.js"></script>
+<script defer src="/assets/js/data.js"></script>
+<script defer src="/assets/js/auth.js"></script>
+<script defer src="/assets/js/store.js"></script>
+<script defer src="/assets/js/app.js"></script>
+<script defer src="/assets/js/cards.js"></script>
+<!-- core:end -->
+<script defer src="/assets/js/land-mask.js"></script>
+<script defer src="/assets/js/globe.js"></script>
+<script defer src="/assets/js/home.js"></script>
 </body>
 </html>

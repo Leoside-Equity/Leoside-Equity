@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — admin delete
+-- Leoside Equity: admin delete
 --
 -- Run this in the SQL Editor after 0001. Safe to re-run.
 --

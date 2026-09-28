@@ -1,156 +1,120 @@
 # Leoside Equity
 
-A static front end for a daily equity research site. Plain HTML, CSS and JavaScript, no build step, no dependencies to install. Drop the folder on any host and it works.
+A static site for a daily equity research publication: plain HTML, CSS and JavaScript on the front, Supabase (Postgres and auth) behind it. There is no framework. The build step only minifies and copies the public files into `dist/`.
 
-## Running it locally
-
-Do not open `index.html` by double clicking it. Browsers restrict `localStorage` on `file://` URLs, which breaks sign in. Start the tiny dev server instead:
+## Run it locally
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\dev-server.ps1
+npm install
+npm run dev
 ```
 
-Then open <http://localhost:5173>.
+Then open <http://localhost:5173>. The dev server sends the same security headers as the live site, so a Content Security Policy problem shows up locally first. Do not open the HTML files by double clicking: sign in needs a real origin.
+
+## Build and deploy
+
+```bash
+npm run build
+```
+
+Deploy the `dist/` folder and nothing else. It holds only public files: the SQL, the scripts, `_source/` and this README are never included. The build:
+
+- joins the shared scripts into one minified file and minifies the rest, with no source maps
+- minifies the stylesheet and HTML and adds a content hash to every CSS and JS reference, so they can be cached for a year
+- copies the Content-Security-Policy from `_headers` into a `<meta>` tag on every page, for hosts that cannot send headers
+- adds every published report to `sitemap.xml`
+
+Host settings are already in the folder:
+
+| Host | What to set |
+| --- | --- |
+| Netlify | Nothing. `netlify.toml` runs the build and publishes `dist/`; headers come from `_headers`. |
+| Vercel | Nothing. `vercel.json` sets the build, output folder and headers. |
+| Cloudflare Pages | Build command `npm run build`, output directory `dist`. Headers come from `_headers`. |
+| Anything else | Upload `dist/`, and copy the headers from `_headers` into the host's settings. |
+
+### Connecting leosideequity.com
+
+1. In the host's dashboard, add `leosideequity.com` and `www.leosideequity.com` as custom domains, and set `www` to redirect to the bare domain.
+2. At your domain registrar, create the DNS records the host shows you (usually an `A` or `ALIAS` record for the bare domain and a `CNAME` for `www`).
+3. Wait for the host to issue the HTTPS certificate, then turn on "force HTTPS".
+4. In Supabase, Authentication > URL Configuration: set Site URL to `https://leosideequity.com` and add `https://leosideequity.com/**` to the redirect URLs. Keep `http://localhost:5173/**` for local work.
+5. In Google Cloud, add `https://leosideequity.com` to the OAuth client's authorised JavaScript origins.
+6. Submit `https://leosideequity.com/sitemap.xml` in Google Search Console and Bing Webmaster Tools.
+
+Every canonical link, share tag, sitemap entry and structured data block already points at `https://leosideequity.com`.
 
 ## What is in here
 
-| File | What it does |
+| Path | Purpose |
 | --- | --- |
-| `index.html` | Home page. Hero, today's report, recent grid, publishing calendar explainer |
-| `reports.html` | Full archive with search, market, sector, rating and sort filters |
-| `report.html` | A single note. Reads `?id=` from the URL. Holds the free preview gate |
-| `dashboard.html` | Member area. Sidebar archive by month, week and day |
-| `signup.html` / `signin.html` | Account forms |
-| `about.html` | What the site is, who it is for, FAQ |
-| `method.html` | The research method, on its own page with a back button |
-| `terms.html` / `privacy.html` / `disclaimer.html` | Legal pages |
-| `admin.html` | Daily publishing screen. Admin accounts only |
-| `assets/js/config.js` | Supabase keys and the `USE_SUPABASE` switch |
-| `assets/js/data.js` | Site config, markets, and the local report array |
-| `assets/js/auth.js` | Accounts. Runs on localStorage or Supabase, same interface |
-| `assets/js/store.js` | Loads reports and boots each page |
-| `assets/js/app.js` | Header, footer, lion mark, date helpers, theme |
-| `assets/js/cards.js` | Shared report card and row markup |
-| `assets/css/styles.css` | Everything visual. Design tokens live at the top |
-| `supabase/` | The migrations and the setup guide |
+| `index.html` | Home: hero with the 3D globe and live exchange clocks, the companies marquee, latest research with its opening volume, this week, and the invitation to join |
+| `reports.html` | Archive with search, market, sector, stance and sort filters, pagination, and shareable filter URLs |
+| `report.html` | One report. The database decides whether a visitor gets the preview or the full text |
+| `dashboard.html` | Members: saved reports, history, account and privacy (download data, delete account). Admins: numbers and the error log |
+| `admin.html` | Publishing, admins only (checked in the database on every save) |
+| `signup.html`, `signin.html`, `reset.html` | Accounts, including the age check |
+| `about.html`, `method.html` | What the site is, FAQ, how a report is written |
+| `terms.html`, `privacy.html`, `disclaimer.html`, `copyright.html`, `accessibility.html` | Legal pages and the accessibility statement |
+| `404.html`, `offline.html` | Not found, and the page the service worker shows offline |
+| `assets/css/styles.css` | Every style. Tokens (colours, type, spacing) are at the top |
+| `assets/js/app.js` | Shared shell: header, menu, footer, search, cookie choice, dialogs, contact, age check, error reporting |
+| `assets/js/globe.js` | The globe: orthographic projection, real sun position, coastlines from `land-mask.js` |
+| `assets/js/config.js` | Supabase URL and publishable key, timeouts |
+| `assets/js/data.js` | Site settings, the weekly calendar, market definitions |
+| `assets/fonts/` | Playfair Display (upright and italic), Inter and IBM Plex Mono, self hosted under the SIL Open Font License |
+| `supabase/migrations/` | Database changes, run in order |
+| `supabase/email-templates/` | Account emails to paste into Supabase |
+| `scripts/` | Build, icon generation, WebP logos, land mask generation, load test |
 
-There is no mailing list. The site sends only what an account cannot work without: address confirmation, password resets, and account, security or legal notices. `privacy.html` section 7 and `terms.html` section 11 both say so, and migration `0011` drops the `digest_opt_in` column that used to record an opt in nobody was asked for. If you ever add a digest, those two sections have to change back first.
+## Publishing
 
-## Publishing a new report
+Use `admin.html`. Any date works:
 
-Everything is driven by `assets/js/data.js`. Add an object to the top of the `REPORTS` array:
-
-```js
-{
-  id: 'aapl-2026-08-03',          // unique, used in the URL
-  date: '2026-08-03',             // YYYY-MM-DD, suggests the market for that day
-  market: 'US',                   // 'US' | 'UK' | 'IN'
-  ticker: 'AAPL',                 // a symbol, an index, or a sector
-  company: 'Apple Inc.',          // the company, the market, or the industry
-  exchange: 'Nasdaq',
-  sector: 'Technology',
-  readMins: 6,
-  title: 'The headline argument in one line',
-  standfirst: 'Two sentences that state the thesis before anyone clicks.',
-  body: [
-    { h: 'Section heading', p: ['First paragraph.', 'Second paragraph.'] },
-    { h: 'Another section', p: ['And so on.'] }
-  ],
-
-  // Only on markets where REGIONS[market].valuation is true, so US and UK:
-  rating: 'Undervalued',          // Undervalued | Fairly valued | Overvalued
-  target: '$150 to $168',         // an estimate of worth, not a forecast
-  last: '$121',
-  horizon: '12 months'
-}
-```
-
-Nothing else needs updating. The reports page, the sector filter, the dashboard tree, the home page and the word counts all read from this array.
-
-Sector filter options, month and week grouping, and the "N reports" counts are all derived, so they stay correct on their own.
-
-With nothing published every page has a proper empty state, so the site still looks finished: the home page shows a "first report is on its way" card, the reports page explains it will fill up, and the dashboard tells the member their account is ready.
-
-## The publishing calendar
-
-Set in `SITE.schedule` in `data.js`, keyed by JavaScript weekday where Sunday is 0:
-
-```js
-schedule: { 0:'IN', 1:'US', 2:'US', 3:'US', 4:'UK', 5:'UK', 6:'IN' }
-```
-
-| Day | Market |
+| Date chosen | What happens |
 | --- | --- |
-| Monday to Wednesday | United States |
-| Thursday and Friday | United Kingdom |
-| Saturday and Sunday | India |
+| In the past | Goes live now, filed under that date |
+| Today | Goes live now |
+| In the future | Held as a scheduled draft, goes live at 06:00 India time on the day |
 
-**A report belongs to a country, and that is all the site stores about its shape.** `market` is `IN`, `US` or `UK`. An earlier version stored the calendar slot instead — `IN_MACRO` on Sunday, `IN_SECTOR` on Saturday — which froze every Sunday into "the whole market" and stamped the distinction onto every card and tag. Storing the country leaves any day free to be whatever it needs to be. Migration `0013` collapses the old codes, and `LS.market()` still maps them so nothing published under the old scheme breaks.
+The publishing page has no author or position fields. Reports appear under "Leoside Equity research desk", and the disclaimer says in general terms that the people who write them may hold shares in what they cover. Note that UK and EU market abuse rules expect a named author and a statement of any position on a view about a listed share; if that matters for your readers, a per-report disclosure is the safer choice. To correct a published fact, edit the report and add a dated note as its first paragraph: the site's pages say corrections appear at the top of the report. For Indian reports keep to the market or a sector: no view, price or target on any individual Indian listed security, because Leoside Equity is not registered with SEBI. The valuation fields are hidden, and emptied by the database, for Indian reports for that reason.
 
-**Three countries, three colours.** India amber, the United States slate blue, the United Kingdom violet, from `REGIONS`.
+Headlines should state the argument without telling people to act. "Ultimate buying opportunity" or "21% upside" reads as a recommendation, which undercuts every disclaimer on the site.
 
-**The Indian week is spelled out in exactly one place**: `REGIONS.IN.days` in `data.js`, which the home page's week section renders. Nowhere else repeats it.
+## Security model
 
-`REGIONS[code].weekdays`, `.count`, `.dayLabel` and `.startDay` are derived at the bottom of `data.js`, so "Monday to Wednesday" and "3 reports a week" are computed, never typed. `describeDays()` treats the week as a circle, which is why India reads as "Saturday and Sunday" rather than as the two ends of the week.
+- The publishable key in `config.js` is public by design. Everything it can reach is decided by row level security and the security definer functions in `supabase/migrations/`.
+- The service role key must never appear anywhere in this folder.
+- Readers never query `reports` directly. `list_reports()` returns metadata only, `get_report()` returns a preview or the full text depending on who is asking.
+- Member writes are rate limited in the database. Every function that returns data checks the caller.
+- Pages load no third party scripts, fonts or trackers. The CSP allows scripts from this site only.
+- Details and the checklist are in `supabase/SETUP.md`.
 
-**`REGIONS[code].valuation`** decides whether the price fields apply. A note on a whole market or a sector is an argument about direction, not a number against a share price, so India carries no valuation stance, fair value, last price or horizon: the publishing form hides those boxes and the report page omits the block rather than printing dashes.
+## Tests you can repeat
 
-**It never needs manual updating.** The strip under the header always runs Sunday to Saturday. Which chip is marked as today, and the date printed beside it, come from `new Date()`, which is the reader's own device clock and timezone. Someone in Bengaluru and someone in New York can see different days highlighted at the same moment, each correct for them. Nothing animates or flashes; today simply carries a brass outline.
-
-Report dates are equally safe. A `date` string like `2026-08-03` is parsed with `new Date(2026, 7, 3)` in `LS.parseDate()`, which builds local midnight. Parsing it the obvious way, `new Date('2026-08-03')`, would be read as UTC and would show the wrong weekday for anyone west of Greenwich. That is why the helper exists, and why every date on the site should go through it rather than through `Date.parse`.
-
-Change one value in `schedule` and the header strip, the home page week section, the market colour coding, the filters and the dashboard all follow.
-
-## One CSS rule worth knowing about
-
-`html, body` use `overflow-x: clip`, **not** `hidden`. This matters more than it looks.
-
-`overflow-x: hidden` computes `overflow-y: auto`, which turns `<body>` into a scroll container. Every `position: sticky` element on the page then resolves against that container instead of the viewport, and because it never scrolls, nothing sticks. That silently broke the site header and left the reading progress bar — which is offset by the header height — drawing a line across the middle of every article. `clip` does the same clipping job without establishing a scroll container.
-
-If sticky positioning ever stops working somewhere on this site, check for an `overflow: hidden` ancestor first.
-
-## Two modes
-
-The site runs either standalone or against Supabase, switched by one line in `assets/js/config.js`:
-
-```js
-USE_SUPABASE: false,   // localStorage. No server. Edit REPORTS in data.js
-USE_SUPABASE: true,    // real accounts, real gate. See supabase/SETUP.md
+```bash
+npm run build        # also fails on a source map in dist/, or a stray quote or brace in styles.css
+npm run loadtest     # 25 simultaneous signed out readers against the live API
+npm run audit:deps   # known vulnerabilities in dependencies
 ```
 
-Everything else is identical between the two. `Auth` and `Data` expose the same functions either way, so no page knows or cares which is running.
+## Design rules
 
-To connect the backend, follow **`supabase/SETUP.md`**. It takes about fifteen minutes and ends with a test that proves the gate is real.
+The palette, type and spacing live in the tokens at the top of `styles.css`. Light mode is warm ivory (`#F6F4EF`) with ink text (`#14181E`) and ink buttons; dark mode is near black (`#08090B`) with ivory text and gold buttons (`#D2AE68`). Brass carries links and small accents, with the United States in steel blue, the United Kingdom in green and India in saffron. Every text colour passes 4.5:1 against every surface in its theme. Playfair Display sets headlines and display type at weight 600, with its italic for the second line of the home headline; Inter sets the interface and all reading text (summaries and report bodies); IBM Plex Mono sets tickers and times.
 
-## How the gate works, and what has to change
+How the pieces fit together:
+- **One surface per theme.** Each page is one continuous background from the header to the footer. Sections are divided by space and hairlines, not by blocks of colour; the only tinted areas are full-width bands (this week on the home page, and the footer) in a slightly warmer version of the page colour.
+- **Header.** A solid bar in the page colour with a hairline underneath, stuck to the top. The name is set in two colours, "Leo" and "Equity" in the text colour and "side" in gold (`--accent` in light, `--gold` in dark), with "The research desk" in small spaced capitals under it. The current page is a quiet filled chip in the nav, and a gold reading-progress line runs along the hairline.
+- **Home page.** The headline (sized to its column, so it always sits on two lines) beside the 3D globe with its orbit rings and the three exchange clocks; pressing a clock turns the globe to that city. Under the buttons a dateline gives today's market and the newest report, ruled like the clocks opposite. A full-width marquee of the companies covered carries the page into "Latest research": the newest report beside its bound 3D volume, then the four before it as a stack of cards. Each card sticks one strip lower than the last, so the next slides over it and leaves its date and market showing; the cards are given equal heights so the pile leaves in one piece. While the page is open it fetches the report list again every three minutes (and when the tab comes back into view) and redraws the lead, the cards, the week and the hero links if anything changed, with a short status message for a new report. It waits while focus or the pointer is inside those parts. The volume stays closed until a mouse pointer rests on it, then opens: the title page inside the cover, and on the first page the key figures and the points of the report's own summary, so it changes with every report. It closes when the pointer leaves, and stays closed on touch screens. It uses only what the public report list already returns, never the report body. A one line note under the lead report says it is general commentary and links to the disclaimer. Then this week as a desk diary: the markets over their days with exchange hours (the middle one centred on the week), a gold line that fills as the week passes, one column a day, today filled in the primary colour, and an agenda list on phones; and the invitation to join with the lion.
+- **Inner pages** open on a plain head (breadcrumbs, title, what the page is for) closed by a hairline. Long documents keep their contents list beside the text without a box, and end with two "keep reading" links to the pages that follow on, ruled like the older and newer links under a report. No page is a dead end. Terms and their meanings (on About and Method) are set as a ledger, `dl.terms`, not as bold headed bullet lists.
+- **Layout safety.** Every single column grid is `minmax(0, 1fr)`, so a wide table scrolls inside its own box and never pushes a page wider than a phone. The exchange clocks put the city under the code when their columns get narrow (a container query in em, so it follows the reader's text size).
+Rules taken from the brief, to keep the site looking made rather than generated:
+- **Surfaces.** Solid colours only: no gradients on text or surfaces, no glass or blur, no grain, no glowing orbs, no dot or line grids. The only soft light is the globe's own atmosphere.
+- **Depth.** No drop shadows on cards or panels. Hairlines do the separating, and a restrained shadow is kept only for things that open over the page (menus, dialogs, toasts, the contact button) and for the stacked report cards on the home page, whose faint upward shadow falls on the card underneath.
+- **Shape.** Corners are rounded but crisp (8 pixels on controls, 10 to 14 on panels), never soft or pill shaped. Buttons are at least 44 pixels tall and keep a 16 pixel gap between them.
+- **Motion.** Hover changes colour or border instantly. Nothing fades, lifts, slides or animates on hover or on scroll, with one deliberate exception: the latest report's volume opens while the pointer rests on it. The stacked report cards are not animated; they are sticky and move only with the reader's scrolling. Otherwise the only motion is the globe (which turns when an exchange is pressed), the companies marquee (with a pause button, and still under reduced motion) and loading indicators. The floating contact button waits until reading has started, so it never sits on a hero.
+- **Labels.** No badges or small labels stacked above headlines, and no dashes: none in the copy, no drawn rules or short bars that read as one, and report text is shown with ranges as "12 to 15%" (`plain()` in `store.js`; the stored text is untouched).
+- **Details.** Icons are drawn for the site with square ends and mitred corners. Monospace is used only for tickers, times and codes, and every spacing value comes from the `--s-*` scale.
 
-Signed out visitors see the first `SITE.freeWords` words (currently 90) and then a card asking them to create a free account. Signed in visitors get the whole note.
-
-The front end is built honestly: `LS.preview()` truncates the text **before** it is written into the page, so the rest of the note is not sitting in the HTML waiting to be found in view source.
-
-**In local mode that is still only a front end.** Account data sits in `localStorage`, so anyone can bypass it from the console. It is fine for working on the design and worthless as security.
-
-**In Supabase mode the gate is real.** The `reports` table has row level security on with no read policy, so it cannot be read through the API at all. The only door is `get_report()`, which reads `auth.uid()` from a signed JWT and returns either a 90 word preview or the full body. Someone can read your JavaScript, take the public key, call the function directly, and still get 90 words. `supabase/SETUP.md` step 6 walks through proving that yourself.
-
-## Design
-
-The palette and type scale are CSS custom properties at the top of `styles.css`. Change them there and the whole site follows.
-
-- Ink navy `#0E141C` for dark surfaces, warm paper `#FBF9F5` for light
-- Antique brass `#9C7430` and `#C6A15A` as the accent
-- India is coded amber, the United States slate blue, the United Kingdom violet, consistently everywhere
-- Playfair Display for headings, Inter for interface, Lora for the body of a note
-- Light and dark themes both supported. It follows the system setting and the toggle in the header overrides it.
-
-The lion mark is a single image, `assets/img/logo.png`, drawn by `LS.mark()` in `app.js`. Replacing the artwork means replacing that file and nothing else. It wants a square export with a transparent background, because it sits on a cream header in light mode and an ink one in dark. `logo.svg` is the fallback `LS.mark()` swaps in if the png ever goes missing; `logo-original.png` is the untouched export kept as a source file.
-
-Readers can set a profile photo. It is cropped square, scaled to 256px in a canvas on their own machine, and stored inline on their profile row as a data URI, so no storage bucket and no second set of access rules. See migration `0012`.
-
-## Before you launch
-
-- [ ] Have a lawyer review `terms.html`, `privacy.html` and `disclaimer.html` against the securities commentary rules in every market you publish on. They are drafted from scratch in plain language, not copied from anywhere, and they still need professional review. Section 19 of the terms carries the territorial scope clause, which is the one most worth a second opinion
-- [ ] Check the contact address in `SITE.email` in `data.js`
-- [ ] Update the domain in `robots.txt` and add a sitemap
-- [ ] Add an Open Graph image and per page `og:` tags if you want link previews to look right
-- [ ] Decide on analytics, then update section 6 of the privacy policy to match what you actually run
-- [ ] `assets/img/favicon.svg` is not referenced by any page. Wire it up as an `<link rel="icon">` or delete it
+The logo is the original lion artwork, `assets/img/logo.png` (335 x 335, transparent), cut from `_source/logo-original.png`. It is shown gold with nothing drawn around it, on both the ivory and the black page. `node scripts/make-icons.mjs` regenerates the header sizes, the favicon, the app icons and the share image from it, and `node scripts/make-webp.mjs` then writes the WebP copies the pages load.
+The globe's land outline is a bitmap built from Natural Earth data by `node scripts/make-land-mask.mjs path/to/land-110m.json` (the file comes from the world-atlas package). The script unwraps each coastline across the date line and closes rings that circle a pole, which is what keeps the Arctic and Antarctica free of stray bands. `globe.js` blends the four map cells around each point, so coastlines stay smooth even near the poles, and the meridians stop at 80 degrees so they never bunch into a bright knot there.

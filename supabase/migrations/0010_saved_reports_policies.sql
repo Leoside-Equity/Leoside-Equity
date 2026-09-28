@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Leoside Equity — repair the saved_reports and reading_history policies
+-- Leoside Equity: repair the saved_reports and reading_history policies
 --
 -- RUN THIS WHOLE FILE. Safe to re-run.
 --

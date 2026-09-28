@@ -1,0 +1,26 @@
+<!-- Supabase > Authentication > Email Templates > Magic Link
+     Subject: Your Leoside Equity sign in link
+     The site does not offer magic link sign in, but Supabase keeps the
+     template, so it carries the same footer in case it is ever sent. -->
+<!DOCTYPE html>
+<html lang="en-GB">
+<body style="margin:0;padding:0;background:#F4F0E8;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F0E8;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FAF7F1;border:1px solid #D6CDBC;">
+        <tr><td style="padding:28px 32px 8px;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#131A22;">Leoside Equity</td></tr>
+        <tr><td style="padding:8px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#394553;">
+          <h1 style="font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:26px;line-height:1.2;color:#131A22;margin:0 0 16px;">Your sign in link</h1>
+          <p style="margin:24px 0;"><a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#0F1720;color:#F4F0E8;text-decoration:none;padding:12px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;">Sign in to Leoside Equity</a></p>
+          <p style="margin:0 0 24px;font-size:14px;color:#5C6673;">If you did not ask for this, ignore this email.</p>
+        </td></tr>
+        <tr><td style="padding:16px 32px 28px;border-top:1px solid #D6CDBC;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#5C6673;">
+          You are receiving this because a sign in link was requested for this address at leosideequity.com. We send no marketing.
+          <a href="{{ .SiteURL }}/dashboard.html#account" style="color:#8A6424;">Manage or delete your account</a>.
+          <a href="{{ .SiteURL }}/privacy.html" style="color:#8A6424;">Privacy policy</a>.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
