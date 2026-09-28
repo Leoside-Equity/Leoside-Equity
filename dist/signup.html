@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://karzpemgpmrlaaflghpk.supabase.co wss://karzpemgpmrlaaflghpk.supabase.co; manifest-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create a free account · Leoside Equity</title>
+<meta name="description" content="A free Leoside Equity account opens every report in full and gives you a saved list and reading history. No card, no paid tier.">
+<link rel="canonical" href="https://leosideequity.com/signup.html">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08090B" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/img/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://karzpemgpmrlaaflghpk.supabase.co" crossorigin>
+<meta property="og:title" content="Create a free account · Leoside Equity">
+<meta property="og:description" content="A free account opens every Leoside Equity report in full.">
+<meta property="og:url" content="https://leosideequity.com/signup.html">
+<meta property="og:image" content="https://leosideequity.com/assets/img/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/css/styles.css?v=d67f65e27d">
+<script src="/assets/js/boot.js?v=ad5274336d"></script>
+</head>
+<body data-page="signup">
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="loadbar" aria-hidden="true"></div>
+<header id="siteHeader" class="site-header">
+<div class="wrap site-header__bar">
+<a class="brand" href="/" aria-label="Leoside Equity, home"><span class="brand__mark" aria-hidden="true"><img src="/assets/img/logo-64.webp" srcset="/assets/img/logo-64.webp 1x, /assets/img/logo-128.webp 2x" alt="" width="32" height="32"></span><span class="brand__text"><span class="brand__name">Leo<span class="brand__split">side</span> Equity</span><span class="brand__tag">The research desk</span></span></a>
+<nav class="site-nav" aria-label="Primary"><a href="/">Latest</a><a href="/reports.html">Reports</a><a href="/method.html">Method</a><a href="/about.html">About</a></nav>
+</div>
+</header>
+<main id="main">
+<div class="auth">
+<section class="auth__panel" aria-labelledby="panelTitle">
+<h2 id="panelTitle">What an account gives you</h2>
+<p class="lede">Reading is free and there is no paid tier. The account exists so reports can open in full and so your saved list follows you between devices.</p>
+<dl class="auth__facts" id="perks"></dl>
+</section>
+<section class="auth__form-side">
+<form class="auth__form" id="signupForm" novalidate>
+<h1>Create your account</h1>
+<p class="muted">Already have one? <a class="link" href="/signin.html" id="toSignin">Sign in instead</a>.</p>
+<div class="notice notice--err" id="formError" role="alert" hidden></div>
+<div class="form-group" id="g-name">
+<label for="name">Name</label>
+<input class="input" id="name" name="name" type="text" autocomplete="name" maxlength="120" required aria-describedby="nameErr">
+<p class="err" id="nameErr">Please tell us what to call you.</p>
+</div>
+<div class="form-group" id="g-email">
+<label for="email">Email address</label>
+<input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="emailErr">
+<p class="err" id="emailErr">That does not look like a valid email address.</p>
+</div>
+<div class="form-group" id="g-password">
+<label for="password">Password</label>
+<div class="pw-wrap">
+<input class="input" id="password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="72" required aria-describedby="pwHint pwErr">
+<button class="pw-toggle" type="button" aria-controls="password" aria-pressed="false" aria-label="Show password">Show</button>
+</div>
+<div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<p class="hint" id="pwHint">At least 10 characters. A long phrase beats a short jumble.</p>
+<p class="err" id="pwErr">Use at least 10 characters.</p>
+</div>
+<div id="dobSlot" class="form-group" aria-hidden="true"><span class="flabel">Date of birth</span><div class="dob"><span class="select" style="display:block"></span><span class="select" style="display:block"></span><span class="select" style="display:block"></span></div></div>
+<p class="hint" style="margin-top:-16px;margin-bottom:24px">Used once to check you are old enough to hold an account. Your date of birth is not stored.</p>
+<div class="form-group" id="g-guardian" hidden>
+<label class="check"><input type="checkbox" id="guardian"><span>A parent or guardian has read the <a class="link" href="/terms.html#eligibility" target="_blank" rel="noopener">terms</a> and agrees to me holding an account.</span></label>
+<p class="err">A parent or guardian needs to agree first.</p>
+</div>
+<fieldset class="form-group">
+<legend class="flabel">Markets you follow</legend>
+<div class="checkset" id="marketChoices"><label class="checkset__item"><input type="checkbox" name="market" value="IN" checked><span class="tag tag--in">India</span></label><label class="checkset__item"><input type="checkbox" name="market" value="UK" checked><span class="tag tag--uk">United Kingdom</span></label><label class="checkset__item"><input type="checkbox" name="market" value="US" checked><span class="tag tag--us">United States</span></label></div>
+<p class="hint">Only changes what is highlighted for you. Every report stays readable.</p>
+</fieldset>
+<div class="form-group" id="g-terms">
+<label class="check"><input type="checkbox" id="terms" required><span>I agree to the <a class="link" href="/terms.html" target="_blank" rel="noopener">terms of service</a> and the <a class="link" href="/disclaimer.html" target="_blank" rel="noopener">research disclaimer</a>, and I have read the <a class="link" href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>.</span></label>
+<p class="err">Please accept the terms to continue.</p>
+</div>
+<button class="btn btn--block btn--lg" type="submit">Create free account</button>
+<div class="divider">or</div>
+<button class="btn btn--ghost btn--block" type="button" data-oauth="google">Continue with Google</button>
+<p class="hint">Google shares your name and email address with us. You will be asked the age question and to accept the terms on your first visit.</p>
+<div class="notice notice--info" id="oauthNote" hidden></div>
+<p class="small muted" style="margin-top:32px">Leoside Equity publishes general commentary, not investment advice. We do not send marketing email.</p>
+</form>
+</section>
+</div>
+</main>
+<footer id="siteFooter" class="site-footer">
+<div class="wrap">
+<nav aria-label="Footer"><a href="/reports.html">Reports</a> · <a href="/method.html">Method</a> · <a href="/about.html">About</a> · <a href="/accessibility.html">Accessibility</a> · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a> · <a href="/disclaimer.html">Disclaimer</a> · <a href="/copyright.html">Copyright</a></nav>
+<p class="footer-legal">General commentary, not investment advice. &copy; Leoside Equity.</p>
+</div>
+</footer>
+<script defer src="/assets/vendor/supabase-2.117.1.js?v=dff1e545f4"></script><script defer src="/assets/js/core.min.js?v=30c750f872"></script>
+<script defer src="/assets/js/account.js?v=5160567c7c"></script>
+</body>
+</html>

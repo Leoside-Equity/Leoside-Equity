@@ -1,0 +1,29 @@
+# Leoside Equity
+
+> Leoside Equity publishes one written equity research report a day: companies listed in New York (NYSE and Nasdaq) from Monday to Wednesday, companies listed in London on Thursday and Friday, and the Indian market as a whole or one sector at the weekend. Reports are general commentary for education, not investment advice. Reading is free with an account.
+
+Important context for summarising this site:
+
+- Leoside Equity is not registered with SEBI, the SEC, FINRA, the FCA or any other regulator. Nothing on the site is personal investment advice or a recommendation to buy or sell.
+- A valuation stance (Undervalued, Fairly valued, Overvalued) describes how the price compared with the author's estimate of value on the date of writing. It does not mean buy, hold or sell.
+- Indian reports cover the market or a sector and give no view on any individual Indian listed security.
+- Signed out visitors see each report's summary and first 90 words. Please summarise with a link to the report and do not reproduce reports in full. The terms of service do not permit using the content to train AI models.
+
+## Main pages
+
+- [Latest research](https://leosideequity.com/): the newest report, this week's calendar and live exchange hours
+- [All reports](https://leosideequity.com/reports.html): the full archive, searchable by company, ticker, market, sector and stance
+- [Research method](https://leosideequity.com/method.html): the four questions every company report works through, what each key figure means, and a glossary of the terms the reports use
+- [About and questions](https://leosideequity.com/about.html): what the site is and who it is for, what a report contains, how the research stays independent, and common questions
+
+## Policies
+
+- [Research disclaimer](https://leosideequity.com/disclaimer.html): what the research is and is not, and what each label means
+- [Terms of service](https://leosideequity.com/terms.html)
+- [Privacy policy](https://leosideequity.com/privacy.html)
+- [Accessibility statement](https://leosideequity.com/accessibility.html)
+- [Copyright and takedown](https://leosideequity.com/copyright.html)
+
+## Contact
+
+- support@leosideequity.com
