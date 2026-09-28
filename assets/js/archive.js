@@ -164,7 +164,7 @@ Boot.start('reports', function () {
   sortEl.addEventListener('change', function () { state.sort = sortEl.value; state.page = 1; render(); });
 
   outEl.addEventListener('click', function (e) {
-    const pageBtn = e.target.closest('[data-page]');
+    const pageBtn = e.target.closest('.pager [data-page]');
     if (pageBtn && !pageBtn.disabled) {
       state.page = +pageBtn.getAttribute('data-page');
       render(true);
